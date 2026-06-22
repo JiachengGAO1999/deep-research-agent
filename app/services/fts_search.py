@@ -172,6 +172,58 @@ async def search_chunks(
     return results
 
 
+async def search_chunks_direct(
+    task_id: str,
+    keywords: List[str],
+    paper_ids: Optional[List[str]] = None,
+    limit: int = 20,
+) -> List[FTSSearchResult]:
+    """Fallback: search document_chunks with SQL LIKE when FTS5 is unavailable."""
+    conditions = ["task_id = :task_id"]
+    params = {"task_id": task_id, "limit": limit}
+
+    if paper_ids:
+        placeholders = ",".join(f":pid_{i}" for i in range(len(paper_ids)))
+        conditions.append(f"paper_id IN ({placeholders})")
+        for i, pid in enumerate(paper_ids):
+            params[f"pid_{i}"] = pid
+
+    # Build LIKE clauses for keyword matching
+    like_clauses = []
+    for i, kw in enumerate(keywords[:10]):
+        kw_clean = kw.strip().lower()
+        if len(kw_clean) > 2:
+            like_clauses.append(f"(LOWER(text) LIKE :kw_{i} OR LOWER(section_title) LIKE :kw_{i})")
+            params[f"kw_{i}"] = f"%{kw_clean}%"
+
+    if not like_clauses:
+        sql = f"""
+            SELECT chunk_id, paper_id, task_id, section_title, text, source_url,
+                   page_start, page_end, parser_name, pdf_sha256, 0.5 AS score
+            FROM document_chunks
+            WHERE {' AND '.join(conditions)}
+            LIMIT :limit
+        """
+    else:
+        where = " AND ".join(conditions + [f"({' OR '.join(like_clauses)})"])
+        sql = f"""
+            SELECT chunk_id, paper_id, task_id, section_title, text, source_url,
+                   page_start, page_end, parser_name, pdf_sha256,
+                   1.0 AS score
+            FROM document_chunks
+            WHERE {where}
+            LIMIT :limit
+        """
+
+    async with async_session_factory() as session:
+        result = await session.execute(text(sql), params)
+        rows = result.fetchall()
+
+    results = [FTSSearchResult(row) for row in rows]
+    logger.info(f"Direct search: {len(keywords)} keywords → {len(results)} chunks")
+    return results
+
+
 async def search_by_keywords(
     task_id: str,
     keywords: List[str],

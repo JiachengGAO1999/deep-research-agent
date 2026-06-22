@@ -700,58 +700,23 @@ async def extract_evidence_node(state: dict) -> dict:
 
 
 async def validate_evidence_node(state: dict) -> dict:
-    """Deterministic evidence validation: quote match, paper_id consistency, provenance."""
+    """Deterministic evidence validation using structured EvidenceCard checks."""
     _mark_stage(state, "validate_evidence")
     logger.info(f"[{state['task_id']}] Validating evidence")
     t0 = time.time()
+
+    from app.services.evidence_validator import validate_all_evidence
 
     evidence = state.get("evidence", [])
     chunks = state.get("_all_chunks", [])
     chunk_map = {c.chunk_id: c for c in chunks}
 
-    validated = []
-    rejected = 0
-    for ev in evidence:
-        issues = []
-
-        # 1. Check paper_id consistency with chunk
-        if ev.chunk_id and ev.chunk_id in chunk_map:
-            chunk = chunk_map[ev.chunk_id]
-            if chunk.paper_id != ev.paper_id:
-                issues.append(f"paper_id mismatch: evidence={ev.paper_id} chunk={chunk.paper_id}")
-            # 2. Verify quote exists verbatim in chunk text
-            if ev.evidence_quote:
-                quote_clean = ev.evidence_quote.strip()
-                chunk_clean = chunk.text.strip()
-                if quote_clean and quote_clean not in chunk_clean:
-                    # Try fuzzy — at least 80% word overlap
-                    q_words = set(quote_clean.lower().split())
-                    c_words = set(chunk_clean.lower().split())
-                    if q_words:
-                        overlap = len(q_words & c_words) / len(q_words)
-                        if overlap < 0.8:
-                            issues.append(f"quote not found in chunk text (overlap={overlap:.0%})")
-            # 3. Check page consistency
-            if ev.page_start and chunk.page_start:
-                if ev.page_start != chunk.page_start:
-                    issues.append(f"page mismatch: evidence={ev.page_start} chunk={chunk.page_start}")
-
-        # 4. evidence_quote must not be empty for full-text evidence
-        if ev.evidence_level == "direct_quote" and not ev.evidence_quote:
-            issues.append("direct_quote evidence has no quote")
-
-        # 5. Mark verification result
-        if issues:
-            ev.verification_status = "rejected"
-            ev.verification_reason = "; ".join(issues)
-            rejected += 1
-        else:
-            ev.verification_status = "verified"
-        validated.append(ev)
+    validated, stats = validate_all_evidence(evidence, chunk_map)
 
     state["evidence"] = validated
-    state["_evidence_validated"] = len(validated) - rejected
-    state["_evidence_rejected"] = rejected
+    state["_evidence_validated"] = stats["passed"]
+    state["_evidence_rejected"] = stats["failed"]
+    state["_evidence_validation_details"] = stats["reasons"]
 
     mt = state.get("metrics", TaskMetrics())
     sd = getattr(mt, "stage_durations", {})
@@ -760,34 +725,61 @@ async def validate_evidence_node(state: dict) -> dict:
     state["metrics"] = mt
     state["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
 
-    if rejected > 0:
+    if stats["failed"] > 0:
         state.setdefault("warnings", []).append(
-            f"Evidence validation: {rejected}/{len(validated)} items rejected"
+            f"Evidence validation: {stats['passed']}/{stats['total']} passed, "
+            f"{stats['failed']} rejected"
         )
     logger.info(
-        f"[{state['task_id']}] Evidence validated: {len(validated) - rejected} ok, {rejected} rejected"
+        f"[{state['task_id']}] Evidence validated: {stats['passed']} ok, {stats['failed']} rejected"
     )
     return state
 
 
 async def build_claims_node(state: dict) -> dict:
-    """Build report claims only from verified evidence and apply quality gates."""
+    """Build claims from verified evidence and run two-phase verification."""
     _mark_stage(state, "build_claims")
     from app.services.claim_evidence import build_claims, evaluate_evidence_quality
+    from app.services.claim_verifier import verify_claim
 
     evidence = state.get("evidence", [])
-    claims = build_claims(evidence)
+    chunks = state.get("_all_chunks", [])
+    chunk_map = {c.chunk_id: c for c in chunks}
+
+    # Only build claims from VERIFIED evidence
+    verified_evidence = [
+        ev for ev in evidence
+        if ev.verification_status.value == "verified"
+    ]
+    claims = build_claims(verified_evidence)
+
+    # Run two-phase verification on each claim
+    llm = _get_llm_client()
+    settings = get_settings()
+    validated_claims = []
+    for claim in claims:
+        bound_evidence = [ev for ev in verified_evidence if ev.evidence_id in claim.evidence_ids]
+        claim = await verify_claim(
+            claim, bound_evidence, chunk_map=chunk_map,
+            llm_client=llm, model=settings.model_fast,
+            skip_llm=settings.MOCK_MODE,
+        )
+        validated_claims.append(claim)
+
     quality = evaluate_evidence_quality(
-        evidence,
-        claims,
+        evidence, validated_claims,
         max_unsupported_important_claims=get_settings().MAX_UNSUPPORTED_IMPORTANT_CLAIMS,
     )
-    state["claims"] = claims
+    state["claims"] = validated_claims
     state["evidence_quality"] = quality
     if not quality.passed:
         state.setdefault("warnings", []).extend(
             f"Evidence quality: {issue}" for issue in quality.issues
         )
+    logger.info(
+        f"[{state['task_id']}] Claims: {len(validated_claims)} built, "
+        f"{sum(1 for c in validated_claims if c.validation_status == 'validated')} validated"
+    )
     return state
 
 
@@ -1371,8 +1363,14 @@ Cite papers using [P#] markers ONLY from the list above."""
             re.DOTALL | re.IGNORECASE,
         )
         # Strip model-generated reference placeholder like "[P1] [P2] ... [P12]"
+        # Also handle it appearing after "## 6. 参考文献" heading
         report_text = re.sub(
-            r"\n\s*(\[P\d+\]\s*){2,}\n", "\n", report_text
+            r"\n\s*(\[P\d+\][,\s]*){2,}\n", "\n", report_text
+        )
+        # Also strip the entire "## 6. 参考文献" section (model-generated, we replace it)
+        report_text = re.sub(
+            r"\n#{1,3}\s*\d*\.?\s*参考文献\s*\n\s*(\[P\d+\][,\s]*)*\s*\n",
+            "\n", report_text
         )
         if ref_pattern.search(report_text):
             report_text = ref_pattern.sub(r"\1\n" + ref_entries, report_text)

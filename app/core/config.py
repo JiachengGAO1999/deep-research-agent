@@ -94,7 +94,7 @@ class Settings:
     ENABLE_FULL_TEXT: bool = os.getenv(
         "ENABLE_FULL_TEXT", "false"
     ).lower() in ("1", "true", "yes")
-    PDF_PARSER_BACKEND: str = os.getenv("PDF_PARSER_BACKEND", "pymupdf")
+    PDF_PARSER_BACKEND: str = os.getenv("PDF_PARSER_BACKEND", "docling")
 
     # Evidence engine
     EVIDENCE_BACKEND: str = os.getenv("EVIDENCE_BACKEND", "abstract")
