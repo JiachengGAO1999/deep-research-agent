@@ -29,6 +29,37 @@ logger = logging.getLogger(__name__)
 _cached_providers: Optional[List[Any]] = None
 _cached_llm_client: Any = None
 _cached_evidence_engine: Any = None
+_runtime_progress: dict[str, dict] = {}
+
+STAGE_PROGRESS = {
+    "initialize": 3,
+    "plan_queries": 10,
+    "search_sources": 22,
+    "normalize_and_deduplicate": 30,
+    "rank_and_select": 40,
+    "download_pdfs": 50,
+    "parse_and_chunk": 58,
+    "extract_evidence": 68,
+    "assess_gaps": 76,
+    "supplementary_search": 55,
+    "build_claims": 84,
+    "synthesize_report": 92,
+    "validate_citations": 97,
+    "finalize": 100,
+}
+
+
+def _mark_stage(state: dict, stage: str) -> None:
+    state["current_stage"] = stage
+    state["progress_percent"] = STAGE_PROGRESS[stage]
+    state["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    task_id = state.get("task_id")
+    if task_id:
+        _runtime_progress[task_id] = state
+
+
+def get_runtime_progress(task_id: str) -> dict:
+    return _runtime_progress.get(task_id, {})
 
 
 class ResearchState(Dict):
@@ -110,6 +141,7 @@ async def _check_availability(providers) -> list:
 
 async def initialize_node(state: dict) -> dict:
     """Initialize the research task."""
+    _mark_stage(state, "initialize")
     logger.info(f"[{state.get('task_id', 'unknown')}] Initializing research task")
     state["status"] = TaskStatus.RUNNING.value
     state["current_round"] = 0
@@ -130,6 +162,7 @@ async def initialize_node(state: dict) -> dict:
 
 async def plan_queries_node(state: dict) -> dict:
     """Generate a structured search plan from the research question."""
+    _mark_stage(state, "plan_queries")
     logger.info(f"[{state['task_id']}] Planning queries")
     t0 = time.time()
 
@@ -168,7 +201,19 @@ Generate a structured search plan in JSON format."""
 
     if result:
         state["search_plan"] = result
-        state["queries"] = result.all_query_strings()
+        queries = result.all_query_strings()
+        concept_query = " ".join(result.core_concepts[:5]).strip()
+        evaluation_query = (
+            f"{concept_query} benchmark empirical evaluation".strip()
+        )
+        for query in (concept_query, evaluation_query):
+            if query and query not in queries:
+                queries.append(query)
+        depth_limits = {"quick": 2, "standard": 5, "deep": 8}
+        query_limit = depth_limits.get(
+            state.get("research_depth", "standard"), 5
+        )
+        state["queries"] = queries[:query_limit]
     else:
         logger.warning("Search plan generation failed, using fallback")
         from app.models.search_plan import SearchQuery, InclusionExclusionCriteria
@@ -198,6 +243,7 @@ Generate a structured search plan in JSON format."""
 
 async def search_sources_node(state: dict) -> dict:
     """Execute searches across all available providers in parallel."""
+    _mark_stage(state, "search_sources")
     logger.info(f"[{state['task_id']}] Searching sources (round {state['current_round']})")
     t0 = time.time()
 
@@ -265,6 +311,7 @@ async def search_sources_node(state: dict) -> dict:
 
 async def normalize_and_deduplicate_node(state: dict) -> dict:
     """Normalize and deduplicate papers."""
+    _mark_stage(state, "normalize_and_deduplicate")
     logger.info(f"[{state['task_id']}] Normalizing and deduplicating")
     t0 = time.time()
 
@@ -292,6 +339,7 @@ async def normalize_and_deduplicate_node(state: dict) -> dict:
 
 async def rank_and_select_node(state: dict) -> dict:
     """Rank papers and select the most relevant ones."""
+    _mark_stage(state, "rank_and_select")
     logger.info(f"[{state['task_id']}] Ranking and selecting papers")
     t0 = time.time()
 
@@ -314,7 +362,10 @@ async def rank_and_select_node(state: dict) -> dict:
         prefiltered,
         state["original_question"],
         search_plan,
-        max_selected=settings.MAX_SELECTED_PAPERS,
+        max_selected=min(
+            state.get("max_papers", settings.MAX_SELECTED_PAPERS),
+            settings.MAX_SELECTED_PAPERS,
+        ),
         llm_client=llm,
         model=settings.model_fast,
         max_tokens=settings.LLM_FAST_MAX_TOKENS,
@@ -354,10 +405,13 @@ async def rank_and_select_node(state: dict) -> dict:
 
 async def download_pdfs_node(state: dict) -> dict:
     """Download PDFs for selected papers from open-access sources."""
+    _mark_stage(state, "download_pdfs")
     logger.info(f"[{state['task_id']}] Downloading PDFs")
     t0 = time.time()
     settings = get_settings()
-    if not settings.ENABLE_FULL_TEXT or settings.EVIDENCE_BACKEND == "abstract":
+    full_text = state.get("enable_full_text", settings.ENABLE_FULL_TEXT)
+    backend = state.get("evidence_backend", settings.EVIDENCE_BACKEND)
+    if not full_text or backend == "abstract":
         state["_downloaded_pdfs"] = {}
         return state
 
@@ -422,10 +476,13 @@ async def download_pdfs_node(state: dict) -> dict:
 
 async def parse_and_chunk_node(state: dict) -> dict:
     """Parse downloaded PDFs and create document chunks with FTS5 index."""
+    _mark_stage(state, "parse_and_chunk")
     logger.info(f"[{state['task_id']}] Parsing PDFs and chunking")
     t0 = time.time()
     settings = get_settings()
-    if not settings.ENABLE_FULL_TEXT or settings.EVIDENCE_BACKEND == "abstract":
+    full_text = state.get("enable_full_text", settings.ENABLE_FULL_TEXT)
+    backend = state.get("evidence_backend", settings.EVIDENCE_BACKEND)
+    if not full_text or backend == "abstract":
         state["_parse_results"] = {}
         state["_all_chunks"] = []
         return state
@@ -492,6 +549,7 @@ async def parse_and_chunk_node(state: dict) -> dict:
 
 async def extract_evidence_node(state: dict) -> dict:
     """Retrieve and verify evidence through the configured EvidenceEngine."""
+    _mark_stage(state, "extract_evidence")
     logger.info(f"[{state['task_id']}] Extracting evidence")
     t0 = time.time()
 
@@ -501,7 +559,11 @@ async def extract_evidence_node(state: dict) -> dict:
         return state
 
     settings = get_settings()
-    engine = _get_evidence_engine()
+    from app.services.evidence_engine import get_evidence_engine
+
+    engine = get_evidence_engine(
+        state.get("evidence_backend", settings.EVIDENCE_BACKEND)
+    )
     available = await engine.is_available()
     if not available:
         state.setdefault("errors", []).append(
@@ -582,6 +644,7 @@ async def extract_evidence_node(state: dict) -> dict:
 
 async def build_claims_node(state: dict) -> dict:
     """Build report claims only from verified evidence and apply quality gates."""
+    _mark_stage(state, "build_claims")
     from app.services.claim_evidence import build_claims, evaluate_evidence_quality
 
     evidence = state.get("evidence", [])
@@ -602,6 +665,7 @@ async def build_claims_node(state: dict) -> dict:
 
 async def assess_gaps_node(state: dict) -> dict:
     """Assess evidence gaps and decide whether supplementary search is needed."""
+    _mark_stage(state, "assess_gaps")
     logger.info(f"[{state['task_id']}] Assessing evidence gaps")
     t0 = time.time()
 
@@ -690,6 +754,7 @@ Return a GapAnalysis JSON object."""
 
 async def supplementary_search_node(state: dict) -> dict:
     """Execute supplementary search with new queries."""
+    _mark_stage(state, "supplementary_search")
     logger.info(f"[{state['task_id']}] Supplementary search round {state.get('supplementary_rounds_done', 0) + 1}")
 
     gap_analysis = state.get("gap_analysis")
@@ -751,6 +816,7 @@ async def supplementary_search_node(state: dict) -> dict:
 
 async def synthesize_report_node(state: dict) -> dict:
     """Generate the final Chinese Markdown research report."""
+    _mark_stage(state, "synthesize_report")
     logger.info(f"[{state['task_id']}] Synthesizing report")
     t0 = time.time()
 
@@ -830,10 +896,16 @@ async def synthesize_report_node(state: dict) -> dict:
 
     llm = _get_llm_client()
 
-    system_prompt = """You are a senior research analyst writing a comprehensive Chinese-language research report.
+    language = state.get("report_language", "zh-CN")
+    language_instruction = (
+        "Write in Simplified Chinese (zh-CN)."
+        if language == "zh-CN"
+        else "Write in English."
+    )
+    system_prompt = f"""You are a senior research analyst writing a comprehensive research report.
 
 Requirements:
-1. Write in Chinese (Simplified, zh-CN)
+1. {language_instruction}
 2. Structure the report with clear sections
 3. Use [P1], [P2], etc. for in-text citations - ONLY cite papers provided to you
 4. NEVER add factual claims, references, findings, or data not present in the verified claims
@@ -949,6 +1021,7 @@ def _build_fallback_report(state: dict) -> str:
 
 async def validate_citations_node(state: dict) -> dict:
     """Validate all citations in the report."""
+    _mark_stage(state, "validate_citations")
     logger.info(f"[{state['task_id']}] Validating citations")
     t0 = time.time()
 
@@ -991,12 +1064,14 @@ async def validate_citations_node(state: dict) -> dict:
 
 async def finalize_node(state: dict) -> dict:
     """Finalize the research task."""
+    _mark_stage(state, "finalize")
     logger.info(f"[{state['task_id']}] Finalizing")
     state["status"] = TaskStatus.COMPLETED.value
     mt = state.get("metrics", TaskMetrics())
     mt.end_time = time.strftime("%Y-%m-%dT%H:%M:%S")
     state["metrics"] = mt
     state["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    _runtime_progress[state["task_id"]] = state
 
     # Clean up cached instances
     _reset_cached_instances()

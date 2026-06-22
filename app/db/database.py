@@ -53,6 +53,11 @@ async def _ensure_sqlite_columns(conn) -> None:
     """Small additive migration shim for development SQLite databases."""
     required = {
         "tasks": {
+            "max_papers": "INTEGER DEFAULT 12",
+            "research_depth": "VARCHAR(20) DEFAULT 'standard'",
+            "evidence_backend": "VARCHAR(20) DEFAULT 'abstract'",
+            "enable_full_text": "BOOLEAN DEFAULT 0",
+            "report_language": "VARCHAR(20) DEFAULT 'zh-CN'",
             "retrieved_passages_json": "TEXT",
             "claims_json": "TEXT",
             "evidence_quality_json": "TEXT",

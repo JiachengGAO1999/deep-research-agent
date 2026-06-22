@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deep Research Agent</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">EVIDENCE-GROUNDED RESEARCH</p>
+        <h1>Deep Research Agent</h1>
+        <p class="subtitle">检索真实学术文献，提取可追溯证据，生成带引用的研究报告。</p>
+      </div>
+      <span id="health" class="health">检查服务…</span>
+    </header>
+
+    <section class="panel form-panel">
+      <form id="research-form">
+        <label class="topic-field">
+          <span>研究主题或问题</span>
+          <textarea id="topic" required rows="4" placeholder="例如：对话历史如何影响大语言模型的推理可靠性？"></textarea>
+        </label>
+
+        <div class="grid">
+          <label><span>开始年份</span><input id="year-from" type="number" min="1900" max="2100" placeholder="2020"></label>
+          <label><span>结束年份</span><input id="year-to" type="number" min="1900" max="2100" placeholder="2026"></label>
+          <label><span>最终论文数</span><input id="max-papers" type="number" min="3" max="30" value="12"></label>
+          <label><span>研究深度</span>
+            <select id="depth">
+              <option value="quick">快速</option>
+              <option value="standard" selected>标准</option>
+              <option value="deep">深入</option>
+            </select>
+          </label>
+        </div>
+
+        <details>
+          <summary>高级设置</summary>
+          <div class="grid advanced">
+            <label><span>证据后端</span>
+              <select id="backend">
+                <option value="abstract" selected>摘要（稳定）</option>
+                <option value="fts">本地全文 FTS</option>
+                <option value="paperqa">PaperQA2</option>
+              </select>
+            </label>
+            <label class="check"><input id="full-text" type="checkbox"><span>启用全文下载与解析</span></label>
+            <label><span>报告语言</span>
+              <select id="language">
+                <option value="zh-CN" selected>中文</option>
+                <option value="en">English</option>
+              </select>
+            </label>
+          </div>
+          <p class="hint">全文模式需要论文存在开放访问 PDF；PaperQA2 还需要可用的 embedding 配置。</p>
+        </details>
+
+        <button id="submit" type="submit">开始研究</button>
+      </form>
+    </section>
+
+    <section id="progress-panel" class="panel hidden">
+      <div class="progress-head">
+        <div>
+          <p class="eyebrow">RESEARCH IN PROGRESS</p>
+          <h2 id="stage-label">准备中</h2>
+        </div>
+        <span id="progress-number">0%</span>
+      </div>
+      <div class="bar"><div id="bar-fill"></div></div>
+      <div class="stats">
+        <span>轮次 <strong id="rounds">0</strong></span>
+        <span>发现论文 <strong id="papers-found">0</strong></span>
+        <span>纳入论文 <strong id="papers-selected">0</strong></span>
+      </div>
+      <p id="task-id" class="task-id"></p>
+      <div id="messages"></div>
+    </section>
+
+    <section id="results" class="hidden">
+      <nav class="tabs">
+        <button data-tab="report" class="active">研究报告</button>
+        <button data-tab="papers">论文</button>
+        <button data-tab="evidence">证据</button>
+        <button data-tab="claims">Claims</button>
+      </nav>
+      <div id="report" class="panel tab-content active"></div>
+      <div id="papers" class="panel tab-content"></div>
+      <div id="evidence" class="panel tab-content"></div>
+      <div id="claims" class="panel tab-content"></div>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

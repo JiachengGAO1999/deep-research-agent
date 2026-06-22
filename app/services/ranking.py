@@ -294,3 +294,136 @@ def _fallback_selection(papers: list[Paper], max_selected: int) -> list[Paper]:
         p.relevance_score = 50  # Fallback score
         p.relevance_reason = "Fallback selection (LLM ranking unavailable)"
     return selected
+
+
+# ---- Reciprocal Rank Fusion ----
+
+def reciprocal_rank_fusion(
+    ranked_lists: list[list[str]],
+    k: int = 60,
+) -> dict[str, float]:
+    """Fuse multiple ranked lists using RRF.
+
+    Each list is a list of paper internal_ids in rank order (best first).
+    Returns {internal_id: fusion_score}.
+    """
+    scores: dict[str, float] = {}
+    for ranks in ranked_lists:
+        for rank, paper_id in enumerate(ranks):
+            scores[paper_id] = scores.get(paper_id, 0.0) + 1.0 / (k + rank + 1)
+    return scores
+
+
+def rrf_rank_papers(
+    papers: list,
+    ranked_lists: list[list[str]],
+    title_weight: float = 0.3,
+    citation_cap: int = 100,
+) -> list:
+    """Rank papers using RRF fusion + weak signals.
+
+    Args:
+        papers: List of Paper objects.
+        ranked_lists: One list per query (paper_ids in rank order).
+        title_weight: Bonus multiplier for title keyword match.
+        citation_cap: Max citation count bonus (weak signal).
+
+    Returns papers sorted by fusion score (highest first).
+    """
+    rrf_scores = reciprocal_rank_fusion(ranked_lists)
+
+    for paper in papers:
+        fusion = rrf_scores.get(paper.internal_id, 0.0)
+
+        # Query coverage bonus: how many ranked lists contained this paper
+        query_hits = sum(
+            1 for ranks in ranked_lists if paper.internal_id in ranks
+        )
+        # Provider coverage bonus
+        provider_hits = len(set(
+            s.provider for s in paper.source_ids
+        ))
+
+        # Title match bonus
+        title_bonus = 0.0
+        if paper.normalized_title:
+            title_bonus = title_weight * sum(
+                1 for ranks in ranked_lists
+                if paper.internal_id in ranks[:5]
+            )
+
+        # Weak citation prior (capped)
+        citation_bonus = min(paper.citation_count or 0, citation_cap) / (citation_cap * 10)
+
+        paper._rrf_score = fusion
+        paper._query_hits = query_hits
+        paper._provider_hits = provider_hits
+        paper._fusion_score = (
+            fusion
+            + 0.2 * query_hits
+            + 0.1 * provider_hits
+            + title_bonus
+            + citation_bonus
+        )
+
+    # Sort by fusion_score descending
+    papers.sort(key=lambda p: getattr(p, "_fusion_score", 0.0), reverse=True)
+    return papers
+
+
+# ---- Per-stage Recall Diagnostics ----
+
+class RecallTracker:
+    """Track where gold papers are lost across the retrieval pipeline."""
+
+    def __init__(self, gold_papers: list[dict]):
+        self.gold_dois = set()
+        self.gold_titles = set()
+        for gp in gold_papers:
+            if gp.get("doi"):
+                self.gold_dois.add(gp["doi"].lower().strip())
+            self.gold_titles.add(self._norm(gp.get("title", "")))
+
+        self.stages: dict[str, float] = {}
+
+    @staticmethod
+    def _norm(title: str) -> str:
+        from app.models.paper import normalize_title
+        return normalize_title(title)
+
+    def _gold_in_papers(self, papers: list) -> set[str]:
+        """Return which gold papers were found in the paper list."""
+        found = set()
+        if not self.gold_dois and not self.gold_titles:
+            return found
+        paper_dois = set()
+        paper_titles = set()
+        for p in papers:
+            if hasattr(p, 'doi') and p.doi:
+                paper_dois.add(p.doi.lower().strip())
+            if hasattr(p, 'normalized_title') and p.normalized_title:
+                paper_titles.add(p.normalized_title)
+            elif hasattr(p, 'title') and p.title:
+                paper_titles.add(self._norm(p.title))
+        found.update(self.gold_dois & paper_dois)
+        for gt in self.gold_titles:
+            if gt and any(gt == pt for pt in paper_titles):
+                found.add(gt)
+        return found
+
+    def record(self, stage: str, papers: list) -> float:
+        """Record recall@all for this stage. Returns the recall ratio."""
+        if not self.gold_dois and not self.gold_titles:
+            self.stages[stage] = 0.0
+            return 0.0
+        found = self._gold_in_papers(papers)
+        total_gold = max(len(self.gold_dois) + len(self.gold_titles), 1)
+        recall = len(found) / total_gold
+        self.stages[stage] = recall
+        return recall
+
+    def summary(self) -> dict:
+        return {
+            "stages": self.stages,
+            "total_gold": len(self.gold_dois) + len(self.gold_titles),
+        }

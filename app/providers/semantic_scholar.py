@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import time
 from typing import Optional
 
 from app.models.paper import Paper, PaperSource, AuthorInfo
@@ -10,6 +12,11 @@ from app.providers.base import BaseProvider
 from app.providers.query_compiler import compile_query
 
 logger = logging.getLogger(__name__)
+
+# Global rate limiter: S2 allows 1 request/second across all endpoints.
+# Shared across all provider instances and tasks.
+_s2_semaphore = asyncio.Semaphore(1)
+_s2_last_request_time = 0.0
 
 
 class SemanticScholarProvider(BaseProvider):
@@ -28,7 +35,16 @@ class SemanticScholarProvider(BaseProvider):
         super().__init__(settings)
         self._base_url = self._settings.SEMANTIC_SCHOLAR_BASE_URL
         self._api_key = self._settings.SEMANTIC_SCHOLAR_API_KEY
-        self._max_results = self._settings.MAX_PAPERS_PER_SOURCE
+        self._max_results = self._settings.MAX_RESULTS_PER_QUERY_S2
+
+    async def _rate_limit(self) -> None:
+        """Enforce S2's 1 req/s global limit across all instances."""
+        global _s2_semaphore, _s2_last_request_time
+        async with _s2_semaphore:
+            elapsed = time.monotonic() - _s2_last_request_time
+            if elapsed < 1.1:
+                await asyncio.sleep(1.1 - elapsed)
+            _s2_last_request_time = time.monotonic()
 
     async def is_available(self) -> bool:
         """Check if Semantic Scholar API is reachable."""
@@ -67,6 +83,8 @@ class SemanticScholarProvider(BaseProvider):
             params["year"] = f"{year_from}-"
 
         headers = self._build_headers()
+
+        await self._rate_limit()
 
         try:
             response = await self._request_with_retry(

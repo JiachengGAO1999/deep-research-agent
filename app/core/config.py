@@ -57,6 +57,18 @@ class Settings:
 
     # Search limits
     MAX_SEARCH_ROUNDS: int = int(os.getenv("MAX_SEARCH_ROUNDS", "3"))
+
+    # Per-provider per-query result limits (avoid oversampling; rely on query diversity)
+    MAX_RESULTS_PER_QUERY_OPENALEX: int = int(os.getenv("MAX_RESULTS_PER_QUERY_OPENALEX", "20"))
+    MAX_RESULTS_PER_QUERY_S2: int = int(os.getenv("MAX_RESULTS_PER_QUERY_S2", "10"))
+    MAX_RESULTS_PER_QUERY_ARXIV: int = int(os.getenv("MAX_RESULTS_PER_QUERY_ARXIV", "20"))
+
+    # Candidate pool sizing
+    MAX_CANDIDATES_AFTER_DEDUP: int = int(os.getenv("MAX_CANDIDATES_AFTER_DEDUP", "100"))
+    MAX_CANDIDATES_FOR_RERANK: int = int(os.getenv("MAX_CANDIDATES_FOR_RERANK", "40"))
+    MAX_CANDIDATES_FOR_LLM: int = int(os.getenv("MAX_CANDIDATES_FOR_LLM", "15"))
+
+    # Backward-compatible fallback
     MAX_PAPERS_PER_SOURCE: int = int(os.getenv("MAX_PAPERS_PER_SOURCE", "20"))
     MAX_SELECTED_PAPERS: int = int(os.getenv("MAX_SELECTED_PAPERS", "20"))
 

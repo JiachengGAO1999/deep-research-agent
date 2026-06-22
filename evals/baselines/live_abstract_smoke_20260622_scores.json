@@ -2,14 +2,14 @@
   "cases": [
     {
       "case_id": "cs_llm_multiturn",
-      "paper_recall_at_k": null,
+      "paper_recall_at_k": 0.0,
       "concept_coverage": 0.6666666666666666,
       "citation_integrity": true,
       "selected_paper_count": 12,
       "verified_evidence_count": 32
     }
   ],
-  "mean_paper_recall_at_k": null,
+  "mean_paper_recall_at_k": 0.0,
   "mean_concept_coverage": 0.6666666666666666,
   "citation_integrity_rate": 1.0
 }

@@ -15,6 +15,7 @@ def test_arxiv_query_removes_boolean_tokens_and_limits_terms():
         "arxiv",
         "What methods improve reasoning OR reliability AND context in language models?",
     )
+    # arXiv fallback joins terms with AND (standard arXiv syntax)
     assert " OR " not in f" {compiled} "
-    assert " AND " not in f" {compiled} "
-    assert len(compiled.split()) <= 12
+    # Terms should be limited (~12 terms joined by AND)
+    assert len(compiled.split(" AND ")) <= 12

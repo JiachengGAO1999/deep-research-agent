@@ -29,10 +29,26 @@ def _paper_recall(case: EvaluationCase, result: dict) -> float | None:
     return hits / len(case.gold_papers)
 
 
-def score(dataset: list[dict], artifact: dict) -> EvaluationSummary:
+def score(
+    dataset: list[dict],
+    artifact: dict,
+    gold_annotations: dict | None = None,
+) -> EvaluationSummary:
+    gold_cases = (gold_annotations or {}).get("cases", {})
+    resolved_dataset = []
+    for row in dataset:
+        row = row.copy()
+        if not row.get("gold_papers") and row["case_id"] in gold_cases:
+            row["gold_papers"] = [
+                {"title": item["title"], "doi": item.get("doi")}
+                for item in gold_cases[row["case_id"]]
+            ]
+        resolved_dataset.append(row)
     cases = {
         item.case_id: item
-        for item in (EvaluationCase.model_validate(row) for row in dataset)
+        for item in (
+            EvaluationCase.model_validate(row) for row in resolved_dataset
+        )
     }
     scores = []
     for result in artifact.get("results", []):
@@ -88,10 +104,16 @@ def main() -> None:
     parser.add_argument("--dataset", default="evals/questions.json")
     parser.add_argument("--artifact", default="evals/baselines/latest.json")
     parser.add_argument("--output")
+    parser.add_argument("--gold", default="evals/gold_annotations.json")
     args = parser.parse_args()
     dataset = json.loads(Path(args.dataset).read_text(encoding="utf-8"))
     artifact = json.loads(Path(args.artifact).read_text(encoding="utf-8"))
-    summary = score(dataset, artifact)
+    gold = (
+        json.loads(Path(args.gold).read_text(encoding="utf-8"))
+        if args.gold and Path(args.gold).exists()
+        else None
+    )
+    summary = score(dataset, artifact, gold)
     rendered = summary.model_dump_json(indent=2)
     if args.output:
         Path(args.output).write_text(rendered, encoding="utf-8")

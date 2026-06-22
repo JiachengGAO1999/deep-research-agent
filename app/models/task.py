@@ -89,6 +89,11 @@ class TaskState(BaseModel):
     # Search configuration
     year_from: Optional[int] = None
     year_to: Optional[int] = None
+    max_papers: int = 12
+    research_depth: str = "standard"
+    evidence_backend: str = "abstract"
+    enable_full_text: bool = False
+    report_language: str = "zh-CN"
 
     # Current round tracking
     current_round: int = 0

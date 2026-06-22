@@ -24,6 +24,11 @@ class TaskRecord(Base):
     status: Mapped[str] = mapped_column(String(20), default="pending")
     year_from: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     year_to: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    max_papers: Mapped[int] = mapped_column(Integer, default=12)
+    research_depth: Mapped[str] = mapped_column(String(20), default="standard")
+    evidence_backend: Mapped[str] = mapped_column(String(20), default="abstract")
+    enable_full_text: Mapped[bool] = mapped_column(Boolean, default=False)
+    report_language: Mapped[str] = mapped_column(String(20), default="zh-CN")
     current_round: Mapped[int] = mapped_column(Integer, default=0)
     max_rounds: Mapped[int] = mapped_column(Integer, default=3)
 

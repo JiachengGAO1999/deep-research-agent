@@ -11,8 +11,7 @@ venv/
 .env
 
 # Database
-storage/app.db
-storage/*.db
+storage/
 
 # IDE
 .idea/
@@ -23,10 +22,6 @@ storage/*.db
 # OS
 .DS_Store
 Thumbs.db
-
-# PDF cache
-storage/cache/
-*.pdf
 
 # Testing
 .pytest_cache/

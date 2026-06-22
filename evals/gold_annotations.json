@@ -1,0 +1,107 @@
+{
+  "metadata": {
+    "version": "2026-06-22",
+    "annotation_method": "Assistant-curated from refined OpenAlex/Semantic Scholar/Crossref candidates and known primary literature; DOI/title identity checked where metadata was available.",
+    "policy": "Gold papers are evidence anchors, not an exhaustive relevant set. Future expert review may add papers without invalidating existing anchors."
+  },
+  "cases": {
+    "cs_llm_multiturn": [
+      {"title": "LLMs Get Lost In Multi-Turn Conversation", "doi": "10.48550/arxiv.2505.06120", "role": "direct empirical evidence"},
+      {"title": "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena", "doi": "10.48550/arxiv.2306.05685", "role": "multi-turn evaluation benchmark"}
+    ],
+    "cs_rag_hallucination": [
+      {"title": "Retrieval Augmentation Reduces Hallucination in Conversation", "doi": "10.18653/v1/2021.findings-emnlp.320", "role": "direct intervention evidence"},
+      {"title": "Searching for Best Practices in Retrieval-Augmented Generation", "doi": "10.18653/v1/2024.emnlp-main.981", "role": "comparative RAG evaluation"},
+      {"title": "Active Retrieval Augmented Generation", "doi": "10.18653/v1/2023.emnlp-main.495", "role": "adaptive retrieval method"}
+    ],
+    "cs_small_models_reasoning": [
+      {"title": "Large Language Models Are Reasoning Teachers", "doi": "10.18653/v1/2023.acl-long.830", "role": "reasoning distillation"},
+      {"title": "MetaMath: Bootstrap Your Own Mathematical Questions for Large Language Models", "doi": "10.48550/arxiv.2309.12284", "role": "mathematical data bootstrapping"},
+      {"title": "Orca: Progressive Learning from Complex Explanation Traces of GPT-4", "doi": "10.48550/arxiv.2306.02707", "role": "explanation-trace distillation"}
+    ],
+    "cs_long_context": [
+      {"title": "Lost in the Middle: How Language Models Use Long Contexts", "doi": "10.1162/tacl_a_00638", "role": "position-dependent long-context failure"},
+      {"title": "LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding", "doi": "10.48550/arxiv.2308.14508", "role": "long-context benchmark"},
+      {"title": "RULER: What's the Real Context Size of Your Long-Context Language Models?", "doi": "10.48550/arxiv.2404.06654", "role": "effective context evaluation"}
+    ],
+    "cs_llm_agents": [
+      {"title": "Improving Factuality and Reasoning in Language Models through Multiagent Debate", "doi": "10.48550/arxiv.2305.14325", "role": "multi-agent debate evidence"},
+      {"title": "More Agents Is All You Need", "doi": "10.48550/arxiv.2402.05120", "role": "agent scaling comparison"},
+      {"title": "ChatEval: Towards Better LLM-based Evaluators through Multi-Agent Debate", "doi": "10.48550/arxiv.2308.07201", "role": "multi-agent evaluator evidence"}
+    ],
+    "bio_crispr_offtarget": [
+      {"title": "High-fidelity CRISPR–Cas9 nucleases with no detectable genome-wide off-target effects", "doi": "10.1038/nature16526", "role": "high-fidelity Cas9 engineering"},
+      {"title": "Enhanced proofreading governs CRISPR–Cas9 targeting accuracy", "doi": "10.1038/nature24268", "role": "specificity mechanism and variant"},
+      {"title": "Evaluation of off-target and on-target scoring algorithms and integration into the guide RNA selection tool CRISPOR", "doi": "10.1186/s13059-016-1012-2", "role": "guide design and scoring"}
+    ],
+    "bio_spatial_transcriptomics": [
+      {"title": "Method of the Year: spatially resolved transcriptomics", "doi": "10.1038/s41592-020-01033-y", "role": "field overview"},
+      {"title": "The expanding vistas of spatial transcriptomics", "doi": "10.1038/s41587-022-01448-2", "role": "technology comparison review"},
+      {"title": "Systematic comparison of sequencing-based spatial transcriptomic methods", "doi": "10.1038/s41592-024-02325-3", "role": "direct sequencing-method comparison"}
+    ],
+    "bio_microbiome_depression": [
+      {"title": "Systematic Review of Gut Microbiota and Major Depression", "doi": "10.3389/fpsyt.2019.00034", "role": "MDD association synthesis"},
+      {"title": "A systematic review of gut microbiota composition in observational studies of major depressive disorder, bipolar disorder and schizophrenia", "doi": "10.1038/s41380-022-01456-3", "role": "observational evidence quality"},
+      {"title": "The effects of probiotics on depressive symptoms in humans: a systematic review", "doi": "10.1186/s12991-017-0138-2", "role": "intervention evidence"}
+    ],
+    "med_glp1_cardiovascular": [
+      {"title": "Semaglutide and Cardiovascular Outcomes in Obesity without Diabetes", "doi": "10.1056/nejmoa2307563", "role": "SELECT primary cardiovascular outcome trial"},
+      {"title": "Semaglutide and cardiovascular outcomes in patients with obesity and prevalent heart failure: a prespecified analysis of the SELECT trial", "doi": "10.1016/s0140-6736(24)01498-3", "role": "heart-failure subgroup evidence"},
+      {"title": "Semaglutide Effects on Cardiovascular Outcomes in People With Overweight or Obesity (SELECT) rationale and design", "doi": "10.1016/j.ahj.2020.07.008", "role": "trial design and population"}
+    ],
+    "med_long_covid": [
+      {"title": "Long term outcomes of hyperbaric oxygen therapy in post covid condition: longitudinal follow-up of a randomized controlled trial", "doi": "10.1038/s41598-024-53091-3", "role": "randomized intervention follow-up"},
+      {"title": "The effect of hyperbaric oxygen therapy on myocardial function in post-COVID-19 syndrome patients: a randomized controlled trial", "doi": "10.1038/s41598-023-36570-x", "role": "randomized cardiac outcome evidence"}
+    ],
+    "med_ai_radiology": [
+      {"title": "Artificial intelligence versus clinicians: systematic review of design, reporting standards, and claims of deep learning studies", "doi": "10.1136/bmj.m689", "role": "clinical evidence quality benchmark"},
+      {"title": "Artificial Intelligence Improves Radiologist Performance for Predicting Malignancy at Chest CT", "doi": "10.1148/radiol.220571", "role": "radiologist-AI assistance comparison"},
+      {"title": "Association of Clinician Diagnostic Performance With Machine Learning–Based Decision Support Systems", "doi": "10.1001/jamanetworkopen.2021.1276", "role": "decision-support performance synthesis"}
+    ],
+    "neuro_sleep_memory": [
+      {"title": "About Sleep's Role in Memory", "doi": "10.1152/physrev.00032.2012", "role": "mechanistic and experimental synthesis"},
+      {"title": "Sleep—A brain-state serving systems memory consolidation", "doi": "10.1016/j.neuron.2023.03.005", "role": "systems consolidation review"},
+      {"title": "Sleep deprivation causes memory deficits by negatively impacting neuronal connectivity in hippocampal area CA1", "doi": "10.7554/elife.13424", "role": "causal mechanistic evidence"}
+    ],
+    "neuro_psychedelic_depression": [
+      {"title": "Single-Dose Psilocybin for a Treatment-Resistant Episode of Major Depression", "doi": "10.1056/nejmoa2206443", "role": "phase 2 randomized trial"},
+      {"title": "Effects of Psilocybin-Assisted Therapy on Major Depressive Disorder", "doi": "10.1001/jamapsychiatry.2020.3285", "role": "randomized clinical trial"},
+      {"title": "Psilocybin for treatment-resistant depression: fMRI-measured brain mechanisms", "doi": "10.1038/s41598-017-13282-7", "role": "mechanistic imaging evidence"}
+    ],
+    "physics_perovskite_stability": [
+      {"title": "In situ observation of heat-induced degradation of perovskite solar cells", "doi": "10.1038/nenergy.2015.12", "role": "thermal degradation mechanism"},
+      {"title": "Light and oxygen induced degradation limits the operational stability of methylammonium lead triiodide perovskite solar cells", "doi": "10.1039/c6ee00409a", "role": "light and oxygen degradation"},
+      {"title": "Consensus statement for stability assessment and reporting for perovskite photovoltaics based on ISOS procedures", "doi": "10.1038/s41560-019-0529-5", "role": "stability measurement standard"}
+    ],
+    "physics_quantum_error": [
+      {"title": "Suppressing quantum errors by scaling a surface code logical qubit", "doi": "10.1038/s41586-022-05434-1", "role": "logical error scaling experiment"},
+      {"title": "Quantum error correction below the surface code threshold", "doi": "10.1038/s41586-024-08449-y", "role": "below-threshold experimental evidence"},
+      {"title": "Exponential suppression of bit or phase errors with cyclic error correction", "doi": "10.1038/s41586-021-03588-y", "role": "error suppression experiment"}
+    ],
+    "climate_cdr": [
+      {"title": "The technological and economic prospects for CO2 utilization and removal", "doi": "10.1038/s41586-019-1681-6", "role": "cross-technology comparison"},
+      {"title": "Direct air capture: process technology, techno-economic and socio-political challenges", "doi": "10.1039/d1ee03523a", "role": "direct air capture evidence"},
+      {"title": "Potential for large-scale CO2 removal via enhanced rock weathering with croplands", "doi": "10.1038/s41586-020-2448-9", "role": "enhanced weathering scale evidence"}
+    ],
+    "climate_heat_mortality": [
+      {"title": "Cooling cities through urban green infrastructure: a health impact assessment of European cities", "doi": "10.1016/s0140-6736(22)02585-5", "role": "urban greening mortality estimate"},
+      {"title": "Is planned adaptation to heat reducing heat-related mortality and illness? A systematic review", "doi": "10.1186/1471-2458-14-1112", "role": "adaptation effectiveness synthesis"},
+      {"title": "Overview of Existing Heat-Health Warning Systems in Europe", "doi": "10.3390/ijerph16152657", "role": "warning-system evidence"}
+    ],
+    "social_remote_work": [
+      {"title": "Does Working from Home Work? Evidence from a Chinese Experiment", "doi": "10.1093/qje/qju032", "role": "randomized productivity experiment"},
+      {"title": "The effects of remote work on collaboration among information workers", "doi": "10.1038/s41562-021-01196-4", "role": "collaboration network evidence"},
+      {"title": "Hybrid working from home improves retention without damaging performance", "doi": "10.1038/s41586-024-07500-2", "role": "randomized hybrid-work evidence"}
+    ],
+    "education_tutoring": [
+      {"title": "The Impressive Effects of Tutoring on PreK-12 Learning: A Systematic Review and Meta-Analysis of the Experimental Evidence", "doi": "10.3386/w27476", "role": "experimental meta-analysis"},
+      {"title": "Can Technology Facilitate Scale? Evidence from a Randomized Evaluation of High Dosage Tutoring", "doi": "10.3386/w32510", "role": "randomized scale-up evidence"},
+      {"title": "Closing the income-achievement gap? Experimental evidence from high-dosage tutoring in Dutch primary education", "doi": "10.1016/j.econedurev.2023.102383", "role": "mathematics-focused experimental evidence"}
+    ],
+    "zh_llm_science": [
+      {"title": "PaperQA2: A Language Model Agent for Deep Search and Literature Review", "doi": "10.48550/arxiv.2409.13740", "role": "citation-grounded literature agent"},
+      {"title": "OpenScholar: Synthesizing Scientific Literature with Retrieval-Augmented Language Models", "doi": "10.48550/arxiv.2411.14199", "role": "scientific synthesis and citation evaluation"},
+      {"title": "A Survey on Hallucination in Large Language Models: Principles, Taxonomy, Challenges, and Open Questions", "doi": "10.48550/arxiv.2311.05232", "role": "hallucination taxonomy and mitigation"}
+    ]
+  }
+}

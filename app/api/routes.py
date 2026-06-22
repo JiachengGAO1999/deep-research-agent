@@ -8,7 +8,7 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_session
@@ -25,9 +25,39 @@ router = APIRouter()
 # ---- Request/Response models ----
 
 class ResearchRequest(BaseModel):
-    question: str = Field(description="The research question to investigate")
+    question: Optional[str] = Field(
+        default=None, description="The research question to investigate"
+    )
+    topic: Optional[str] = Field(
+        default=None, description="User-facing alias for question"
+    )
     year_from: Optional[int] = Field(default=None, description="Start year filter (inclusive)")
     year_to: Optional[int] = Field(default=None, description="End year filter (inclusive)")
+    max_papers: int = Field(
+        default=12, ge=3, le=30, description="Maximum papers in the final report"
+    )
+    research_depth: str = Field(
+        default="standard", pattern="^(quick|standard|deep)$"
+    )
+    evidence_backend: str = Field(
+        default="abstract", pattern="^(abstract|fts|paperqa)$"
+    )
+    enable_full_text: bool = False
+    report_language: str = Field(default="zh-CN", pattern="^(zh-CN|en)$")
+
+    @model_validator(mode="after")
+    def validate_request(self):
+        value = (self.question or self.topic or "").strip()
+        if not value:
+            raise ValueError("question or topic is required")
+        self.question = value
+        if self.year_from and self.year_to and self.year_from > self.year_to:
+            raise ValueError("year_from must be less than or equal to year_to")
+        if self.evidence_backend != "abstract" and not self.enable_full_text:
+            raise ValueError(
+                "enable_full_text must be true for fts or paperqa evidence backend"
+            )
+        return self
 
 
 class ResearchResponse(BaseModel):
@@ -47,6 +77,8 @@ class TaskStatusResponse(BaseModel):
     is_completed: bool
     created_at: str
     updated_at: str
+    current_stage: Optional[str] = None
+    progress_percent: int = 0
 
 
 class PaperResponse(BaseModel):
@@ -78,6 +110,7 @@ class ReportResponse(BaseModel):
 
 # In-memory registry of active tasks (complementing DB persistence)
 _active_tasks: dict[str, asyncio.Task] = {}
+_runtime_states: dict[str, dict] = {}
 
 
 async def _run_research_background(state: TaskState) -> None:
@@ -90,6 +123,11 @@ async def _run_research_background(state: TaskState) -> None:
             "status": TaskStatus.RUNNING.value,
             "year_from": state.year_from,
             "year_to": state.year_to,
+            "max_papers": state.max_papers,
+            "research_depth": state.research_depth,
+            "evidence_backend": state.evidence_backend,
+            "enable_full_text": state.enable_full_text,
+            "report_language": state.report_language,
             "current_round": 0,
             "max_rounds": state.max_rounds,
             "queries": [],
@@ -103,8 +141,10 @@ async def _run_research_background(state: TaskState) -> None:
             "previous_round_paper_ids": [],
             "new_papers_this_round": 0,
         }
+        _runtime_states[state.task_id] = research_state
 
         final_state = await run_research(research_state)
+        _runtime_states[state.task_id] = final_state
 
         # Persist to database
         from app.db.database import async_session_factory
@@ -164,12 +204,21 @@ async def create_research(
     from app.core.config import get_settings
     settings = get_settings()
 
+    depth_rounds = {"quick": 1, "standard": 2, "deep": 3}
     state = TaskState(
-        original_question=request.question,
+        original_question=request.question or "",
         year_from=request.year_from,
         year_to=request.year_to,
+        max_papers=request.max_papers,
+        research_depth=request.research_depth,
+        evidence_backend=request.evidence_backend,
+        enable_full_text=request.enable_full_text,
+        report_language=request.report_language,
         status=TaskStatus.PENDING,
-        max_rounds=settings.MAX_SEARCH_ROUNDS,
+        max_rounds=min(
+            settings.MAX_SEARCH_ROUNDS,
+            depth_rounds[request.research_depth],
+        ),
     )
 
     # Persist initial state
@@ -198,19 +247,24 @@ async def get_task_status(
 
     warnings = json.loads(record.warnings_json or "[]")
     errors = json.loads(record.errors_json or "[]")
+    from app.workflow.graph import get_runtime_progress
+
+    runtime = get_runtime_progress(task_id) or _runtime_states.get(task_id, {})
 
     return TaskStatusResponse(
         task_id=record.task_id,
         status=record.status,
         original_question=record.original_question,
-        current_round=record.current_round,
-        papers_found=len(papers),
-        papers_selected=len(selected),
-        warnings=warnings,
-        errors=errors,
+        current_round=runtime.get("current_round", record.current_round),
+        papers_found=len(runtime.get("normalized_papers", [])) or len(papers),
+        papers_selected=len(runtime.get("selected_papers", [])) or len(selected),
+        warnings=runtime.get("warnings", warnings),
+        errors=runtime.get("errors", errors),
         is_completed=record.status in ("completed", "failed", "interrupted"),
         created_at=record.created_at,
         updated_at=record.updated_at,
+        current_stage=runtime.get("current_stage"),
+        progress_percent=runtime.get("progress_percent", 100 if record.status == "completed" else 0),
     )
 
 

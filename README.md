@@ -161,6 +161,9 @@ PORT=8000
 
 ## API
 
+启动后访问 `http://127.0.0.1:8000/` 可使用内置研究前端。前端支持任务
+提交、阶段进度、论文、Evidence、Claims 和最终报告查看。
+
 ### 创建研究任务
 
 ```http
@@ -168,11 +171,37 @@ POST /api/research
 Content-Type: application/json
 
 {
-  "question": "How does dialogue history affect reasoning reliability in large language models?",
+  "topic": "How does dialogue history affect reasoning reliability in large language models?",
   "year_from": 2020,
-  "year_to": 2026
+  "year_to": 2026,
+  "max_papers": 12,
+  "research_depth": "standard",
+  "evidence_backend": "abstract",
+  "enable_full_text": false,
+  "report_language": "zh-CN"
 }
 ```
+
+核心参数：
+
+| 参数 | 含义 | 推荐默认 |
+|---|---|---|
+| `topic` / `question` | 研究问题 | 必填 |
+| `year_from` | 起始年份 | 留空 |
+| `year_to` | 截止年份 | 当前年份 |
+| `max_papers` | 最终报告最多纳入论文数 | 12 |
+| `research_depth` | `quick` / `standard` / `deep` | standard |
+
+高级参数：
+
+| 参数 | 含义 |
+|---|---|
+| `evidence_backend` | `abstract`、`fts` 或 `paperqa` |
+| `enable_full_text` | 是否下载和解析开放访问全文 |
+| `report_language` | `zh-CN` 或 `en` |
+
+`max_papers` 是最终纳入数量，不是候选检索数量。系统会检索更大的候选池，
+经过去重、筛选和 evidence quality gate 后再限制最终论文数。
 
 返回：
 
@@ -236,7 +265,9 @@ ssh -L 18004:127.0.0.1:8004 sjtu-a800
 ## 基线与评测
 
 固定问题集位于 `evals/questions.json`。其中 `seed` 案例已经固定问题和
-覆盖点，但仍需领域专家逐步补齐 gold papers/passages。
+覆盖点。`evals/gold_annotations.json` 保存了当前 20 个问题的人工策展
+gold paper anchors、DOI 和其证据角色；它们用于 Recall@K，而不是声称
+穷尽所有相关文献。
 
 ```bash
 # 可重复的离线 Mock 基线
