@@ -169,80 +169,119 @@ async def plan_queries_node(state: dict) -> dict:
     llm = _get_llm_client()
     settings = get_settings()
 
-    system_prompt = """You are an expert academic research strategist. Given a research question, produce a search plan and a detailed search intent.
+    # Step 1: Generate SearchPlan (simpler, more reliable)
+    system_prompt = """You are an expert academic research strategist. Given a research question, create a structured search plan.
 
-The SearchPlan should include:
-1. Research topic, core concepts (3-6), synonyms for each concept
-2. Inclusion and exclusion criteria
-3. Relevant academic domains (e.g., cs.CL, cs.AI, cs.LG, cs.HC)
+Analyze the research question and produce:
+1. A refined research topic statement
+2. Core concepts (3-6), each with 2-4 synonyms
+3. 3-6 search queries optimized for academic APIs
+4. Relevant academic domains (e.g., cs.CL, cs.AI, cs.LG)
+5. Inclusion and exclusion criteria
 
-The SearchIntent is the critical part for high recall. It should include:
-- 3-5 sub-questions that decompose the main question
-- 3-5 query families, each targeting a sub-question
-- Each family has broad queries (high recall), narrow queries (precise phrases), and synonym variants
-- Use DIVERSE terminology across families. If one uses "dialogue history", another must use "conversation history", "multi-turn interaction", "chat context", etc. Gold papers may use any synonym — diversity is critical.
+IMPORTANT: Use DIVERSE terminology across queries. Don't repeat the same keywords.
+If one query uses "dialogue history", another should use "conversation history" or "multi-turn interaction".
+Gold papers may use unexpected synonyms — diversity is critical for recall.
 
-IMPORTANT: Generate >= 6 total query strings across all families. More queries = better recall.
-
-Respond with JSON: {"search_plan": {...}, "search_intent": {...}}"""
+Each query should be a concise string suitable for API search (not natural language questions)."""
 
     user_prompt = f"""Research Question: {state['original_question']}
 
 Year constraints: from {state.get('year_from') or 'any'} to {state.get('year_to') or 'any'}
 
-Generate a SearchPlan and a SearchIntent with diverse query families. Return valid JSON."""
+Generate a structured search plan with diverse terminology in JSON format."""
 
     from app.models.search_plan import SearchPlan as SP
-    from app.models.search_intent import SearchIntent as SI
-    from pydantic import BaseModel
-
-    class PlanAndIntentOutput(BaseModel):
-        search_plan: SP
-        search_intent: SI
-
-    result, usage = await llm.generate_structured(
+    sp_result, usage1 = await llm.generate_structured(
         system_prompt=system_prompt,
         user_prompt=user_prompt,
-        output_model=PlanAndIntentOutput,
+        output_model=SP,
         model=settings.model_fast,
         max_tokens=settings.LLM_FAST_MAX_TOKENS,
         enable_thinking=settings.LLM_FAST_ENABLE_THINKING,
     )
 
-    if result:
-        state["search_plan"] = result.search_plan
-        state["search_intent"] = result.search_intent
-        # Flatten all query families into diverse query strings
-        queries = result.search_intent.all_query_strings()
-        if not queries:
-            queries = result.search_plan.all_query_strings()
-        # Augment with concept query + evaluation query
-        concept_query = " ".join(result.search_plan.core_concepts[:5]).strip()
-        evaluation_query = f"{concept_query} benchmark empirical evaluation".strip()
-        for query in (concept_query, evaluation_query):
-            if query and query not in queries:
-                queries.append(query)
-        depth_limits = {"quick": 2, "standard": 6, "deep": 10}
-        query_limit = depth_limits.get(state.get("research_depth", "standard"), 6)
-        state["queries"] = queries[:query_limit]
+    search_plan = None
+    if sp_result:
+        search_plan = sp_result
+        state["search_plan"] = search_plan
     else:
-        logger.warning("Search plan generation failed, using fallback")
+        logger.warning("SearchPlan generation failed, using fallback")
         from app.models.search_plan import SearchQuery, InclusionExclusionCriteria
-        fallback = SP(
+        search_plan = SP(
             research_topic=state["original_question"],
             core_concepts=state["original_question"].split(),
             queries=[SearchQuery(query_string=state["original_question"], rationale="Fallback query", keywords=[])],
             criteria=InclusionExclusionCriteria(),
         )
-        state["search_plan"] = fallback
-        state["queries"] = fallback.all_query_strings()
-        state.setdefault("warnings", []).append("Search plan generation failed, using basic fallback query")
+        state["search_plan"] = search_plan
+        state.setdefault("warnings", []).append("Search plan generation failed, using basic fallback")
+
+    # Step 2: Generate SearchIntent from SearchPlan (richer, with query families)
+    si_system = """You are a query expansion specialist. Given a search plan, produce a SearchIntent with diverse query families.
+
+For each core concept, generate query families with:
+- broad queries: high-recall keyword combinations
+- narrow queries: precise phrases, field-specific terms
+- synonym variants: use ALL the synonyms from the search plan
+
+CRITICAL RULE: Each family MUST use different synonyms and phrasings.
+If concept A has synonyms [X, Y, Z], family 1 uses X, family 2 uses Y, family 3 uses Z.
+Maximize lexical diversity — this is essential for finding papers that use unexpected terminology.
+
+Respond with a valid SearchIntent JSON."""
+
+    core = search_plan.core_concepts if search_plan else state["original_question"].split()
+    synonyms_text = ""
+    if search_plan and search_plan.synonyms:
+        synonyms_text = "\n".join(
+            f"  {k}: {v}" for k, v in list(search_plan.synonyms.items())[:6]
+        )
+    si_user = f"""Research Question: {state['original_question']}
+Core concepts: {core}
+Synonyms:
+{synonyms_text}
+
+Generate a SearchIntent with >= 4 query families using DIVERSE terminology.
+Return a valid SearchIntent JSON object."""
+
+    from app.models.search_intent import SearchIntent as SI
+    si_result, usage2 = await llm.generate_structured(
+        system_prompt=si_system,
+        user_prompt=si_user,
+        output_model=SI,
+        model=settings.model_fast,
+        max_tokens=settings.LLM_FAST_MAX_TOKENS,
+        enable_thinking=False,  # Force off for structured output
+    )
+
+    if si_result:
+        state["search_intent"] = si_result
+        queries = si_result.all_query_strings()
+        if not queries:
+            queries = search_plan.all_query_strings()
+    else:
+        logger.warning("SearchIntent generation failed, using SearchPlan queries")
+        queries = search_plan.all_query_strings()
+        state.setdefault("warnings", []).append("SearchIntent generation failed, using SearchPlan queries only")
+
+    # Augment with concept + evaluation queries
+    concept_query = " ".join(core[:5]).strip()
+    evaluation_query = f"{concept_query} benchmark empirical evaluation".strip()
+    for query in (concept_query, evaluation_query):
+        if query and query not in queries:
+            queries.append(query)
+    depth_limits = {"quick": 2, "standard": 5, "deep": 8}
+    query_limit = depth_limits.get(state.get("research_depth", "standard"), 5)
+    state["queries"] = queries[:query_limit]
 
     mt = state.get("metrics", TaskMetrics())
-    mt.llm_call_count = (
-        getattr(mt, "llm_call_count", 0) + usage.get("call_count", 1)
+    mt.llm_call_count = getattr(mt, "llm_call_count", 0) + 2
+    mt.llm_tokens_used = (
+        getattr(mt, "llm_tokens_used", 0)
+        + usage1.get("total_tokens", 0)
+        + usage2.get("total_tokens", 0)
     )
-    mt.llm_tokens_used = getattr(mt, "llm_tokens_used", 0) + usage.get("total_tokens", 0)
     sd = getattr(mt, "stage_durations", {})
     sd["plan_queries"] = time.time() - t0
     state["metrics"] = mt
@@ -685,49 +724,73 @@ async def assess_gaps_node(state: dict) -> dict:
     logger.info(f"[{state['task_id']}] Assessing evidence gaps")
     t0 = time.time()
 
+    papers = state.get("selected_papers", [])
     evidence = state.get("evidence", [])
+    search_intent = state.get("search_intent")
+    used_queries = state.get("queries", [])
     settings = get_settings()
 
-    if not evidence:
+    if not papers:
         state["gap_analysis"] = GapAnalysis(
             needs_supplementary_search=False,
-            rationale="No evidence to analyze",
+            rationale="No papers to analyze",
         )
         return state
 
-    evidence_by_paper = {}
-    for ev in evidence:
-        if ev.paper_id in evidence_by_paper:
-            continue
-        finding = "; ".join(ev.key_findings[:2]) if ev.key_findings else "N/A"
-        evidence_by_paper[ev.paper_id] = (
-            f"Paper {ev.paper_id}: "
-            f"{(ev.relevance_to_user_question or 'N/A')[:160]}\n"
-            f"  Findings: {finding[:320]}"
-        )
-    evidence_text = "\n".join(list(evidence_by_paper.values())[:12])
+    # Build a terminology-aware view: what we searched vs what we found
+    found_titles = "\n".join(
+        f"  - {p.title}" for p in papers[:15]
+    )
+    used_queries_text = "\n".join(
+        f"  - {q}" for q in used_queries[:8]
+    )
+
+    # Extract key terms from found papers to help LLM spot vocabulary gaps
+    from collections import Counter
+    import re
+    all_titles = " ".join(p.title.lower() for p in papers)
+    title_words = re.findall(r"[a-z]{4,}", all_titles)
+    top_terms = Counter(title_words).most_common(30)
+    found_terms = ", ".join(w for w, _ in top_terms[:30])
 
     llm = _get_llm_client()
 
-    system_prompt = """You are a research gap analyst. Identify gaps and decide if supplementary search is needed.
+    system_prompt = """You are a research gap analyst with a focus on TERMINOLOGY DIVERSITY.
 
-Consider:
-1. Which aspects of the research question are adequately covered?
-2. Which aspects lack evidence?
-3. Are there important sub-questions unaddressed?
+Your job: look at the papers we FOUND and identify terminology that was MISSING from our search queries.
 
-IMPORTANT: Do NOT recommend supplementary search if max rounds have been reached.
+CRITICAL: The same concept can be expressed with very different words:
+- "dialogue history" = "conversation history" = "multi-turn interaction" = "chat context"
+- "reasoning reliability" = "logical consistency" = "inference quality" = "reasoning faithfulness"
+- "degradation" = "decay" = "decline" = "deterioration" = "gets lost"
 
-Respond with a JSON GapAnalysis object."""
+If the found papers all use similar terminology (e.g., all mention "memory systems" but none mention "consistency"), generate supplementary queries that use the MISSING terms.
+
+For each gap you identify:
+1. What terminology did the current queries use?
+2. What terminology appears in related literature but is absent from our results?
+3. Generate 2-4 supplementary queries using the MISSING vocabulary.
+
+Respond with a JSON GapAnalysis object. Make supplementary_queries use terms NOT already in the used queries."""
 
     user_prompt = f"""Research Question: {state['original_question']}
 Supplementary rounds done: {state.get('supplementary_rounds_done', 0)}
 Max supplementary rounds: {settings.MAX_SEARCH_ROUNDS - 1}
 
-Current Evidence:
-{evidence_text}
+=== Queries we already used ===
+{used_queries_text}
 
-Return a GapAnalysis JSON object."""
+=== Top terms in found papers ===
+{found_terms}
+
+=== Papers we found (titles only) ===
+{found_titles}
+
+=== Task ===
+1. What terminology is OVERUSED in the queries (all papers sound similar)?
+2. What terminology is MISSING (related concepts not captured)?
+3. Generate supplementary queries using DIFFERENT vocabulary.
+4. Return a GapAnalysis JSON object."""
 
     result, usage = await llm.generate_structured(
         system_prompt=system_prompt,
