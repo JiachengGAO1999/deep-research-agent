@@ -70,6 +70,7 @@ class ReportResponse(BaseModel):
     task_id: str
     report: str
     citation_validation: Optional[dict]
+    evidence_quality: Optional[dict]
     references: list[dict]
 
 
@@ -115,6 +116,10 @@ async def _run_research_background(state: TaskState) -> None:
             state.errors = final_state.get("errors", [])
             state.metrics = final_state.get("metrics", TaskMetrics())
             state.citation_validation = final_state.get("citation_validation")
+            state.retrieved_passages = final_state.get("retrieved_passages", [])
+            state.claims = final_state.get("claims", [])
+            state.evidence_quality = final_state.get("evidence_quality")
+            state.report_paper_ids = final_state.get("report_paper_ids", [])
 
             await TaskRepository.save_state(session, state)
 
@@ -227,6 +232,13 @@ async def get_report(
 
     # Get selected papers for reference list
     papers = await PaperRepository.get_by_task(session, task_id, selected_only=True)
+    report_paper_ids = json.loads(record.report_paper_ids_json or "[]")
+    if report_paper_ids:
+        positions = {paper_id: index for index, paper_id in enumerate(report_paper_ids)}
+        papers = sorted(
+            (paper for paper in papers if paper.internal_id in positions),
+            key=lambda paper: positions[paper.internal_id],
+        )
     references = []
     for p in papers:
         ref = {
@@ -241,11 +253,13 @@ async def get_report(
         references.append(ref)
 
     citation_validation = json.loads(record.citation_validation_json or "null")
+    evidence_quality = json.loads(record.evidence_quality_json or "null")
 
     return ReportResponse(
         task_id=record.task_id,
         report=record.report or "No report generated",
         citation_validation=citation_validation,
+        evidence_quality=evidence_quality,
         references=references,
     )
 
@@ -301,6 +315,9 @@ async def get_evidence(
     for ev in evidence_records:
         result.append({
             "paper_id": ev.paper_id,
+            "evidence_id": ev.evidence_id,
+            "passage_id": ev.passage_id,
+            "sub_question_id": ev.sub_question_id,
             "research_question": ev.research_question,
             "method": ev.method,
             "dataset_or_participants": ev.dataset_or_participants,
@@ -308,9 +325,39 @@ async def get_evidence(
             "limitations": json.loads(ev.limitations_json or "[]"),
             "relevance_to_user_question": ev.relevance_to_user_question,
             "evidence_quote": ev.evidence_quote,
+            "chunk_id": ev.chunk_id,
+            "section_title": ev.section_title,
+            "page_start": ev.page_start,
+            "page_end": ev.page_end,
+            "source_url": ev.source_url,
+            "evidence_level": ev.evidence_level,
+            "stance": ev.stance,
+            "evidence_type": ev.evidence_type,
+            "verification_status": ev.verification_status,
+            "verification_reason": ev.verification_reason,
+            "confidence": ev.confidence,
         })
 
     return {"task_id": task_id, "count": len(result), "evidence": result}
+
+
+@router.get("/api/research/{task_id}/claims")
+async def get_claims(
+    task_id: str,
+    session: AsyncSession = Depends(get_session),
+):
+    """Get the claim-evidence layer used to compose the report."""
+    record = await TaskRepository.get(session, task_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Task not found")
+    claims = json.loads(record.claims_json or "[]")
+    quality = json.loads(record.evidence_quality_json or "null")
+    return {
+        "task_id": task_id,
+        "count": len(claims),
+        "claims": claims,
+        "evidence_quality": quality,
+    }
 
 
 @router.get("/api/research")

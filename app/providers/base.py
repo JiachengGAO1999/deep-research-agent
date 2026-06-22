@@ -19,6 +19,8 @@ class BaseProvider(ABC):
     """Abstract base for academic data source providers."""
 
     name: str = "base"
+    # Set by each search() call: total hits in the API for this query
+    last_total_hits: int = 0
 
     def __init__(self, settings=None):
         self._settings = settings or get_settings()

@@ -259,6 +259,11 @@ class MockLLMClient:
                 from app.models.evidence import GapAnalysis
                 return GapAnalysis.model_validate(MOCK_GAP_ANALYSIS_JSON), usage
 
+            elif "rankings" in output_model.model_json_schema().get("properties", {}):
+                return output_model.model_validate(
+                    {"rankings": MOCK_RANKING_RESULTS}
+                ), usage
+
             else:
                 # Try to construct a minimal valid instance
                 schema = output_model.model_json_schema()

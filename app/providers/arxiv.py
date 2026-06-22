@@ -9,6 +9,7 @@ from urllib.parse import urlencode
 
 from app.models.paper import Paper, PaperSource, AuthorInfo
 from app.providers.base import BaseProvider
+from app.providers.query_compiler import compile_query
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ class ArxivProvider(BaseProvider):
         self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None
     ) -> list[Paper]:
         """Search arXiv for papers."""
+        query = compile_query(self.name, query)
         # Build arXiv query (AND between terms)
         search_terms = " AND ".join(f'all:"{t}"' for t in query.split() if t)
         if not search_terms:
@@ -59,30 +61,48 @@ class ArxivProvider(BaseProvider):
             response = await self._request_with_retry(
                 f"{self._base_url}/query", params=params
             )
-            papers = self._parse_atom(response.text)
-            logger.info(f"{self.name}: found {len(papers)} results for query '{query[:60]}...'")
+            papers, total_hits = self._parse_atom(response.text)
+            self.last_total_hits = total_hits
+            logger.info(
+                f"{self.name}: returned {len(papers)} papers "
+                f"(total available: {total_hits}) for query '{query[:60]}...'"
+            )
             return papers
         except Exception as e:
             logger.error(f"{self.name}: search failed: {e}")
             return []
 
-    def _parse_atom(self, xml_text: str) -> list[Paper]:
-        """Parse arXiv Atom XML response."""
+    def _parse_atom(self, xml_text: str) -> tuple:
+        """Parse arXiv Atom XML response. Returns (papers, total_hits)."""
         papers = []
+        total_hits = 0
         try:
             root = ET.fromstring(xml_text)
         except ET.ParseError as e:
             logger.error(f"{self.name}: XML parse error: {e}")
-            return []
+            return [], 0
 
-        for entry in root.findall("atom:entry", ARXIV_NS):
+        # Extract total results from opensearch namespace
+        ns = {
+            "atom": "http://www.w3.org/2005/Atom",
+            "arxiv": "http://arxiv.org/schemas/atom",
+            "opensearch": "http://a9.com/-/spec/opensearch/1.1/",
+        }
+        total_el = root.find("opensearch:totalResults", ns)
+        if total_el is not None and total_el.text:
+            try:
+                total_hits = int(total_el.text)
+            except ValueError:
+                pass
+
+        for entry in root.findall("atom:entry", ns):
             try:
                 paper = self._normalize_entry(entry)
                 papers.append(paper)
             except Exception as e:
                 logger.warning(f"{self.name}: failed to normalize entry: {e}")
 
-        return papers
+        return papers, total_hits
 
     def _normalize_entry(self, entry: ET.Element) -> Paper:
         """Convert arXiv Atom entry to normalized Paper."""

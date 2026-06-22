@@ -2,6 +2,9 @@
 
 面向科研人员的学术文献检索与研究报告生成智能体 MVP。
 
+项目方向、质量门和开发优先级以 [GUIDE.md](GUIDE.md) 为准。本 README
+主要说明安装、配置和运行方式。
+
 给定一个研究问题，系统自动完成：问题分析 → 检索式生成 → 多源检索 → 去重 → 相关性筛选 → 证据提取 → 缺口分析 → 补充检索 → 中文报告生成 → 引用校验。
 
 ## 架构说明
@@ -59,14 +62,18 @@ normalize_and_deduplicate  ← DOI/标题/Provider ID 三级去重
 rank_and_select   ← 确定性预筛选 + LLM 结构化相关性判断
     │
     ▼
-extract_evidence  ← 从标题/摘要提取结构化证据（禁止编造）
+Evidence Engine   ← abstract / FTS5 / PaperQA2 可替换后端
+    │
+    ▼
+extract_evidence  ← passage 级证据与 exact quote 验证
     │
     ▼
 assess_gaps       ← 评估证据缺口，决定是否补充检索
     │
     ├── 需要补充 → supplementary_search → rank_and_select (循环)
     │
-    └── 不需要 → synthesize_report → validate_citations → finalize
+    └── 不需要 → build_claims → synthesize_report
+                             → validate_citations → finalize
 ```
 
 **停止条件**（防止无限循环）：
@@ -84,6 +91,18 @@ python3.11 -m venv .venv
 source .venv/bin/activate
 pip install fastapi uvicorn langgraph pydantic httpx aiosqlite sqlalchemy python-dotenv pytest pytest-asyncio
 cp .env.example .env
+```
+
+推荐直接安装项目依赖：
+
+```bash
+pip install -e ".[dev]"
+
+# 可选：本地 PDF 解析
+pip install -e ".[fulltext]"
+
+# 可选：PaperQA2 Evidence Engine
+pip install -e ".[paperqa]"
 ```
 
 ### 2. 选择 LLM 后端
@@ -131,6 +150,11 @@ DATABASE_URL=sqlite+aiosqlite:///./storage/app.db
 MAX_SEARCH_ROUNDS=3
 MAX_PAPERS_PER_SOURCE=20
 MAX_SELECTED_PAPERS=20
+
+# Evidence backend: abstract | fts | paperqa
+EVIDENCE_BACKEND=abstract
+ENABLE_FULL_TEXT=false
+PDF_PARSER_BACKEND=pymupdf
 HOST=0.0.0.0
 PORT=8000
 ```
@@ -186,6 +210,7 @@ GET /api/research/{task_id}/papers?selected_only=true
 
 ```http
 GET /api/research/{task_id}/evidence
+GET /api/research/{task_id}/claims
 ```
 
 ### 健康检查
@@ -206,6 +231,29 @@ ssh -L 18004:127.0.0.1:8004 sjtu-a800
 
 # 全部测试
 .venv/bin/python -m pytest tests/ -v
+```
+
+## 基线与评测
+
+固定问题集位于 `evals/questions.json`。其中 `seed` 案例已经固定问题和
+覆盖点，但仍需领域专家逐步补齐 gold papers/passages。
+
+```bash
+# 可重复的离线 Mock 基线
+.venv/bin/python -m app.evaluation.baseline \
+  --mock \
+  --backend abstract \
+  --output evals/baselines/latest.json
+
+# 评分
+.venv/bin/python -m app.evaluation.runner \
+  --artifact evals/baselines/latest.json
+
+# PaperQA2 对比（需安装可选依赖并允许全文下载）
+.venv/bin/python -m app.evaluation.baseline \
+  --backend paperqa \
+  --full-text \
+  --output evals/baselines/paperqa.json
 ```
 
 测试覆盖：
@@ -271,8 +319,10 @@ deep-research-agent/
 2. **Reasoning 开销**：STRONG 模式下约 50% token 用于内部推理，延迟和成本较高
 3. **后台任务**：服务重启后任务标记为 interrupted，不自动恢复
 4. **单数据源模式**：当前仅用 vLLM 单端点，FAST/STRONG 共享同一模型
-5. **无向量检索**：排序依赖关键词 + LLM 判断
-6. **无 PDF 全文**：仅基于标题和摘要提取证据
+5. **默认摘要模式**：稳定基线默认使用 `abstract` Evidence Engine
+6. **全文后端仍需真实评测**：FTS5 是实验 adapter；PaperQA2 是可选 adapter
+7. **Citation correctness 尚不完整**：目前已具备 quote verification 和
+   Claim-Evidence 约束，但还没有完整的逐句 entailment verifier
 
 ## 下一步扩展
 

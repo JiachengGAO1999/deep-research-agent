@@ -82,6 +82,10 @@ class TaskRepository:
             "queries_json": _json_dump(state.queries),
             "gap_analysis_json": _json_dump(state.gap_analysis),
             "evidence_json": _json_dump(state.evidence),
+            "retrieved_passages_json": _json_dump(state.retrieved_passages),
+            "claims_json": _json_dump(state.claims),
+            "evidence_quality_json": _json_dump(state.evidence_quality),
+            "report_paper_ids_json": _json_dump(state.report_paper_ids),
             "warnings_json": _json_dump(state.warnings),
             "errors_json": _json_dump(state.errors),
             "metrics_json": _json_dump(state.metrics),
@@ -208,6 +212,9 @@ class EvidenceRepository:
             record = EvidenceRecord(
                 task_id=task_id,
                 paper_id=ev.paper_id,
+                evidence_id=ev.evidence_id,
+                passage_id=ev.passage_id,
+                sub_question_id=ev.sub_question_id,
                 research_question=ev.research_question,
                 method=ev.method,
                 dataset_or_participants=ev.dataset_or_participants,
@@ -215,6 +222,17 @@ class EvidenceRepository:
                 limitations_json=_json_dump(ev.limitations),
                 relevance_to_user_question=ev.relevance_to_user_question,
                 evidence_quote=ev.evidence_quote,
+                chunk_id=ev.chunk_id,
+                section_title=ev.section_title,
+                page_start=ev.page_start,
+                page_end=ev.page_end,
+                source_url=ev.source_url,
+                evidence_level=ev.evidence_level,
+                stance=ev.stance.value,
+                evidence_type=ev.evidence_type.value,
+                verification_status=ev.verification_status.value,
+                verification_reason=ev.verification_reason,
+                confidence=ev.confidence,
             )
             records.append(record)
         session.add_all(records)

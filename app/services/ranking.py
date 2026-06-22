@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Default max papers after selection
 DEFAULT_MAX_SELECTED = 20
+LLM_RANK_BATCH_SIZE = 8
 
 
 def deterministic_prefilter(
@@ -132,6 +133,35 @@ async def llm_rank_papers(
     if not papers:
         return [], {}
 
+    if len(papers) > LLM_RANK_BATCH_SIZE:
+        all_selected: list[Paper] = []
+        total_usage: dict[str, int] = {}
+        for start in range(0, len(papers), LLM_RANK_BATCH_SIZE):
+            batch = papers[start : start + LLM_RANK_BATCH_SIZE]
+            batch_selected, usage = await llm_rank_papers(
+                batch,
+                research_question,
+                search_plan,
+                max_selected=len(batch),
+                llm_client=llm_client,
+                model=model,
+                max_tokens=max_tokens,
+                enable_thinking=enable_thinking,
+            )
+            all_selected.extend(batch_selected)
+            for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
+                total_usage[key] = total_usage.get(key, 0) + int(
+                    usage.get(key, 0) or 0
+                )
+            total_usage["call_count"] = total_usage.get("call_count", 0) + int(
+                usage.get("call_count", 1)
+            )
+        all_selected.sort(
+            key=lambda paper: paper.relevance_score or 0,
+            reverse=True,
+        )
+        return all_selected[:max_selected], total_usage
+
     # Build a concise paper list for the LLM
     paper_summaries = []
     for i, paper in enumerate(papers):
@@ -232,9 +262,11 @@ Evaluate each paper and return the JSON with rankings."""
             logger.info(
                 f"LLM ranking: {len(papers)} evaluated, {len(selected)} selected"
             )
+            usage["call_count"] = usage.get("call_count", 1)
             return selected, usage
         else:
             logger.warning("LLM ranking returned no valid results, using pre-filter")
+            usage["call_count"] = usage.get("call_count", 1)
             return _fallback_selection(papers, max_selected), usage
 
     except Exception as e:

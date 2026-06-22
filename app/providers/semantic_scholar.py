@@ -7,6 +7,7 @@ from typing import Optional
 
 from app.models.paper import Paper, PaperSource, AuthorInfo
 from app.providers.base import BaseProvider
+from app.providers.query_compiler import compile_query
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,7 @@ class SemanticScholarProvider(BaseProvider):
         self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None
     ) -> list[Paper]:
         """Search Semantic Scholar papers."""
+        query = compile_query(self.name, query)
         params: dict = {
             "query": query,
             "limit": min(self._max_results, 50),
@@ -80,7 +82,12 @@ class SemanticScholarProvider(BaseProvider):
                     papers.append(paper)
                 except Exception as e:
                     logger.warning(f"{self.name}: failed to normalize paper: {e}")
-            logger.info(f"{self.name}: found {len(papers)} results for query '{query[:60]}...'")
+            # S2 search endpoint does not return total count
+            self.last_total_hits = 0
+            logger.info(
+                f"{self.name}: returned {len(papers)} papers "
+                f"(total available: N/A) for query '{query[:60]}...'"
+            )
             return papers
         except Exception as e:
             logger.error(f"{self.name}: search failed: {e}")

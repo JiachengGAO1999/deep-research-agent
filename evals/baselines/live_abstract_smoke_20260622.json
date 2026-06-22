@@ -1,0 +1,1090 @@
+{
+  "dataset": "evals/questions.json",
+  "mock": false,
+  "evidence_backend": "abstract",
+  "results": [
+    {
+      "case_id": "cs_llm_multiturn",
+      "question": "How does dialogue history affect reasoning reliability in large language models?",
+      "status": "completed",
+      "selected_papers": [
+        {
+          "internal_id": "33d47ca8a3ed",
+          "title": "D-SMART: Enhancing LLM Dialogue Consistency via Dynamic Structured Memory And Reasoning Tree",
+          "doi": "10.48550/arXiv.2510.13363"
+        },
+        {
+          "internal_id": "277671839412",
+          "title": "Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory",
+          "doi": null
+        },
+        {
+          "internal_id": "93d788757a93",
+          "title": "Feedback Indices to Evaluate LLM Responses to Rebuttals for Multiple Choice Type Questions",
+          "doi": "10.48550/arXiv.2601.03285"
+        },
+        {
+          "internal_id": "cf2ae951bbe0",
+          "title": "Empathy by Design: Aligning Large Language Models for Healthcare Dialogue",
+          "doi": "10.1109/BigData66926.2025.11402624"
+        },
+        {
+          "internal_id": "b5a8b11147fa",
+          "title": "Evaluating Long-Term Memory for Long-Context Question Answering",
+          "doi": "10.48550/arXiv.2510.23730"
+        },
+        {
+          "internal_id": "6c9f4fc61e0e",
+          "title": "Large language models improve clinical decision making of medical students through patient simulation and structured feedback: a randomized controlled trial",
+          "doi": "10.1186/s12909-024-06399-7"
+        },
+        {
+          "internal_id": "189297a22a34",
+          "title": "Towards Conversational Diagnostic AI",
+          "doi": "10.48550/arxiv.2401.05654"
+        },
+        {
+          "internal_id": "51368d0ed2fd",
+          "title": "AuroraMem: Towards Eternal Memory in Conversational AI",
+          "doi": "10.1109/RIVF68649.2025.11365063"
+        },
+        {
+          "internal_id": "cf9d433965ae",
+          "title": "Evaluating large language models in analysing classroom dialogue",
+          "doi": "10.1038/s41539-024-00273-3"
+        },
+        {
+          "internal_id": "35618094212f",
+          "title": "Patient Cognitive Bias in Large Language Model–Supported Health Consultations: Simulation-Based Comparative Study",
+          "doi": "10.2196/85770"
+        },
+        {
+          "internal_id": "bee743179f02",
+          "title": "Memory-Efficient Multi-Agent Debate with Compressed Contexts for Long-Form Reasoning",
+          "doi": "10.66525/ijictt85"
+        },
+        {
+          "internal_id": "22e85d5eb062",
+          "title": "ОЦЕНКА УЯЗВИМОСТИ LLM ДЛЯ МАНИПУЛЯЦИИ",
+          "doi": "10.21681/2311-3456-2026-2-81-90"
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_id": "8ba2ce3884a444e1",
+          "paper_id": "93d788757a93",
+          "passage_id": "abstract:93d788757a93",
+          "sub_question_id": "sq1",
+          "research_question": "How does dialogue history affect reasoning reliability in large language models?",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "We present a systematic framework of indices designed to characterize Large Language Model (LLM) responses when challenged with rebuttals during a chat. Assessing how LLMs respond to user dissent is crucial for understanding their reliability and behavior patterns, yet the complexity of human-LLM interactions makes systematic evaluation challenging. Our approach employs a fictitious-response rebuttal method that quantifies LLM behavior when presented with multiple-choice questions followed by deliberate challenges to their fictitious previous response. The indices are specifically designed to detect and measure what could be characterized as sycophantic behavior (excessive agreement with user challenges) or stubborn responses (rigid adherence to the fictitious response in the chat history)"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "We present a systematic framework of indices designed to characterize Large Language Model (LLM) responses when challenged with rebuttals during a chat. Assessing how LLMs respond to user dissent is crucial for understanding their reliability and behavior patterns, yet the complexity of human-LLM interactions makes systematic evaluation challenging. Our approach employs a fictitious-response rebuttal method that quantifies LLM behavior when presented with multiple-choice questions followed by deliberate challenges to their fictitious previous response. The indices are specifically designed to detect and measure what could be characterized as sycophantic behavior (excessive agreement with user challenges) or stubborn responses (rigid adherence to the fictitious response in the chat history)",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/b6c410ea8c05d5290b5a27efe42928eb7893b586",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "997b506965444889",
+          "paper_id": "22e85d5eb062",
+          "passage_id": "abstract:22e85d5eb062",
+          "sub_question_id": "sq1",
+          "research_question": "How does dialogue history affect reasoning reliability in large language models?",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Purpose of the Study: this study investigates the robustness of contemporary large language models when employed\nas decision engines for security-critical authorization requests involving account and permission modification operations\nassociated with the MITRE ATT&CK T1098 technique. The primary objective is to evaluate the stability and reliability of binary\nallow/deny authorization decisions under systematically designed prompt perturbations.\nMethods of Research: an experimental ethical authorization assistant was developed to query several open large\nlanguage models using a curated collection of security-sensitive account-manipulation scenarios. A controlled perturbation\nframework introduces temporal, structural, contextual, and cognitive-load variations into prompts while preserving\nth"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Purpose of the Study: this study investigates the robustness of contemporary large language models when employed\nas decision engines for security-critical authorization requests involving account and permission modification operations\nassociated with the MITRE ATT&CK T1098 technique. The primary objective is to evaluate the stability and reliability of binary\nallow/deny authorization decisions under systematically designed prompt perturbations.\nMethods of Research: an experimental ethical authorization assistant was developed to query several open large\nlanguage models using a curated collection of security-sensitive account-manipulation scenarios. A controlled perturbation\nframework introduces temporal, structural, contextual, and cognitive-load variations into prompts while preserving\nth",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/b30a10bc081ceab566cd830348619ef4be3fd2f8",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "805f84226fb24ac5",
+          "paper_id": "33d47ca8a3ed",
+          "passage_id": "abstract:33d47ca8a3ed",
+          "sub_question_id": "sq1",
+          "research_question": "How does dialogue history affect reasoning reliability in large language models?",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Large Language Models (LLMs) often exhibit factual inconsistencies and logical decay in extended, multi-turn dialogues, a challenge stemming from their reliance on static, pre-trained knowledge and an inability to reason adaptively over the dialogue history. Prevailing mitigation strategies, such as Retrieval-Augmented Generation (RAG) and agentic working memories, improve information recall but still engage with fundamentally static knowledge sources and follow pre-defined single reasoning path. This hinders their ability to preserve factual and logical consistency of their responses in multi-turn dialogues while the context evolves over time. To address this issue, we propose D-SMART, a model-agnostic framework designed to maintain multi-turn dialogue consistency by enabling LLMs to buil"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Large Language Models (LLMs) often exhibit factual inconsistencies and logical decay in extended, multi-turn dialogues, a challenge stemming from their reliance on static, pre-trained knowledge and an inability to reason adaptively over the dialogue history. Prevailing mitigation strategies, such as Retrieval-Augmented Generation (RAG) and agentic working memories, improve information recall but still engage with fundamentally static knowledge sources and follow pre-defined single reasoning path. This hinders their ability to preserve factual and logical consistency of their responses in multi-turn dialogues while the context evolves over time. To address this issue, we propose D-SMART, a model-agnostic framework designed to maintain multi-turn dialogue consistency by enabling LLMs to buil",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/3c508d7abbd7a45755f0a86b0e5ee2ad36a62dce",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "2a8915b2c5af4d96",
+          "paper_id": "277671839412",
+          "passage_id": "abstract:277671839412",
+          "sub_question_id": "sq1",
+          "research_question": "How does dialogue history affect reasoning reliability in large language models?",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Large Language Models (LLMs) have demonstrated remarkable prowess in generating contextually coherent responses, yet their fixed context windows pose fundamental challenges for maintaining consistency over prolonged multi-session dialogues. We introduce Mem0, a scalable memory-centric architecture that addresses this issue by dynamically extracting, consolidating, and retrieving salient information from ongoing conversations. Building on this foundation, we further propose an enhanced variant that leverages graph-based memory representations to capture complex relational structures among conversational elements. Through comprehensive evaluations on LOCOMO benchmark, we systematically compare our approaches against six baseline categories: (i) established memory-augmented systems, (ii) retr"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Large Language Models (LLMs) have demonstrated remarkable prowess in generating contextually coherent responses, yet their fixed context windows pose fundamental challenges for maintaining consistency over prolonged multi-session dialogues. We introduce Mem0, a scalable memory-centric architecture that addresses this issue by dynamically extracting, consolidating, and retrieving salient information from ongoing conversations. Building on this foundation, we further propose an enhanced variant that leverages graph-based memory representations to capture complex relational structures among conversational elements. Through comprehensive evaluations on LOCOMO benchmark, we systematically compare our approaches against six baseline categories: (i) established memory-augmented systems, (ii) retr",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://arxiv.org/abs/2504.19413v1",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "0abdc1494db34dc5",
+          "paper_id": "cf2ae951bbe0",
+          "passage_id": "abstract:cf2ae951bbe0",
+          "sub_question_id": "sq1",
+          "research_question": "How does dialogue history affect reasoning reliability in large language models?",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "General-purpose large language models (LLMs) have demonstrated remarkable generative and reasoning capabilities but remain limited in healthcare and caregiving applications due to two key deficiencies: factual unreliability and a lack of empathetic communication. These shortcomings pose significant risks in sensitive contexts where users, particularly nonprofessionals and caregivers, seek medically relevant guidance or emotional reassurance. To address these challenges, we introduce a Direct Preference Optimization (DPO)-based alignment framework designed to improve factual correctness, semantic coherence, and human-centric qualities such as empathy, politeness, and simplicity in caregiver-patient dialogues. Our approach finetunes domain-adapted Large Language Models (LLMs) using pairwise "
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "General-purpose large language models (LLMs) have demonstrated remarkable generative and reasoning capabilities but remain limited in healthcare and caregiving applications due to two key deficiencies: factual unreliability and a lack of empathetic communication. These shortcomings pose significant risks in sensitive contexts where users, particularly nonprofessionals and caregivers, seek medically relevant guidance or emotional reassurance. To address these challenges, we introduce a Direct Preference Optimization (DPO)-based alignment framework designed to improve factual correctness, semantic coherence, and human-centric qualities such as empathy, politeness, and simplicity in caregiver-patient dialogues. Our approach finetunes domain-adapted Large Language Models (LLMs) using pairwise ",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/c3b46e8eb8e624b91715c85de9fb99eb99f3c46f",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "72cec208b7e5414d",
+          "paper_id": "189297a22a34",
+          "passage_id": "abstract:189297a22a34",
+          "sub_question_id": "sq1",
+          "research_question": "How does dialogue history affect reasoning reliability in large language models?",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "At the heart of medicine lies the physician-patient dialogue, where skillful history-taking paves the way for accurate diagnosis, effective management, and enduring trust. Artificial Intelligence (AI) systems capable of diagnostic dialogue could increase accessibility, consistency, and quality of care. However, approximating clinicians' expertise is an outstanding grand challenge. Here, we introduce AMIE (Articulate Medical Intelligence Explorer), a Large Language Model (LLM) based AI system optimized for diagnostic dialogue. AMIE uses a novel self-play based simulated environment with automated feedback mechanisms for scaling learning across diverse disease conditions, specialties, and contexts. We designed a framework for evaluating clinically-meaningful axes of performance including his"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "At the heart of medicine lies the physician-patient dialogue, where skillful history-taking paves the way for accurate diagnosis, effective management, and enduring trust. Artificial Intelligence (AI) systems capable of diagnostic dialogue could increase accessibility, consistency, and quality of care. However, approximating clinicians' expertise is an outstanding grand challenge. Here, we introduce AMIE (Articulate Medical Intelligence Explorer), a Large Language Model (LLM) based AI system optimized for diagnostic dialogue. AMIE uses a novel self-play based simulated environment with automated feedback mechanisms for scaling learning across diverse disease conditions, specialties, and contexts. We designed a framework for evaluating clinically-meaningful axes of performance including his",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://arxiv.org/pdf/2401.05654",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "9711a32df6cc4148",
+          "paper_id": "35618094212f",
+          "passage_id": "abstract:35618094212f",
+          "sub_question_id": "sq1",
+          "research_question": "How does dialogue history affect reasoning reliability in large language models?",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Abstract Background Large language models (LLMs) are increasingly used by patients for health information and preliminary medical advice. In patient-facing consultations, users may present explicitly stated diagnostic preferences or symptom narratives emphasizing a preferred explanation. Such cognitively biased input constrains the diagnostic context available to the model and may systematically steer its reasoning during interactive LLM-supported health consultations. Objective This study aimed to quantify the impact of patient cognitive bias on LLM diagnostic performance in multiturn consultations, assess the effectiveness of prompt-based mitigation strategies and decoding temperature adjustment, and evaluate a dual-system framework for improving robustness under biased interaction. Meth"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Abstract Background Large language models (LLMs) are increasingly used by patients for health information and preliminary medical advice. In patient-facing consultations, users may present explicitly stated diagnostic preferences or symptom narratives emphasizing a preferred explanation. Such cognitively biased input constrains the diagnostic context available to the model and may systematically steer its reasoning during interactive LLM-supported health consultations. Objective This study aimed to quantify the impact of patient cognitive bias on LLM diagnostic performance in multiturn consultations, assess the effectiveness of prompt-based mitigation strategies and decoding temperature adjustment, and evaluate a dual-system framework for improving robustness under biased interaction. Meth",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/6d0e3b8a4daefba21a43c8494c32959ecc06408c",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "9c62b56e4c534d43",
+          "paper_id": "bee743179f02",
+          "passage_id": "abstract:bee743179f02",
+          "sub_question_id": "sq1",
+          "research_question": "How does dialogue history affect reasoning reliability in large language models?",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Abstract\nThe advent of large language models has significantly advanced the capabilities of artificial intelligence systems in complex problem-solving scenarios. However, deploying these models in multi-agent debate frameworks for long-form reasoning presents substantial challenges regarding memory utilization and computational efficiency. As multiple agents interact, exchange arguments, and iteratively refine their positions, the context window rapidly expands, leading to severe memory bottlenecks and degraded reasoning coherence. This paper proposes a novel framework centered on memory-efficient multi-agent debate utilizing compressed contexts. By introducing a semantic compression mechanism that distills agent arguments into high-density representations, the proposed system minimizes to"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Abstract\nThe advent of large language models has significantly advanced the capabilities of artificial intelligence systems in complex problem-solving scenarios. However, deploying these models in multi-agent debate frameworks for long-form reasoning presents substantial challenges regarding memory utilization and computational efficiency. As multiple agents interact, exchange arguments, and iteratively refine their positions, the context window rapidly expands, leading to severe memory bottlenecks and degraded reasoning coherence. This paper proposes a novel framework centered on memory-efficient multi-agent debate utilizing compressed contexts. By introducing a semantic compression mechanism that distills agent arguments into high-density representations, the proposed system minimizes to",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/831d19bebf55b91b8791af5b6f0134b91e23e0f1",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "da572334aa7a493d",
+          "paper_id": "277671839412",
+          "passage_id": "abstract:277671839412",
+          "sub_question_id": "sq2",
+          "research_question": "This query directly addresses the research question by combining the core concepts.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Large Language Models (LLMs) have demonstrated remarkable prowess in generating contextually coherent responses, yet their fixed context windows pose fundamental challenges for maintaining consistency over prolonged multi-session dialogues. We introduce Mem0, a scalable memory-centric architecture that addresses this issue by dynamically extracting, consolidating, and retrieving salient information from ongoing conversations. Building on this foundation, we further propose an enhanced variant that leverages graph-based memory representations to capture complex relational structures among conversational elements. Through comprehensive evaluations on LOCOMO benchmark, we systematically compare our approaches against six baseline categories: (i) established memory-augmented systems, (ii) retr"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Large Language Models (LLMs) have demonstrated remarkable prowess in generating contextually coherent responses, yet their fixed context windows pose fundamental challenges for maintaining consistency over prolonged multi-session dialogues. We introduce Mem0, a scalable memory-centric architecture that addresses this issue by dynamically extracting, consolidating, and retrieving salient information from ongoing conversations. Building on this foundation, we further propose an enhanced variant that leverages graph-based memory representations to capture complex relational structures among conversational elements. Through comprehensive evaluations on LOCOMO benchmark, we systematically compare our approaches against six baseline categories: (i) established memory-augmented systems, (ii) retr",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://arxiv.org/abs/2504.19413v1",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "cd14364fad214690",
+          "paper_id": "22e85d5eb062",
+          "passage_id": "abstract:22e85d5eb062",
+          "sub_question_id": "sq2",
+          "research_question": "This query directly addresses the research question by combining the core concepts.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Purpose of the Study: this study investigates the robustness of contemporary large language models when employed\nas decision engines for security-critical authorization requests involving account and permission modification operations\nassociated with the MITRE ATT&CK T1098 technique. The primary objective is to evaluate the stability and reliability of binary\nallow/deny authorization decisions under systematically designed prompt perturbations.\nMethods of Research: an experimental ethical authorization assistant was developed to query several open large\nlanguage models using a curated collection of security-sensitive account-manipulation scenarios. A controlled perturbation\nframework introduces temporal, structural, contextual, and cognitive-load variations into prompts while preserving\nth"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Purpose of the Study: this study investigates the robustness of contemporary large language models when employed\nas decision engines for security-critical authorization requests involving account and permission modification operations\nassociated with the MITRE ATT&CK T1098 technique. The primary objective is to evaluate the stability and reliability of binary\nallow/deny authorization decisions under systematically designed prompt perturbations.\nMethods of Research: an experimental ethical authorization assistant was developed to query several open large\nlanguage models using a curated collection of security-sensitive account-manipulation scenarios. A controlled perturbation\nframework introduces temporal, structural, contextual, and cognitive-load variations into prompts while preserving\nth",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/b30a10bc081ceab566cd830348619ef4be3fd2f8",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "81c77341cc7645fe",
+          "paper_id": "33d47ca8a3ed",
+          "passage_id": "abstract:33d47ca8a3ed",
+          "sub_question_id": "sq2",
+          "research_question": "This query directly addresses the research question by combining the core concepts.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Large Language Models (LLMs) often exhibit factual inconsistencies and logical decay in extended, multi-turn dialogues, a challenge stemming from their reliance on static, pre-trained knowledge and an inability to reason adaptively over the dialogue history. Prevailing mitigation strategies, such as Retrieval-Augmented Generation (RAG) and agentic working memories, improve information recall but still engage with fundamentally static knowledge sources and follow pre-defined single reasoning path. This hinders their ability to preserve factual and logical consistency of their responses in multi-turn dialogues while the context evolves over time. To address this issue, we propose D-SMART, a model-agnostic framework designed to maintain multi-turn dialogue consistency by enabling LLMs to buil"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Large Language Models (LLMs) often exhibit factual inconsistencies and logical decay in extended, multi-turn dialogues, a challenge stemming from their reliance on static, pre-trained knowledge and an inability to reason adaptively over the dialogue history. Prevailing mitigation strategies, such as Retrieval-Augmented Generation (RAG) and agentic working memories, improve information recall but still engage with fundamentally static knowledge sources and follow pre-defined single reasoning path. This hinders their ability to preserve factual and logical consistency of their responses in multi-turn dialogues while the context evolves over time. To address this issue, we propose D-SMART, a model-agnostic framework designed to maintain multi-turn dialogue consistency by enabling LLMs to buil",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/3c508d7abbd7a45755f0a86b0e5ee2ad36a62dce",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "f3b7d542a57c4834",
+          "paper_id": "93d788757a93",
+          "passage_id": "abstract:93d788757a93",
+          "sub_question_id": "sq2",
+          "research_question": "This query directly addresses the research question by combining the core concepts.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "We present a systematic framework of indices designed to characterize Large Language Model (LLM) responses when challenged with rebuttals during a chat. Assessing how LLMs respond to user dissent is crucial for understanding their reliability and behavior patterns, yet the complexity of human-LLM interactions makes systematic evaluation challenging. Our approach employs a fictitious-response rebuttal method that quantifies LLM behavior when presented with multiple-choice questions followed by deliberate challenges to their fictitious previous response. The indices are specifically designed to detect and measure what could be characterized as sycophantic behavior (excessive agreement with user challenges) or stubborn responses (rigid adherence to the fictitious response in the chat history)"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "We present a systematic framework of indices designed to characterize Large Language Model (LLM) responses when challenged with rebuttals during a chat. Assessing how LLMs respond to user dissent is crucial for understanding their reliability and behavior patterns, yet the complexity of human-LLM interactions makes systematic evaluation challenging. Our approach employs a fictitious-response rebuttal method that quantifies LLM behavior when presented with multiple-choice questions followed by deliberate challenges to their fictitious previous response. The indices are specifically designed to detect and measure what could be characterized as sycophantic behavior (excessive agreement with user challenges) or stubborn responses (rigid adherence to the fictitious response in the chat history)",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/b6c410ea8c05d5290b5a27efe42928eb7893b586",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "9b79b748e62c475b",
+          "paper_id": "cf2ae951bbe0",
+          "passage_id": "abstract:cf2ae951bbe0",
+          "sub_question_id": "sq2",
+          "research_question": "This query directly addresses the research question by combining the core concepts.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "General-purpose large language models (LLMs) have demonstrated remarkable generative and reasoning capabilities but remain limited in healthcare and caregiving applications due to two key deficiencies: factual unreliability and a lack of empathetic communication. These shortcomings pose significant risks in sensitive contexts where users, particularly nonprofessionals and caregivers, seek medically relevant guidance or emotional reassurance. To address these challenges, we introduce a Direct Preference Optimization (DPO)-based alignment framework designed to improve factual correctness, semantic coherence, and human-centric qualities such as empathy, politeness, and simplicity in caregiver-patient dialogues. Our approach finetunes domain-adapted Large Language Models (LLMs) using pairwise "
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "General-purpose large language models (LLMs) have demonstrated remarkable generative and reasoning capabilities but remain limited in healthcare and caregiving applications due to two key deficiencies: factual unreliability and a lack of empathetic communication. These shortcomings pose significant risks in sensitive contexts where users, particularly nonprofessionals and caregivers, seek medically relevant guidance or emotional reassurance. To address these challenges, we introduce a Direct Preference Optimization (DPO)-based alignment framework designed to improve factual correctness, semantic coherence, and human-centric qualities such as empathy, politeness, and simplicity in caregiver-patient dialogues. Our approach finetunes domain-adapted Large Language Models (LLMs) using pairwise ",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/c3b46e8eb8e624b91715c85de9fb99eb99f3c46f",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "b94de31f826d4773",
+          "paper_id": "6c9f4fc61e0e",
+          "passage_id": "abstract:6c9f4fc61e0e",
+          "sub_question_id": "sq2",
+          "research_question": "This query directly addresses the research question by combining the core concepts.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Abstract Background Clinical decision-making (CDM) refers to physicians’ ability to gather, evaluate, and interpret relevant diagnostic information. An integral component of CDM is the medical history conversation, traditionally practiced on real or simulated patients. In this study, we explored the potential of using Large Language Models (LLM) to simulate patient-doctor interactions and provide structured feedback. Methods We developed AI prompts to simulate patients with different symptoms, engaging in realistic medical history conversations. In our double-blind randomized design, the control group participated in simulated medical history conversations with AI patients (control group), while the intervention group, in addition to simulated conversations, also received AI-generated feed"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Abstract Background Clinical decision-making (CDM) refers to physicians’ ability to gather, evaluate, and interpret relevant diagnostic information. An integral component of CDM is the medical history conversation, traditionally practiced on real or simulated patients. In this study, we explored the potential of using Large Language Models (LLM) to simulate patient-doctor interactions and provide structured feedback. Methods We developed AI prompts to simulate patients with different symptoms, engaging in realistic medical history conversations. In our double-blind randomized design, the control group participated in simulated medical history conversations with AI patients (control group), while the intervention group, in addition to simulated conversations, also received AI-generated feed",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://bmcmededuc.biomedcentral.com/counter/pdf/10.1186/s12909-024-06399-7",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "cbead4f6f1954072",
+          "paper_id": "35618094212f",
+          "passage_id": "abstract:35618094212f",
+          "sub_question_id": "sq2",
+          "research_question": "This query directly addresses the research question by combining the core concepts.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Abstract Background Large language models (LLMs) are increasingly used by patients for health information and preliminary medical advice. In patient-facing consultations, users may present explicitly stated diagnostic preferences or symptom narratives emphasizing a preferred explanation. Such cognitively biased input constrains the diagnostic context available to the model and may systematically steer its reasoning during interactive LLM-supported health consultations. Objective This study aimed to quantify the impact of patient cognitive bias on LLM diagnostic performance in multiturn consultations, assess the effectiveness of prompt-based mitigation strategies and decoding temperature adjustment, and evaluate a dual-system framework for improving robustness under biased interaction. Meth"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Abstract Background Large language models (LLMs) are increasingly used by patients for health information and preliminary medical advice. In patient-facing consultations, users may present explicitly stated diagnostic preferences or symptom narratives emphasizing a preferred explanation. Such cognitively biased input constrains the diagnostic context available to the model and may systematically steer its reasoning during interactive LLM-supported health consultations. Objective This study aimed to quantify the impact of patient cognitive bias on LLM diagnostic performance in multiturn consultations, assess the effectiveness of prompt-based mitigation strategies and decoding temperature adjustment, and evaluate a dual-system framework for improving robustness under biased interaction. Meth",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/6d0e3b8a4daefba21a43c8494c32959ecc06408c",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "7865bac4ec034135",
+          "paper_id": "bee743179f02",
+          "passage_id": "abstract:bee743179f02",
+          "sub_question_id": "sq2",
+          "research_question": "This query directly addresses the research question by combining the core concepts.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Abstract\nThe advent of large language models has significantly advanced the capabilities of artificial intelligence systems in complex problem-solving scenarios. However, deploying these models in multi-agent debate frameworks for long-form reasoning presents substantial challenges regarding memory utilization and computational efficiency. As multiple agents interact, exchange arguments, and iteratively refine their positions, the context window rapidly expands, leading to severe memory bottlenecks and degraded reasoning coherence. This paper proposes a novel framework centered on memory-efficient multi-agent debate utilizing compressed contexts. By introducing a semantic compression mechanism that distills agent arguments into high-density representations, the proposed system minimizes to"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Abstract\nThe advent of large language models has significantly advanced the capabilities of artificial intelligence systems in complex problem-solving scenarios. However, deploying these models in multi-agent debate frameworks for long-form reasoning presents substantial challenges regarding memory utilization and computational efficiency. As multiple agents interact, exchange arguments, and iteratively refine their positions, the context window rapidly expands, leading to severe memory bottlenecks and degraded reasoning coherence. This paper proposes a novel framework centered on memory-efficient multi-agent debate utilizing compressed contexts. By introducing a semantic compression mechanism that distills agent arguments into high-density representations, the proposed system minimizes to",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/831d19bebf55b91b8791af5b6f0134b91e23e0f1",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "04c8908b8a73482d",
+          "paper_id": "277671839412",
+          "passage_id": "abstract:277671839412",
+          "sub_question_id": "sq3",
+          "research_question": "This query uses synonyms for the core concepts to capture a broader range of relevant literature.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Large Language Models (LLMs) have demonstrated remarkable prowess in generating contextually coherent responses, yet their fixed context windows pose fundamental challenges for maintaining consistency over prolonged multi-session dialogues. We introduce Mem0, a scalable memory-centric architecture that addresses this issue by dynamically extracting, consolidating, and retrieving salient information from ongoing conversations. Building on this foundation, we further propose an enhanced variant that leverages graph-based memory representations to capture complex relational structures among conversational elements. Through comprehensive evaluations on LOCOMO benchmark, we systematically compare our approaches against six baseline categories: (i) established memory-augmented systems, (ii) retr"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Large Language Models (LLMs) have demonstrated remarkable prowess in generating contextually coherent responses, yet their fixed context windows pose fundamental challenges for maintaining consistency over prolonged multi-session dialogues. We introduce Mem0, a scalable memory-centric architecture that addresses this issue by dynamically extracting, consolidating, and retrieving salient information from ongoing conversations. Building on this foundation, we further propose an enhanced variant that leverages graph-based memory representations to capture complex relational structures among conversational elements. Through comprehensive evaluations on LOCOMO benchmark, we systematically compare our approaches against six baseline categories: (i) established memory-augmented systems, (ii) retr",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://arxiv.org/abs/2504.19413v1",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "d498820cfa7d4370",
+          "paper_id": "cf2ae951bbe0",
+          "passage_id": "abstract:cf2ae951bbe0",
+          "sub_question_id": "sq3",
+          "research_question": "This query uses synonyms for the core concepts to capture a broader range of relevant literature.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "General-purpose large language models (LLMs) have demonstrated remarkable generative and reasoning capabilities but remain limited in healthcare and caregiving applications due to two key deficiencies: factual unreliability and a lack of empathetic communication. These shortcomings pose significant risks in sensitive contexts where users, particularly nonprofessionals and caregivers, seek medically relevant guidance or emotional reassurance. To address these challenges, we introduce a Direct Preference Optimization (DPO)-based alignment framework designed to improve factual correctness, semantic coherence, and human-centric qualities such as empathy, politeness, and simplicity in caregiver-patient dialogues. Our approach finetunes domain-adapted Large Language Models (LLMs) using pairwise "
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "General-purpose large language models (LLMs) have demonstrated remarkable generative and reasoning capabilities but remain limited in healthcare and caregiving applications due to two key deficiencies: factual unreliability and a lack of empathetic communication. These shortcomings pose significant risks in sensitive contexts where users, particularly nonprofessionals and caregivers, seek medically relevant guidance or emotional reassurance. To address these challenges, we introduce a Direct Preference Optimization (DPO)-based alignment framework designed to improve factual correctness, semantic coherence, and human-centric qualities such as empathy, politeness, and simplicity in caregiver-patient dialogues. Our approach finetunes domain-adapted Large Language Models (LLMs) using pairwise ",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/c3b46e8eb8e624b91715c85de9fb99eb99f3c46f",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "947051986a98491e",
+          "paper_id": "22e85d5eb062",
+          "passage_id": "abstract:22e85d5eb062",
+          "sub_question_id": "sq3",
+          "research_question": "This query uses synonyms for the core concepts to capture a broader range of relevant literature.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Purpose of the Study: this study investigates the robustness of contemporary large language models when employed\nas decision engines for security-critical authorization requests involving account and permission modification operations\nassociated with the MITRE ATT&CK T1098 technique. The primary objective is to evaluate the stability and reliability of binary\nallow/deny authorization decisions under systematically designed prompt perturbations.\nMethods of Research: an experimental ethical authorization assistant was developed to query several open large\nlanguage models using a curated collection of security-sensitive account-manipulation scenarios. A controlled perturbation\nframework introduces temporal, structural, contextual, and cognitive-load variations into prompts while preserving\nth"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Purpose of the Study: this study investigates the robustness of contemporary large language models when employed\nas decision engines for security-critical authorization requests involving account and permission modification operations\nassociated with the MITRE ATT&CK T1098 technique. The primary objective is to evaluate the stability and reliability of binary\nallow/deny authorization decisions under systematically designed prompt perturbations.\nMethods of Research: an experimental ethical authorization assistant was developed to query several open large\nlanguage models using a curated collection of security-sensitive account-manipulation scenarios. A controlled perturbation\nframework introduces temporal, structural, contextual, and cognitive-load variations into prompts while preserving\nth",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/b30a10bc081ceab566cd830348619ef4be3fd2f8",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "1771e95eb5a34b75",
+          "paper_id": "33d47ca8a3ed",
+          "passage_id": "abstract:33d47ca8a3ed",
+          "sub_question_id": "sq3",
+          "research_question": "This query uses synonyms for the core concepts to capture a broader range of relevant literature.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Large Language Models (LLMs) often exhibit factual inconsistencies and logical decay in extended, multi-turn dialogues, a challenge stemming from their reliance on static, pre-trained knowledge and an inability to reason adaptively over the dialogue history. Prevailing mitigation strategies, such as Retrieval-Augmented Generation (RAG) and agentic working memories, improve information recall but still engage with fundamentally static knowledge sources and follow pre-defined single reasoning path. This hinders their ability to preserve factual and logical consistency of their responses in multi-turn dialogues while the context evolves over time. To address this issue, we propose D-SMART, a model-agnostic framework designed to maintain multi-turn dialogue consistency by enabling LLMs to buil"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Large Language Models (LLMs) often exhibit factual inconsistencies and logical decay in extended, multi-turn dialogues, a challenge stemming from their reliance on static, pre-trained knowledge and an inability to reason adaptively over the dialogue history. Prevailing mitigation strategies, such as Retrieval-Augmented Generation (RAG) and agentic working memories, improve information recall but still engage with fundamentally static knowledge sources and follow pre-defined single reasoning path. This hinders their ability to preserve factual and logical consistency of their responses in multi-turn dialogues while the context evolves over time. To address this issue, we propose D-SMART, a model-agnostic framework designed to maintain multi-turn dialogue consistency by enabling LLMs to buil",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/3c508d7abbd7a45755f0a86b0e5ee2ad36a62dce",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "1617f370c425452b",
+          "paper_id": "6c9f4fc61e0e",
+          "passage_id": "abstract:6c9f4fc61e0e",
+          "sub_question_id": "sq3",
+          "research_question": "This query uses synonyms for the core concepts to capture a broader range of relevant literature.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Abstract Background Clinical decision-making (CDM) refers to physicians’ ability to gather, evaluate, and interpret relevant diagnostic information. An integral component of CDM is the medical history conversation, traditionally practiced on real or simulated patients. In this study, we explored the potential of using Large Language Models (LLM) to simulate patient-doctor interactions and provide structured feedback. Methods We developed AI prompts to simulate patients with different symptoms, engaging in realistic medical history conversations. In our double-blind randomized design, the control group participated in simulated medical history conversations with AI patients (control group), while the intervention group, in addition to simulated conversations, also received AI-generated feed"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Abstract Background Clinical decision-making (CDM) refers to physicians’ ability to gather, evaluate, and interpret relevant diagnostic information. An integral component of CDM is the medical history conversation, traditionally practiced on real or simulated patients. In this study, we explored the potential of using Large Language Models (LLM) to simulate patient-doctor interactions and provide structured feedback. Methods We developed AI prompts to simulate patients with different symptoms, engaging in realistic medical history conversations. In our double-blind randomized design, the control group participated in simulated medical history conversations with AI patients (control group), while the intervention group, in addition to simulated conversations, also received AI-generated feed",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://bmcmededuc.biomedcentral.com/counter/pdf/10.1186/s12909-024-06399-7",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "ae452a5bdf9c4052",
+          "paper_id": "93d788757a93",
+          "passage_id": "abstract:93d788757a93",
+          "sub_question_id": "sq3",
+          "research_question": "This query uses synonyms for the core concepts to capture a broader range of relevant literature.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "We present a systematic framework of indices designed to characterize Large Language Model (LLM) responses when challenged with rebuttals during a chat. Assessing how LLMs respond to user dissent is crucial for understanding their reliability and behavior patterns, yet the complexity of human-LLM interactions makes systematic evaluation challenging. Our approach employs a fictitious-response rebuttal method that quantifies LLM behavior when presented with multiple-choice questions followed by deliberate challenges to their fictitious previous response. The indices are specifically designed to detect and measure what could be characterized as sycophantic behavior (excessive agreement with user challenges) or stubborn responses (rigid adherence to the fictitious response in the chat history)"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "We present a systematic framework of indices designed to characterize Large Language Model (LLM) responses when challenged with rebuttals during a chat. Assessing how LLMs respond to user dissent is crucial for understanding their reliability and behavior patterns, yet the complexity of human-LLM interactions makes systematic evaluation challenging. Our approach employs a fictitious-response rebuttal method that quantifies LLM behavior when presented with multiple-choice questions followed by deliberate challenges to their fictitious previous response. The indices are specifically designed to detect and measure what could be characterized as sycophantic behavior (excessive agreement with user challenges) or stubborn responses (rigid adherence to the fictitious response in the chat history)",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/b6c410ea8c05d5290b5a27efe42928eb7893b586",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "6b82557aa2d84e44",
+          "paper_id": "189297a22a34",
+          "passage_id": "abstract:189297a22a34",
+          "sub_question_id": "sq3",
+          "research_question": "This query uses synonyms for the core concepts to capture a broader range of relevant literature.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "At the heart of medicine lies the physician-patient dialogue, where skillful history-taking paves the way for accurate diagnosis, effective management, and enduring trust. Artificial Intelligence (AI) systems capable of diagnostic dialogue could increase accessibility, consistency, and quality of care. However, approximating clinicians' expertise is an outstanding grand challenge. Here, we introduce AMIE (Articulate Medical Intelligence Explorer), a Large Language Model (LLM) based AI system optimized for diagnostic dialogue. AMIE uses a novel self-play based simulated environment with automated feedback mechanisms for scaling learning across diverse disease conditions, specialties, and contexts. We designed a framework for evaluating clinically-meaningful axes of performance including his"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "At the heart of medicine lies the physician-patient dialogue, where skillful history-taking paves the way for accurate diagnosis, effective management, and enduring trust. Artificial Intelligence (AI) systems capable of diagnostic dialogue could increase accessibility, consistency, and quality of care. However, approximating clinicians' expertise is an outstanding grand challenge. Here, we introduce AMIE (Articulate Medical Intelligence Explorer), a Large Language Model (LLM) based AI system optimized for diagnostic dialogue. AMIE uses a novel self-play based simulated environment with automated feedback mechanisms for scaling learning across diverse disease conditions, specialties, and contexts. We designed a framework for evaluating clinically-meaningful axes of performance including his",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://arxiv.org/pdf/2401.05654",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "f57a8af645a749b9",
+          "paper_id": "35618094212f",
+          "passage_id": "abstract:35618094212f",
+          "sub_question_id": "sq3",
+          "research_question": "This query uses synonyms for the core concepts to capture a broader range of relevant literature.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Abstract Background Large language models (LLMs) are increasingly used by patients for health information and preliminary medical advice. In patient-facing consultations, users may present explicitly stated diagnostic preferences or symptom narratives emphasizing a preferred explanation. Such cognitively biased input constrains the diagnostic context available to the model and may systematically steer its reasoning during interactive LLM-supported health consultations. Objective This study aimed to quantify the impact of patient cognitive bias on LLM diagnostic performance in multiturn consultations, assess the effectiveness of prompt-based mitigation strategies and decoding temperature adjustment, and evaluate a dual-system framework for improving robustness under biased interaction. Meth"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Abstract Background Large language models (LLMs) are increasingly used by patients for health information and preliminary medical advice. In patient-facing consultations, users may present explicitly stated diagnostic preferences or symptom narratives emphasizing a preferred explanation. Such cognitively biased input constrains the diagnostic context available to the model and may systematically steer its reasoning during interactive LLM-supported health consultations. Objective This study aimed to quantify the impact of patient cognitive bias on LLM diagnostic performance in multiturn consultations, assess the effectiveness of prompt-based mitigation strategies and decoding temperature adjustment, and evaluate a dual-system framework for improving robustness under biased interaction. Meth",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/6d0e3b8a4daefba21a43c8494c32959ecc06408c",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "e7abc0748275488f",
+          "paper_id": "33d47ca8a3ed",
+          "passage_id": "abstract:33d47ca8a3ed",
+          "sub_question_id": "sq4",
+          "research_question": "This query uses alternative terms for the core concepts to ensure comprehensive coverage.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Large Language Models (LLMs) often exhibit factual inconsistencies and logical decay in extended, multi-turn dialogues, a challenge stemming from their reliance on static, pre-trained knowledge and an inability to reason adaptively over the dialogue history. Prevailing mitigation strategies, such as Retrieval-Augmented Generation (RAG) and agentic working memories, improve information recall but still engage with fundamentally static knowledge sources and follow pre-defined single reasoning path. This hinders their ability to preserve factual and logical consistency of their responses in multi-turn dialogues while the context evolves over time. To address this issue, we propose D-SMART, a model-agnostic framework designed to maintain multi-turn dialogue consistency by enabling LLMs to buil"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Large Language Models (LLMs) often exhibit factual inconsistencies and logical decay in extended, multi-turn dialogues, a challenge stemming from their reliance on static, pre-trained knowledge and an inability to reason adaptively over the dialogue history. Prevailing mitigation strategies, such as Retrieval-Augmented Generation (RAG) and agentic working memories, improve information recall but still engage with fundamentally static knowledge sources and follow pre-defined single reasoning path. This hinders their ability to preserve factual and logical consistency of their responses in multi-turn dialogues while the context evolves over time. To address this issue, we propose D-SMART, a model-agnostic framework designed to maintain multi-turn dialogue consistency by enabling LLMs to buil",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/3c508d7abbd7a45755f0a86b0e5ee2ad36a62dce",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "8e0428bf77654198",
+          "paper_id": "277671839412",
+          "passage_id": "abstract:277671839412",
+          "sub_question_id": "sq4",
+          "research_question": "This query uses alternative terms for the core concepts to ensure comprehensive coverage.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Large Language Models (LLMs) have demonstrated remarkable prowess in generating contextually coherent responses, yet their fixed context windows pose fundamental challenges for maintaining consistency over prolonged multi-session dialogues. We introduce Mem0, a scalable memory-centric architecture that addresses this issue by dynamically extracting, consolidating, and retrieving salient information from ongoing conversations. Building on this foundation, we further propose an enhanced variant that leverages graph-based memory representations to capture complex relational structures among conversational elements. Through comprehensive evaluations on LOCOMO benchmark, we systematically compare our approaches against six baseline categories: (i) established memory-augmented systems, (ii) retr"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Large Language Models (LLMs) have demonstrated remarkable prowess in generating contextually coherent responses, yet their fixed context windows pose fundamental challenges for maintaining consistency over prolonged multi-session dialogues. We introduce Mem0, a scalable memory-centric architecture that addresses this issue by dynamically extracting, consolidating, and retrieving salient information from ongoing conversations. Building on this foundation, we further propose an enhanced variant that leverages graph-based memory representations to capture complex relational structures among conversational elements. Through comprehensive evaluations on LOCOMO benchmark, we systematically compare our approaches against six baseline categories: (i) established memory-augmented systems, (ii) retr",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://arxiv.org/abs/2504.19413v1",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "59e881ed16e84464",
+          "paper_id": "cf2ae951bbe0",
+          "passage_id": "abstract:cf2ae951bbe0",
+          "sub_question_id": "sq4",
+          "research_question": "This query uses alternative terms for the core concepts to ensure comprehensive coverage.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "General-purpose large language models (LLMs) have demonstrated remarkable generative and reasoning capabilities but remain limited in healthcare and caregiving applications due to two key deficiencies: factual unreliability and a lack of empathetic communication. These shortcomings pose significant risks in sensitive contexts where users, particularly nonprofessionals and caregivers, seek medically relevant guidance or emotional reassurance. To address these challenges, we introduce a Direct Preference Optimization (DPO)-based alignment framework designed to improve factual correctness, semantic coherence, and human-centric qualities such as empathy, politeness, and simplicity in caregiver-patient dialogues. Our approach finetunes domain-adapted Large Language Models (LLMs) using pairwise "
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "General-purpose large language models (LLMs) have demonstrated remarkable generative and reasoning capabilities but remain limited in healthcare and caregiving applications due to two key deficiencies: factual unreliability and a lack of empathetic communication. These shortcomings pose significant risks in sensitive contexts where users, particularly nonprofessionals and caregivers, seek medically relevant guidance or emotional reassurance. To address these challenges, we introduce a Direct Preference Optimization (DPO)-based alignment framework designed to improve factual correctness, semantic coherence, and human-centric qualities such as empathy, politeness, and simplicity in caregiver-patient dialogues. Our approach finetunes domain-adapted Large Language Models (LLMs) using pairwise ",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/c3b46e8eb8e624b91715c85de9fb99eb99f3c46f",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "b377d5a8948544e6",
+          "paper_id": "22e85d5eb062",
+          "passage_id": "abstract:22e85d5eb062",
+          "sub_question_id": "sq4",
+          "research_question": "This query uses alternative terms for the core concepts to ensure comprehensive coverage.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Purpose of the Study: this study investigates the robustness of contemporary large language models when employed\nas decision engines for security-critical authorization requests involving account and permission modification operations\nassociated with the MITRE ATT&CK T1098 technique. The primary objective is to evaluate the stability and reliability of binary\nallow/deny authorization decisions under systematically designed prompt perturbations.\nMethods of Research: an experimental ethical authorization assistant was developed to query several open large\nlanguage models using a curated collection of security-sensitive account-manipulation scenarios. A controlled perturbation\nframework introduces temporal, structural, contextual, and cognitive-load variations into prompts while preserving\nth"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Purpose of the Study: this study investigates the robustness of contemporary large language models when employed\nas decision engines for security-critical authorization requests involving account and permission modification operations\nassociated with the MITRE ATT&CK T1098 technique. The primary objective is to evaluate the stability and reliability of binary\nallow/deny authorization decisions under systematically designed prompt perturbations.\nMethods of Research: an experimental ethical authorization assistant was developed to query several open large\nlanguage models using a curated collection of security-sensitive account-manipulation scenarios. A controlled perturbation\nframework introduces temporal, structural, contextual, and cognitive-load variations into prompts while preserving\nth",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/b30a10bc081ceab566cd830348619ef4be3fd2f8",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "10c6f2e9c7494ecc",
+          "paper_id": "93d788757a93",
+          "passage_id": "abstract:93d788757a93",
+          "sub_question_id": "sq4",
+          "research_question": "This query uses alternative terms for the core concepts to ensure comprehensive coverage.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "We present a systematic framework of indices designed to characterize Large Language Model (LLM) responses when challenged with rebuttals during a chat. Assessing how LLMs respond to user dissent is crucial for understanding their reliability and behavior patterns, yet the complexity of human-LLM interactions makes systematic evaluation challenging. Our approach employs a fictitious-response rebuttal method that quantifies LLM behavior when presented with multiple-choice questions followed by deliberate challenges to their fictitious previous response. The indices are specifically designed to detect and measure what could be characterized as sycophantic behavior (excessive agreement with user challenges) or stubborn responses (rigid adherence to the fictitious response in the chat history)"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "We present a systematic framework of indices designed to characterize Large Language Model (LLM) responses when challenged with rebuttals during a chat. Assessing how LLMs respond to user dissent is crucial for understanding their reliability and behavior patterns, yet the complexity of human-LLM interactions makes systematic evaluation challenging. Our approach employs a fictitious-response rebuttal method that quantifies LLM behavior when presented with multiple-choice questions followed by deliberate challenges to their fictitious previous response. The indices are specifically designed to detect and measure what could be characterized as sycophantic behavior (excessive agreement with user challenges) or stubborn responses (rigid adherence to the fictitious response in the chat history)",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/b6c410ea8c05d5290b5a27efe42928eb7893b586",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "f7c081b6cb89495b",
+          "paper_id": "189297a22a34",
+          "passage_id": "abstract:189297a22a34",
+          "sub_question_id": "sq4",
+          "research_question": "This query uses alternative terms for the core concepts to ensure comprehensive coverage.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "At the heart of medicine lies the physician-patient dialogue, where skillful history-taking paves the way for accurate diagnosis, effective management, and enduring trust. Artificial Intelligence (AI) systems capable of diagnostic dialogue could increase accessibility, consistency, and quality of care. However, approximating clinicians' expertise is an outstanding grand challenge. Here, we introduce AMIE (Articulate Medical Intelligence Explorer), a Large Language Model (LLM) based AI system optimized for diagnostic dialogue. AMIE uses a novel self-play based simulated environment with automated feedback mechanisms for scaling learning across diverse disease conditions, specialties, and contexts. We designed a framework for evaluating clinically-meaningful axes of performance including his"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "At the heart of medicine lies the physician-patient dialogue, where skillful history-taking paves the way for accurate diagnosis, effective management, and enduring trust. Artificial Intelligence (AI) systems capable of diagnostic dialogue could increase accessibility, consistency, and quality of care. However, approximating clinicians' expertise is an outstanding grand challenge. Here, we introduce AMIE (Articulate Medical Intelligence Explorer), a Large Language Model (LLM) based AI system optimized for diagnostic dialogue. AMIE uses a novel self-play based simulated environment with automated feedback mechanisms for scaling learning across diverse disease conditions, specialties, and contexts. We designed a framework for evaluating clinically-meaningful axes of performance including his",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://arxiv.org/pdf/2401.05654",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "f53237ae62f14424",
+          "paper_id": "6c9f4fc61e0e",
+          "passage_id": "abstract:6c9f4fc61e0e",
+          "sub_question_id": "sq4",
+          "research_question": "This query uses alternative terms for the core concepts to ensure comprehensive coverage.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Abstract Background Clinical decision-making (CDM) refers to physicians’ ability to gather, evaluate, and interpret relevant diagnostic information. An integral component of CDM is the medical history conversation, traditionally practiced on real or simulated patients. In this study, we explored the potential of using Large Language Models (LLM) to simulate patient-doctor interactions and provide structured feedback. Methods We developed AI prompts to simulate patients with different symptoms, engaging in realistic medical history conversations. In our double-blind randomized design, the control group participated in simulated medical history conversations with AI patients (control group), while the intervention group, in addition to simulated conversations, also received AI-generated feed"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Abstract Background Clinical decision-making (CDM) refers to physicians’ ability to gather, evaluate, and interpret relevant diagnostic information. An integral component of CDM is the medical history conversation, traditionally practiced on real or simulated patients. In this study, we explored the potential of using Large Language Models (LLM) to simulate patient-doctor interactions and provide structured feedback. Methods We developed AI prompts to simulate patients with different symptoms, engaging in realistic medical history conversations. In our double-blind randomized design, the control group participated in simulated medical history conversations with AI patients (control group), while the intervention group, in addition to simulated conversations, also received AI-generated feed",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://bmcmededuc.biomedcentral.com/counter/pdf/10.1186/s12909-024-06399-7",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        },
+        {
+          "evidence_id": "76309dcf453c4b81",
+          "paper_id": "35618094212f",
+          "passage_id": "abstract:35618094212f",
+          "sub_question_id": "sq4",
+          "research_question": "This query uses alternative terms for the core concepts to ensure comprehensive coverage.",
+          "method": null,
+          "dataset_or_participants": null,
+          "key_findings": [
+            "Abstract Background Large language models (LLMs) are increasingly used by patients for health information and preliminary medical advice. In patient-facing consultations, users may present explicitly stated diagnostic preferences or symptom narratives emphasizing a preferred explanation. Such cognitively biased input constrains the diagnostic context available to the model and may systematically steer its reasoning during interactive LLM-supported health consultations. Objective This study aimed to quantify the impact of patient cognitive bias on LLM diagnostic performance in multiturn consultations, assess the effectiveness of prompt-based mitigation strategies and decoding temperature adjustment, and evaluate a dual-system framework for improving robustness under biased interaction. Meth"
+          ],
+          "limitations": [],
+          "relevance_to_user_question": "Retrieved source passage relevant to the sub-question.",
+          "evidence_quote": "Abstract Background Large language models (LLMs) are increasingly used by patients for health information and preliminary medical advice. In patient-facing consultations, users may present explicitly stated diagnostic preferences or symptom narratives emphasizing a preferred explanation. Such cognitively biased input constrains the diagnostic context available to the model and may systematically steer its reasoning during interactive LLM-supported health consultations. Objective This study aimed to quantify the impact of patient cognitive bias on LLM diagnostic performance in multiturn consultations, assess the effectiveness of prompt-based mitigation strategies and decoding temperature adjustment, and evaluate a dual-system framework for improving robustness under biased interaction. Meth",
+          "chunk_id": null,
+          "section_title": "Abstract",
+          "page_start": null,
+          "page_end": null,
+          "source_url": "https://www.semanticscholar.org/paper/6d0e3b8a4daefba21a43c8494c32959ecc06408c",
+          "evidence_level": "abstract",
+          "stance": "supports",
+          "evidence_type": "abstract",
+          "verification_status": "verified",
+          "verification_reason": "normalized exact substring match",
+          "confidence": 0.65
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "58818b7fe19d45d7",
+          "claim_text": "We present a systematic framework of indices designed to characterize Large Language Model (LLM) responses when challenged with rebuttals during a chat.",
+          "claim_type": "source_finding",
+          "importance": "core",
+          "evidence_ids": [
+            "8ba2ce3884a444e1"
+          ],
+          "paper_ids": [
+            "93d788757a93"
+          ],
+          "support_status": "supported",
+          "confidence": 0.65,
+          "section_id": null
+        },
+        {
+          "claim_id": "4e40e70d13f44a37",
+          "claim_text": "Purpose of the Study: this study investigates the robustness of contemporary large language models when employed\nas decision engines for security-critical authorization requests involving account and permission modification operations\nassociated with the MITRE ATT&CK T1098 technique.",
+          "claim_type": "source_finding",
+          "importance": "core",
+          "evidence_ids": [
+            "997b506965444889"
+          ],
+          "paper_ids": [
+            "22e85d5eb062"
+          ],
+          "support_status": "supported",
+          "confidence": 0.65,
+          "section_id": null
+        },
+        {
+          "claim_id": "6879d4f88a404869",
+          "claim_text": "Large Language Models (LLMs) often exhibit factual inconsistencies and logical decay in extended, multi-turn dialogues, a challenge stemming from their reliance on static, pre-trained knowledge and an inability to reason adaptively over the dialogue history.",
+          "claim_type": "source_finding",
+          "importance": "core",
+          "evidence_ids": [
+            "805f84226fb24ac5"
+          ],
+          "paper_ids": [
+            "33d47ca8a3ed"
+          ],
+          "support_status": "supported",
+          "confidence": 0.65,
+          "section_id": null
+        },
+        {
+          "claim_id": "2fb43a7c1d3f4766",
+          "claim_text": "Large Language Models (LLMs) have demonstrated remarkable prowess in generating contextually coherent responses, yet their fixed context windows pose fundamental challenges for maintaining consistency over prolonged multi-session dialogues.",
+          "claim_type": "source_finding",
+          "importance": "core",
+          "evidence_ids": [
+            "2a8915b2c5af4d96"
+          ],
+          "paper_ids": [
+            "277671839412"
+          ],
+          "support_status": "supported",
+          "confidence": 0.65,
+          "section_id": null
+        },
+        {
+          "claim_id": "0123251f31c74c5c",
+          "claim_text": "General-purpose large language models (LLMs) have demonstrated remarkable generative and reasoning capabilities but remain limited in healthcare and caregiving applications due to two key deficiencies: factual unreliability and a lack of empathetic communication.",
+          "claim_type": "source_finding",
+          "importance": "core",
+          "evidence_ids": [
+            "0abdc1494db34dc5"
+          ],
+          "paper_ids": [
+            "cf2ae951bbe0"
+          ],
+          "support_status": "supported",
+          "confidence": 0.65,
+          "section_id": null
+        },
+        {
+          "claim_id": "72b7841b54cf4219",
+          "claim_text": "At the heart of medicine lies the physician-patient dialogue, where skillful history-taking paves the way for accurate diagnosis, effective management, and enduring trust.",
+          "claim_type": "source_finding",
+          "importance": "core",
+          "evidence_ids": [
+            "72cec208b7e5414d"
+          ],
+          "paper_ids": [
+            "189297a22a34"
+          ],
+          "support_status": "supported",
+          "confidence": 0.65,
+          "section_id": null
+        },
+        {
+          "claim_id": "4e809e264ad94285",
+          "claim_text": "Abstract Background Large language models (LLMs) are increasingly used by patients for health information and preliminary medical advice.",
+          "claim_type": "source_finding",
+          "importance": "core",
+          "evidence_ids": [
+            "9711a32df6cc4148"
+          ],
+          "paper_ids": [
+            "35618094212f"
+          ],
+          "support_status": "supported",
+          "confidence": 0.65,
+          "section_id": null
+        },
+        {
+          "claim_id": "20ff0bd9a79e40c6",
+          "claim_text": "Abstract\nThe advent of large language models has significantly advanced the capabilities of artificial intelligence systems in complex problem-solving scenarios.",
+          "claim_type": "source_finding",
+          "importance": "core",
+          "evidence_ids": [
+            "9c62b56e4c534d43"
+          ],
+          "paper_ids": [
+            "bee743179f02"
+          ],
+          "support_status": "supported",
+          "confidence": 0.65,
+          "section_id": null
+        },
+        {
+          "claim_id": "8abf532030064ae3",
+          "claim_text": "Abstract Background Clinical decision-making (CDM) refers to physicians’ ability to gather, evaluate, and interpret relevant diagnostic information.",
+          "claim_type": "source_finding",
+          "importance": "core",
+          "evidence_ids": [
+            "b94de31f826d4773"
+          ],
+          "paper_ids": [
+            "6c9f4fc61e0e"
+          ],
+          "support_status": "supported",
+          "confidence": 0.65,
+          "section_id": null
+        }
+      ],
+      "evidence_quality": {
+        "evidence_count": 32,
+        "verified_evidence_count": 32,
+        "direct_quote_count": 0,
+        "abstract_evidence_count": 32,
+        "claim_count": 9,
+        "supported_claim_count": 9,
+        "unsupported_important_claim_count": 0,
+        "quote_verification_rate": 1.0,
+        "citation_completeness": 1.0,
+        "passed": true,
+        "issues": []
+      },
+      "citation_validation": {
+        "citations_in_text": [
+          "2",
+          "9",
+          "1",
+          "3",
+          "7",
+          "5",
+          "6",
+          "4",
+          "8"
+        ],
+        "papers_in_reference_list": [
+          "P1",
+          "P2",
+          "P3",
+          "P4",
+          "P5",
+          "P6",
+          "P7",
+          "P8",
+          "P9"
+        ],
+        "orphan_citations": [],
+        "unused_papers": [],
+        "is_valid": true,
+        "issues": [],
+        "fixed": false
+      },
+      "report": "\n\n# 大语言模型对话历史对推理可靠性的影响研究  \n\n## 研究问题  \n本研究旨在探讨对话历史如何影响大型语言模型（LLMs）的推理可靠性。具体而言，研究关注对话历史的长度、复杂性及结构如何改变LLMs在多轮对话中的事实一致性、逻辑连贯性及推理稳定性，并评估现有技术手段（如记忆架构、检索增强生成）在缓解这些问题中的有效性。  \n\n---\n\n## 检索范围与方法  \n本研究基于三轮系统性文献检索，筛选出12篇符合主题的论文（2024-2026年发表）。检索范围涵盖技术性研究（如对话记忆机制设计）与应用性研究（如医疗、安全领域中的LLMs应用），并优先选择包含实证分析的论文。通过摘要与验证性声明的交叉核对，提取关键结论，确保研究结论基于明确的证据链。  \n\n---\n\n## 核心发现  \n### 1. **对话历史对推理可靠性的挑战**  \n- **事实不一致与逻辑衰减**：LLMs在多轮对话中易因依赖静态预训练知识而出现事实错误或逻辑断裂，尤其在涉及复杂推理任务时表现显著（[P1]）。  \n- **上下文窗口限制**：固定长度的上下文窗口导致LLMs难以维持长期对话的一致性，尤其在跨会话场景中（[P2]）。  \n- **反驳响应的脆弱性**：当LLMs被反驳性问题挑战时，其推理可靠性可能因缺乏动态记忆机制而下降（[P3]）。  \n\n### 2. **特定场景中的可靠性问题**  \n- **医疗领域**：通用LLMs在医疗对话中因事实不可靠和缺乏共情能力，难以满足临床决策需求（[P4]）。  \n- **安全敏感场景**：LLMs在处理涉及权限修改等高风险操作时，其推理可靠性可能因对抗性输入而受损（[P9]）。  \n\n### 3. **技术解决方案的初步探索**  \n- **动态记忆架构**：如D-SMART通过结构化记忆与推理树优化多轮对话的一致性（[P1]）。  \n- **长时记忆系统**：Mem0提出可扩展的长期记忆框架，以应对多会话场景的上下文管理问题（[P2]）。  \n\n---\n\n## 研究之间的一致与分歧  \n### 一致观点  \n- **技术瓶颈共识**：所有研究均指出LLMs在多轮对话中因静态知识或上下文限制导致推理可靠性下降（[P1]、[P2]、[P4]）。  \n- **记忆机制的重要性**：多数研究认为动态记忆架构是提升可靠性关键（[P1]、[P2]、[P8]）。  \n\n### 分歧点  \n- **应用场景的侧重点**：医疗领域研究强调共情与事实可靠性（[P4]、[P7]），而安全领域研究更关注对抗性输入的鲁棒性（[P9]）。  \n- **解决方案的多样性**：部分研究提出基于检索增强生成（RAG）的策略（[P3]），而另一些则聚焦于记忆压缩技术（[P8]）。  \n\n---\n\n## 研究局限与证据缺口  \n### 1. **对话历史参数的影响量化不足**  \n- **证据缺口**：现有研究缺乏对对话长度、内容复杂度与结构复杂度对推理可靠性具体影响的量化分析（[P1]、[P2]）。  \n- **严重性**：中等（需进一步实证研究）。  \n\n### 2. **缓解策略的有效性对比缺失**  \n- **证据缺口**：未见对检索增强生成（RAG）、记忆架构等技术在不同对话场景中效果的系统性对比（[P3]、[P8]）。  \n- **严重性**：中等（需跨场景实验验证）。  \n\n---\n\n## 对后续研究的建议  \n1. **量化研究**：设计实验测量对话历史长度、复杂度与推理可靠性指标（如事实一致性、逻辑连贯性）之间的关系，明确阈值与影响机制。  \n2. **技术对比**：构建统一基准测试集，对比RAG、记忆压缩等策略在多轮对话中的可靠性提升效果。  \n3. **跨领域整合**：结合医疗、安全等场景需求，开发适应性更强的对话记忆框架，兼顾事实可靠性与场景特异性。  \n\n---\n\n## 参考文献  \n\n[P1] Xiang Lei, Qin Li, Min Zhang et al. (2025). \"D-SMART: Enhancing LLM Dialogue Consistency via Dynamic Structured Memory And Reasoning Tree.\" *arXiv.org*. DOI: [10.48550/arXiv.2510.13363](https://doi.org/10.48550/arXiv.2510.13363)\n\n[P2] Prateek Chhikara, Dev Khant, Saket Aryan et al. (2025). \"Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory.\" *arXiv preprint*. URL: https://arxiv.org/abs/2504.19413v1\n\n[P3] J. Dunlap, Anne-Simone Parent, R. Widenhorn (2026). \"Feedback Indices to Evaluate LLM Responses to Rebuttals for Multiple Choice Type Questions.\" *arXiv.org*. DOI: [10.48550/arXiv.2601.03285](https://doi.org/10.48550/arXiv.2601.03285)\n\n[P4] E. Umucu, Guillermina Solis, Leon Garza et al. (2025). \"Empathy by Design: Aligning Large Language Models for Healthcare Dialogue.\" *BigData Congress [Services Society]*. DOI: [10.1109/BigData66926.2025.11402624](https://doi.org/10.1109/BigData66926.2025.11402624)\n\n[P5] Emilia Brügge, Sarah Ricchizzi, Malin Arenbeck et al. (2024). \"Large language models improve clinical decision making of medical students through patient simulation and structured feedback: a randomized controlled trial.\" *BMC Medical Education*. DOI: [10.1186/s12909-024-06399-7](https://doi.org/10.1186/s12909-024-06399-7)\n\n[P6] Tao Tu, Anil Palepu, Mike Schaekermann et al. (2024). \"Towards Conversational Diagnostic AI.\" *arXiv (Cornell University)*. DOI: [10.48550/arxiv.2401.05654](https://doi.org/10.48550/arxiv.2401.05654)\n\n[P7] Yi Zuo, Qifeng Wan, Shalong Wang (2025). \"Patient Cognitive Bias in Large Language Model–Supported Health Consultations: Simulation-Based Comparative Study.\" *Journal of Medical Internet Research*. DOI: [10.2196/85770](https://doi.org/10.2196/85770)\n\n[P8] Hyejin Byun, Mireille Bertin, Min‐Ji Kim et al. (2026). \"Memory-Efficient Multi-Agent Debate with Compressed Contexts for Long-Form Reasoning.\" *International journal of information and communication technology trends*. DOI: [10.66525/ijictt85](https://doi.org/10.66525/ijictt85)\n\n[P9] A. K. Jaiswal, Roman V. Meshcheryakov (2026). \"ОЦЕНКА УЯЗВИМОСТИ LLM ДЛЯ МАНИПУЛЯЦИИ.\" *Voprosy kiberbezopasnosti*. DOI: [10.21681/2311-3456-2026-2-81-90](https://doi.org/10.21681/2311-3456-2026-2-81-90)",
+      "warnings": [],
+      "errors": []
+    }
+  ]
+}

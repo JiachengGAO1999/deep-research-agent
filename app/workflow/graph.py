@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 # Module-level cached singletons (NOT stored in LangGraph state to avoid serialization issues)
 _cached_providers: Optional[List[Any]] = None
 _cached_llm_client: Any = None
+_cached_evidence_engine: Any = None
 
 
 class ResearchState(Dict):
@@ -50,12 +51,12 @@ def _get_llm_client():
     return _cached_llm_client
 
 
-def _get_providers():
+def _get_providers(settings=None):
     """Get provider instances based on config. Cached at module level."""
     global _cached_providers
     if _cached_providers is not None:
         return _cached_providers
-    settings = get_settings()
+    settings = settings or get_settings()
     if settings.MOCK_MODE or not settings.has_llm_key:
         from app.providers.mock_provider import MockProvider
         logger.info("Using mock providers (mock mode or no API keys)")
@@ -64,21 +65,29 @@ def _get_providers():
         from app.providers.openalex import OpenAlexProvider
         from app.providers.semantic_scholar import SemanticScholarProvider
         from app.providers.arxiv import ArxivProvider
-        from app.providers.crossref import CrossrefProvider
         _cached_providers = [
             OpenAlexProvider(settings=settings),
             SemanticScholarProvider(settings=settings),
             ArxivProvider(settings=settings),
-            CrossrefProvider(settings=settings),
         ]
     return _cached_providers
 
 
+def _get_evidence_engine():
+    global _cached_evidence_engine
+    if _cached_evidence_engine is None:
+        from app.services.evidence_engine import get_evidence_engine
+
+        _cached_evidence_engine = get_evidence_engine()
+    return _cached_evidence_engine
+
+
 def _reset_cached_instances():
     """Reset cached instances (for testing)."""
-    global _cached_providers, _cached_llm_client
+    global _cached_providers, _cached_llm_client, _cached_evidence_engine
     _cached_providers = None
     _cached_llm_client = None
+    _cached_evidence_engine = None
 
 
 async def _check_availability(providers) -> list:
@@ -174,7 +183,9 @@ Generate a structured search plan in JSON format."""
         state.setdefault("warnings", []).append("Search plan generation failed, using basic fallback query")
 
     mt = state.get("metrics", TaskMetrics())
-    mt.llm_call_count = getattr(mt, "llm_call_count", 0) + 1
+    mt.llm_call_count = (
+        getattr(mt, "llm_call_count", 0) + usage.get("call_count", 1)
+    )
     mt.llm_tokens_used = getattr(mt, "llm_tokens_used", 0) + usage.get("total_tokens", 0)
     sd = getattr(mt, "stage_durations", {})
     sd["plan_queries"] = time.time() - t0
@@ -206,17 +217,18 @@ async def search_sources_node(state: dict) -> dict:
     async def search_provider(provider, query: str):
         try:
             papers = await provider.search(query, year_from=year_from, year_to=year_to)
-            return provider.name, papers, True
+            total_hits = getattr(provider, "last_total_hits", 0)
+            return provider.name, papers, total_hits, True
         except Exception as e:
             logger.error(f"Provider {provider.name} failed for query '{query[:50]}...': {e}")
             state.setdefault("warnings", []).append(f"Provider {provider.name} failed: {str(e)[:200]}")
-            return provider.name, [], False
+            return provider.name, [], 0, False
 
     for query in queries:
         tasks = [search_provider(p, query) for p in available_providers]
         results = await asyncio.gather(*tasks)
 
-        for provider_name, papers, success in results:
+        for provider_name, papers, total_hits, success in results:
             reqs = getattr(mt, "provider_requests", {})
             reqs[provider_name] = reqs.get(provider_name, 0) + 1
             mt.provider_requests = reqs
@@ -224,6 +236,11 @@ async def search_sources_node(state: dict) -> dict:
             results_count = getattr(mt, "provider_results", {})
             results_count[provider_name] = results_count.get(provider_name, 0) + len(papers)
             mt.provider_results = results_count
+
+            # Distinguish total_hits from returned count
+            hits = getattr(mt, "provider_total_hits", {})
+            hits[provider_name] = max(hits.get(provider_name, 0), total_hits)
+            mt.provider_total_hits = hits
 
             if not success:
                 fails = getattr(mt, "provider_failures", {})
@@ -305,7 +322,9 @@ async def rank_and_select_node(state: dict) -> dict:
     )
 
     mt = state.get("metrics", TaskMetrics())
-    mt.llm_call_count = getattr(mt, "llm_call_count", 0) + 1
+    mt.llm_call_count = (
+        getattr(mt, "llm_call_count", 0) + usage.get("call_count", 1)
+    )
     mt.llm_tokens_used = getattr(mt, "llm_tokens_used", 0) + usage.get("total_tokens", 0)
 
     if not selected:
@@ -333,8 +352,146 @@ async def rank_and_select_node(state: dict) -> dict:
     return state
 
 
+async def download_pdfs_node(state: dict) -> dict:
+    """Download PDFs for selected papers from open-access sources."""
+    logger.info(f"[{state['task_id']}] Downloading PDFs")
+    t0 = time.time()
+    settings = get_settings()
+    if not settings.ENABLE_FULL_TEXT or settings.EVIDENCE_BACKEND == "abstract":
+        state["_downloaded_pdfs"] = {}
+        return state
+
+    papers = state.get("selected_papers", [])
+    if not papers:
+        return state
+
+    from app.services.pdf_downloader import PDFDownloader
+    from app.services.pdf_lifecycle import PDFLifecycleManager
+
+    downloader = PDFDownloader(settings=settings)
+    lifecycle = PDFLifecycleManager(settings=settings)
+
+    downloaded = {}
+    for paper in papers:
+        pdf_url = paper.full_text_url or paper.url
+        if not pdf_url:
+            state.setdefault("warnings", []).append(
+                f"No PDF URL for {paper.internal_id}: {paper.title[:60]}"
+            )
+            continue
+
+        sha256, file_path, error = await downloader.download(pdf_url)
+        if sha256 and file_path:
+            downloaded[paper.internal_id] = {
+                "sha256": sha256,
+                "file_path": file_path,
+                "source_url": pdf_url,
+            }
+            # Register in lifecycle DB
+            import os
+            file_size = os.path.getsize(file_path) if os.path.exists(file_path) else 0
+            from app.db.database import async_session_factory
+            async with async_session_factory() as session:
+                await lifecycle.register_download(
+                    session=session,
+                    sha256=sha256,
+                    source_url=pdf_url,
+                    file_path=file_path,
+                    file_size_bytes=file_size,
+                    task_id=state["task_id"],
+                    open_access_status="gold" if paper.open_access else "unknown",
+                )
+        else:
+            state.setdefault("warnings", []).append(
+                f"PDF download failed for {paper.internal_id}: {error}"
+            )
+
+    state["_downloaded_pdfs"] = downloaded
+    mt = state.get("metrics", TaskMetrics())
+    sd = getattr(mt, "stage_durations", {})
+    sd["download_pdfs"] = time.time() - t0
+    mt.stage_durations = sd
+    state["metrics"] = mt
+    state["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+
+    logger.info(
+        f"[{state['task_id']}] Downloaded {len(downloaded)}/{len(papers)} PDFs"
+    )
+    return state
+
+
+async def parse_and_chunk_node(state: dict) -> dict:
+    """Parse downloaded PDFs and create document chunks with FTS5 index."""
+    logger.info(f"[{state['task_id']}] Parsing PDFs and chunking")
+    t0 = time.time()
+    settings = get_settings()
+    if not settings.ENABLE_FULL_TEXT or settings.EVIDENCE_BACKEND == "abstract":
+        state["_parse_results"] = {}
+        state["_all_chunks"] = []
+        return state
+
+    downloaded = state.get("_downloaded_pdfs", {})
+    papers = state.get("selected_papers", [])
+    if not downloaded:
+        state.setdefault("warnings", []).append("No PDFs to parse")
+        return state
+
+    from app.services.pdf_parser import PDFParser
+    from app.services.fts_search import save_chunks, init_fts5
+
+    # Ensure FTS5 is initialized
+    await init_fts5()
+
+    parser = PDFParser(backend=settings.PDF_PARSER_BACKEND)
+    all_chunks = []
+    parse_results = {}
+
+    for paper in papers:
+        pdf_info = downloaded.get(paper.internal_id)
+        if not pdf_info:
+            continue
+
+        try:
+            result = await parser.parse(
+                pdf_path=pdf_info["file_path"],
+                paper=paper,
+                task_id=state["task_id"],
+            )
+            parse_results[paper.internal_id] = result
+
+            if result.status.value == "completed":
+                # Save all chunks to DB
+                await save_chunks(result.parent_chunks)
+                await save_chunks(result.child_chunks)
+                all_chunks.extend(result.parent_chunks)
+                all_chunks.extend(result.child_chunks)
+            else:
+                state.setdefault("warnings", []).append(
+                    f"Parse failed for {paper.internal_id}: {result.error_message}"
+                )
+        except Exception as e:
+            logger.error(f"Parse error for {paper.internal_id}: {e}")
+            state.setdefault("warnings", []).append(
+                f"Parse error for {paper.internal_id}: {str(e)[:200]}"
+            )
+
+    state["_parse_results"] = parse_results
+    state["_all_chunks"] = all_chunks
+    mt = state.get("metrics", TaskMetrics())
+    sd = getattr(mt, "stage_durations", {})
+    sd["parse_and_chunk"] = time.time() - t0
+    mt.stage_durations = sd
+    state["metrics"] = mt
+    state["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+
+    logger.info(
+        f"[{state['task_id']}] Parsed {len(parse_results)} PDFs → {len(all_chunks)} chunks"
+    )
+    return state
+
+
 async def extract_evidence_node(state: dict) -> dict:
-    """Extract structured evidence from selected papers."""
+    """Retrieve and verify evidence through the configured EvidenceEngine."""
     logger.info(f"[{state['task_id']}] Extracting evidence")
     t0 = time.time()
 
@@ -343,85 +500,103 @@ async def extract_evidence_node(state: dict) -> dict:
         state.setdefault("warnings", []).append("No papers for evidence extraction")
         return state
 
-    evidence_list: List[ExtractedEvidence] = []
-    llm = _get_llm_client()
     settings = get_settings()
-
-    paper_summaries = []
-    for paper in papers:
-        has_abstract = bool(paper.abstract)
-        summary = (
-            f"Paper ID: {paper.internal_id}\n"
-            f"Title: {paper.title}\n"
-            f"Year: {paper.publication_year or 'N/A'}\n"
-            f"Venue: {paper.venue or 'N/A'}\n"
-            f"Abstract: {(paper.abstract or 'NO ABSTRACT AVAILABLE')[:500]}\n"
+    engine = _get_evidence_engine()
+    available = await engine.is_available()
+    if not available:
+        state.setdefault("errors", []).append(
+            f"Configured evidence backend '{engine.name}' is unavailable"
         )
-        paper_summaries.append(summary)
+        state["evidence"] = []
+        return state
 
-    paper_list_text = "\n---\n".join(paper_summaries)
-
-    system_prompt = """You are a research assistant extracting structured evidence from academic papers.
-
-For each paper, extract:
-- research_question: What research question does this paper address?
-- method: What methodology is used?
-- dataset_or_participants: What data or participants?
-- key_findings: List the key findings
-- limitations: List limitations
-- relevance_to_user_question: How does this relate to the user's research question?
-- evidence_quote: Verbatim quote from the abstract. If no abstract is available, set this to null.
-
-CRITICAL: The evidence_quote MUST be a verbatim excerpt from the provided abstract. Do NOT fabricate quotes.
-
-Respond with a JSON object with an "evidence" array."""
-
-    user_prompt = f"""User's Research Question: {state['original_question']}
-
-Papers to analyze:
-{paper_list_text}
-
-Return JSON: {{"evidence": [ExtractedEvidence objects]}}"""
-
-    from pydantic import BaseModel
-
-    class EvidenceOutput(BaseModel):
-        evidence: List[ExtractedEvidence]
-
-    result, usage = await llm.generate_structured(
-        system_prompt=system_prompt,
-        user_prompt=user_prompt,
-        output_model=EvidenceOutput,
-        model=settings.model_fast,
-        max_tokens=settings.LLM_FAST_MAX_TOKENS,
-        enable_thinking=settings.LLM_FAST_ENABLE_THINKING,
+    downloaded = state.get("_downloaded_pdfs", {})
+    document_paths = {
+        paper_id: info["file_path"]
+        for paper_id, info in downloaded.items()
+        if info.get("file_path")
+    }
+    ingestion = await engine.ingest(
+        papers,
+        document_paths=document_paths,
+        task_id=state["task_id"],
     )
+    state["evidence_ingestion"] = ingestion
+    state.setdefault("warnings", []).extend(ingestion.warnings)
 
-    mt = state.get("metrics", TaskMetrics())
-    mt.llm_call_count = getattr(mt, "llm_call_count", 0) + 1
-    mt.llm_tokens_used = getattr(mt, "llm_tokens_used", 0) + usage.get("total_tokens", 0)
+    search_plan = state.get("search_plan")
+    sub_questions = [state["original_question"]]
+    if search_plan:
+        for query in search_plan.queries[:3]:
+            candidate = query.rationale.strip() or query.query_string.strip()
+            if candidate and candidate not in sub_questions:
+                sub_questions.append(candidate)
 
-    if result and result.evidence:
-        evidence_list = result.evidence
-    else:
-        logger.warning("Evidence extraction failed, using fallback")
-        for paper in papers:
-            evidence_list.append(ExtractedEvidence(
-                paper_id=paper.internal_id,
-                relevance_to_user_question="Extracted from title and abstract",
-                evidence_quote=paper.abstract[:200] if paper.abstract else None,
-                key_findings=[paper.title] if paper.title else [],
-            ))
-        state.setdefault("warnings", []).append("Evidence extraction LLM call failed, using basic fallback")
+    passages = []
+    seen_passages = set()
+    selected_ids = [paper.internal_id for paper in papers]
+    for index, sub_question in enumerate(sub_questions):
+        retrieved = await engine.retrieve(
+            question=state["original_question"],
+            sub_question=sub_question,
+            paper_ids=selected_ids,
+            limit=settings.EVIDENCE_TOP_K,
+            task_id=state["task_id"],
+        )
+        per_paper: dict[str, int] = {}
+        filtered = []
+        for passage in retrieved:
+            count = per_paper.get(passage.paper_id, 0)
+            if count >= settings.EVIDENCE_MAX_PER_PAPER:
+                continue
+            per_paper[passage.paper_id] = count + 1
+            filtered.append(passage)
+            if passage.passage_id not in seen_passages:
+                seen_passages.add(passage.passage_id)
+                passages.append(passage)
+        extracted = await engine.extract(sub_question, filtered)
+        for item in extracted:
+            item.sub_question_id = f"sq{index + 1}"
+        state.setdefault("_evidence_batches", []).extend(extracted)
+
+    evidence_list = state.pop("_evidence_batches", [])
+    state["retrieved_passages"] = passages
 
     state["evidence"] = evidence_list
+    mt = state.get("metrics", TaskMetrics())
     sd = getattr(mt, "stage_durations", {})
     sd["extract_evidence"] = time.time() - t0
     mt.stage_durations = sd
     state["metrics"] = mt
     state["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
 
-    logger.info(f"[{state['task_id']}] Extracted evidence from {len(evidence_list)} papers")
+    logger.info(
+        "[%s] Evidence backend=%s passages=%d evidence=%d",
+        state["task_id"],
+        engine.name,
+        len(passages),
+        len(evidence_list),
+    )
+    return state
+
+
+async def build_claims_node(state: dict) -> dict:
+    """Build report claims only from verified evidence and apply quality gates."""
+    from app.services.claim_evidence import build_claims, evaluate_evidence_quality
+
+    evidence = state.get("evidence", [])
+    claims = build_claims(evidence)
+    quality = evaluate_evidence_quality(
+        evidence,
+        claims,
+        max_unsupported_important_claims=get_settings().MAX_UNSUPPORTED_IMPORTANT_CLAIMS,
+    )
+    state["claims"] = claims
+    state["evidence_quality"] = quality
+    if not quality.passed:
+        state.setdefault("warnings", []).extend(
+            f"Evidence quality: {issue}" for issue in quality.issues
+        )
     return state
 
 
@@ -440,11 +615,17 @@ async def assess_gaps_node(state: dict) -> dict:
         )
         return state
 
-    evidence_text = "\n".join(
-        f"Paper {ev.paper_id}: {ev.relevance_to_user_question or 'N/A'}\n"
-        f"  Findings: {'; '.join(ev.key_findings[:3]) if ev.key_findings else 'N/A'}"
-        for ev in evidence
-    )
+    evidence_by_paper = {}
+    for ev in evidence:
+        if ev.paper_id in evidence_by_paper:
+            continue
+        finding = "; ".join(ev.key_findings[:2]) if ev.key_findings else "N/A"
+        evidence_by_paper[ev.paper_id] = (
+            f"Paper {ev.paper_id}: "
+            f"{(ev.relevance_to_user_question or 'N/A')[:160]}\n"
+            f"  Findings: {finding[:320]}"
+        )
+    evidence_text = "\n".join(list(evidence_by_paper.values())[:12])
 
     llm = _get_llm_client()
 
@@ -531,15 +712,16 @@ async def supplementary_search_node(state: dict) -> dict:
     async def search_provider(provider, query: str):
         try:
             papers = await provider.search(query, year_from=year_from, year_to=year_to)
-            return provider.name, papers
+            total_hits = getattr(provider, "last_total_hits", 0)
+            return provider.name, papers, total_hits
         except Exception as e:
             logger.error(f"Provider {provider.name} failed: {e}")
-            return provider.name, []
+            return provider.name, [], 0
 
     for query in state["queries"]:
         tasks = [search_provider(p, query) for p in available_providers]
         results = await asyncio.gather(*tasks)
-        for provider_name, papers in results:
+        for provider_name, papers, total_hits in results:
             reqs = getattr(mt, "provider_requests", {})
             reqs[provider_name] = reqs.get(provider_name, 0) + 1
             mt.provider_requests = reqs
@@ -547,6 +729,10 @@ async def supplementary_search_node(state: dict) -> dict:
             res = getattr(mt, "provider_results", {})
             res[provider_name] = res.get(provider_name, 0) + len(papers)
             mt.provider_results = res
+
+            hits = getattr(mt, "provider_total_hits", {})
+            hits[provider_name] = max(hits.get(provider_name, 0), total_hits)
+            mt.provider_total_hits = hits
 
             for p in papers:
                 p.search_round = state.get("current_round", 2)
@@ -570,6 +756,7 @@ async def synthesize_report_node(state: dict) -> dict:
 
     papers = state.get("selected_papers", [])
     evidence = state.get("evidence", [])
+    claims = state.get("claims", [])
     gap_analysis = state.get("gap_analysis")
     settings = get_settings()
 
@@ -578,29 +765,57 @@ async def synthesize_report_node(state: dict) -> dict:
         state.setdefault("warnings", []).append("No papers available for report generation")
         return state
 
-    # Safeguard for 8K context: limit papers in prompt and truncate abstracts.
-    # At 4096 completion tokens, ~4000 tokens remain for the prompt.
-    # Each paper summary ~150-250 tokens; 12 papers ≈ 2400 prompt tokens.
+    # Safeguard for 8K context: report generation receives verified claims only.
     MAX_PAPERS_IN_PROMPT = 12
-    ABSTRACT_CHARS = 200
 
-    papers_for_report = papers[:MAX_PAPERS_IN_PROMPT]
-    if len(papers) > MAX_PAPERS_IN_PROMPT:
+    supported_paper_ids = {
+        paper_id
+        for claim in claims
+        if claim.support_status == "supported"
+        for paper_id in claim.paper_ids
+    }
+    eligible_papers = [
+        paper for paper in papers if paper.internal_id in supported_paper_ids
+    ]
+    papers_for_report = eligible_papers[:MAX_PAPERS_IN_PROMPT]
+    if not papers_for_report:
+        state["report"] = _build_fallback_report(state)
+        state["report_paper_ids"] = [
+            paper.internal_id for paper in papers[:MAX_PAPERS_IN_PROMPT]
+        ]
         state.setdefault("warnings", []).append(
-            f"Truncated papers from {len(papers)} to {MAX_PAPERS_IN_PROMPT} for report prompt (8K context budget)"
+            "No verified claims available; generated fallback report"
+        )
+        return state
+    state["report_paper_ids"] = [
+        paper.internal_id for paper in papers_for_report
+    ]
+    if len(eligible_papers) > MAX_PAPERS_IN_PROMPT:
+        state.setdefault("warnings", []).append(
+            f"Truncated supported papers from {len(eligible_papers)} to {MAX_PAPERS_IN_PROMPT} for report prompt"
         )
 
     paper_summaries = []
     for i, paper in enumerate(papers_for_report):
-        ev = next((e for e in evidence if e.paper_id == paper.internal_id), None)
-        findings = "; ".join(ev.key_findings[:2]) if ev and ev.key_findings else "N/A"
-        abstract_text = (paper.abstract or "N/A")
-        if len(abstract_text) > ABSTRACT_CHARS:
-            abstract_text = abstract_text[:ABSTRACT_CHARS] + "..."
+        paper_claims = [
+            claim for claim in claims if paper.internal_id in claim.paper_ids
+        ][:3]
+        claim_text = "\n".join(
+            f"    - Claim {claim.claim_id}: {claim.claim_text}"
+            for claim in paper_claims
+        ) or "    - No verified claim available"
+        source_locations = []
+        for ev in evidence:
+            if ev.paper_id != paper.internal_id:
+                continue
+            location = ev.section_title or "Abstract"
+            if ev.page_start:
+                location += f", p.{ev.page_start}"
+            source_locations.append(location)
         summary = (
             f"[P{i + 1}] {paper.title} ({paper.publication_year or 'n.d.'})\n"
-            f"    Abstract: {abstract_text}\n"
-            f"    Key findings: {findings}\n"
+            f"    Verified claims:\n{claim_text}\n"
+            f"    Source locations: {', '.join(source_locations[:3]) or 'N/A'}\n"
         )
         paper_summaries.append(summary)
 
@@ -621,8 +836,9 @@ Requirements:
 1. Write in Chinese (Simplified, zh-CN)
 2. Structure the report with clear sections
 3. Use [P1], [P2], etc. for in-text citations - ONLY cite papers provided to you
-4. NEVER fabricate references, findings, or data not present in the provided materials
+4. NEVER add factual claims, references, findings, or data not present in the verified claims
 5. Be honest about evidence strength and gaps
+6. If a requested aspect has no verified claim, state that evidence is insufficient
 
 Sections:
 - 研究问题 (Research Question)
@@ -640,7 +856,7 @@ CRITICAL: Only cite papers from the provided list. Each [P#] must correspond to 
 Search rounds: {state.get('current_round', 0) + 1}
 Papers selected: {len(papers)}
 
-Papers:
+Papers and verified claims:
 {paper_list_text}
 
 Evidence Gaps:
@@ -687,7 +903,13 @@ Generate a comprehensive Chinese research report. Cite papers using [P#] markers
 
 def _build_fallback_report(state: dict) -> str:
     """Build a basic report without LLM."""
-    papers = state.get("selected_papers", [])
+    papers_by_id = {
+        paper.internal_id: paper for paper in state.get("selected_papers", [])
+    }
+    report_ids = state.get("report_paper_ids", [])
+    papers = [papers_by_id[paper_id] for paper_id in report_ids if paper_id in papers_by_id]
+    if not papers:
+        papers = state.get("selected_papers", [])
     evidence = state.get("evidence", [])
     gap_analysis = state.get("gap_analysis")
 
@@ -731,7 +953,17 @@ async def validate_citations_node(state: dict) -> dict:
     t0 = time.time()
 
     report = state.get("report", "")
-    papers = state.get("selected_papers", [])
+    papers_by_id = {
+        paper.internal_id: paper for paper in state.get("selected_papers", [])
+    }
+    report_ids = state.get("report_paper_ids", [])
+    papers = [
+        papers_by_id[paper_id]
+        for paper_id in report_ids
+        if paper_id in papers_by_id
+    ]
+    if not papers:
+        papers = state.get("selected_papers", [])
 
     validation = validate_citations(report, papers)
 
@@ -781,7 +1013,7 @@ def should_supplement(state: dict) -> str:
         max_rounds = state.get("max_rounds", 3)
         if supp_done < max_rounds - 1:
             return "supplementary_search"
-    return "synthesize_report"
+    return "build_claims"
 
 
 # ---- Build the graph ----
@@ -796,9 +1028,12 @@ def build_research_graph() -> StateGraph:
     workflow.add_node("search_sources", search_sources_node)
     workflow.add_node("normalize_and_deduplicate", normalize_and_deduplicate_node)
     workflow.add_node("rank_and_select", rank_and_select_node)
+    workflow.add_node("download_pdfs", download_pdfs_node)
+    workflow.add_node("parse_and_chunk", parse_and_chunk_node)
     workflow.add_node("extract_evidence", extract_evidence_node)
     workflow.add_node("assess_gaps", assess_gaps_node)
     workflow.add_node("supplementary_search", supplementary_search_node)
+    workflow.add_node("build_claims", build_claims_node)
     workflow.add_node("synthesize_report", synthesize_report_node)
     workflow.add_node("validate_citations", validate_citations_node)
     workflow.add_node("finalize", finalize_node)
@@ -809,7 +1044,9 @@ def build_research_graph() -> StateGraph:
     workflow.add_edge("plan_queries", "search_sources")
     workflow.add_edge("search_sources", "normalize_and_deduplicate")
     workflow.add_edge("normalize_and_deduplicate", "rank_and_select")
-    workflow.add_edge("rank_and_select", "extract_evidence")
+    workflow.add_edge("rank_and_select", "download_pdfs")
+    workflow.add_edge("download_pdfs", "parse_and_chunk")
+    workflow.add_edge("parse_and_chunk", "extract_evidence")
     workflow.add_edge("extract_evidence", "assess_gaps")
 
     # Conditional branching
@@ -818,7 +1055,7 @@ def build_research_graph() -> StateGraph:
         should_supplement,
         {
             "supplementary_search": "supplementary_search",
-            "synthesize_report": "synthesize_report",
+            "build_claims": "build_claims",
         },
     )
 
@@ -826,6 +1063,7 @@ def build_research_graph() -> StateGraph:
     workflow.add_edge("supplementary_search", "rank_and_select")
 
     # Final steps
+    workflow.add_edge("build_claims", "synthesize_report")
     workflow.add_edge("synthesize_report", "validate_citations")
     workflow.add_edge("validate_citations", "finalize")
     workflow.add_edge("finalize", END)
@@ -849,6 +1087,11 @@ async def run_research(state: dict) -> dict:
         Final state dict with report, papers, evidence, etc.
     """
     _reset_cached_instances()
+
+    # Ensure DB tables + FTS5 exist (needed for PDF cache, chunks)
+    from app.db.database import init_db
+    await init_db()
+
     graph = build_research_graph()
 
     config = {"configurable": {"thread_id": state["task_id"]}}

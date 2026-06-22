@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import get_settings
@@ -31,11 +32,57 @@ async def get_session() -> AsyncSession:
 
 
 async def init_db() -> None:
-    """Create all tables."""
+    """Create all tables and FTS5 index."""
     from app.db.models import Base
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        if database_url.startswith("sqlite"):
+            await _ensure_sqlite_columns(conn)
+
+    # Initialize FTS5 virtual table
+    try:
+        from app.services.fts_search import init_fts5
+        await init_fts5()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"FTS5 init failed (non-fatal): {e}")
+
+
+async def _ensure_sqlite_columns(conn) -> None:
+    """Small additive migration shim for development SQLite databases."""
+    required = {
+        "tasks": {
+            "retrieved_passages_json": "TEXT",
+            "claims_json": "TEXT",
+            "evidence_quality_json": "TEXT",
+            "report_paper_ids_json": "TEXT",
+        },
+        "evidence": {
+            "evidence_id": "VARCHAR(20)",
+            "passage_id": "VARCHAR(100)",
+            "sub_question_id": "VARCHAR(30)",
+            "chunk_id": "VARCHAR(20)",
+            "section_title": "TEXT",
+            "page_start": "INTEGER",
+            "page_end": "INTEGER",
+            "source_url": "TEXT",
+            "evidence_level": "VARCHAR(20)",
+            "stance": "VARCHAR(20)",
+            "evidence_type": "VARCHAR(30)",
+            "verification_status": "VARCHAR(20)",
+            "verification_reason": "TEXT",
+            "confidence": "FLOAT",
+        },
+    }
+    for table, columns in required.items():
+        rows = await conn.execute(text(f"PRAGMA table_info({table})"))
+        existing = {row[1] for row in rows.fetchall()}
+        for column, ddl_type in columns.items():
+            if column not in existing:
+                await conn.execute(
+                    text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl_type}")
+                )
 
 
 async def close_db() -> None:

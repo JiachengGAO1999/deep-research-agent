@@ -1,0 +1,167 @@
+{
+  "cases": [
+    {
+      "case_id": "cs_llm_multiturn",
+      "paper_recall_at_k": null,
+      "concept_coverage": 1.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "cs_rag_hallucination",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "cs_small_models_reasoning",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "cs_long_context",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "cs_llm_agents",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "bio_crispr_offtarget",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "bio_spatial_transcriptomics",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "bio_microbiome_depression",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "med_glp1_cardiovascular",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "med_long_covid",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "med_ai_radiology",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "neuro_sleep_memory",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "neuro_psychedelic_depression",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "physics_perovskite_stability",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.3333333333333333,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "physics_quantum_error",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "climate_cdr",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "climate_heat_mortality",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "social_remote_work",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "education_tutoring",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    },
+    {
+      "case_id": "zh_llm_science",
+      "paper_recall_at_k": null,
+      "concept_coverage": 0.0,
+      "citation_integrity": true,
+      "selected_paper_count": 8,
+      "verified_evidence_count": 32
+    }
+  ],
+  "mean_paper_recall_at_k": null,
+  "mean_concept_coverage": 0.06666666666666667,
+  "citation_integrity_rate": 1.0
+}

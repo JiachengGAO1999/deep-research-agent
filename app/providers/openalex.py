@@ -11,6 +11,7 @@ import httpx
 from app.core.config import get_settings
 from app.models.paper import Paper, PaperSource, AuthorInfo
 from app.providers.base import BaseProvider
+from app.providers.query_compiler import compile_query
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class OpenAlexProvider(BaseProvider):
         self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None
     ) -> list[Paper]:
         """Search OpenAlex works."""
+        query = compile_query(self.name, query)
         params: dict = {
             "search": query,
             "per_page": min(self._max_results, 50),
@@ -65,6 +67,9 @@ class OpenAlexProvider(BaseProvider):
                 f"{self._base_url}/works", params=params, headers=headers
             )
             data = response.json()
+            meta = data.get("meta", {})
+            total_hits = meta.get("count", 0)
+            self.last_total_hits = total_hits
             papers = []
             for work in data.get("results", []):
                 try:
@@ -72,7 +77,10 @@ class OpenAlexProvider(BaseProvider):
                     papers.append(paper)
                 except Exception as e:
                     logger.warning(f"{self.name}: failed to normalize work: {e}")
-            logger.info(f"{self.name}: found {len(papers)} results for query '{query[:60]}...'")
+            logger.info(
+                f"{self.name}: returned {len(papers)} papers "
+                f"(total available: {total_hits}) for query '{query[:60]}...'"
+            )
             return papers
         except Exception as e:
             logger.error(f"{self.name}: search failed: {e}")

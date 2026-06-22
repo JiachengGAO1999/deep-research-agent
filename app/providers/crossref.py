@@ -7,6 +7,7 @@ from typing import Optional
 
 from app.models.paper import Paper, PaperSource, AuthorInfo
 from app.providers.base import BaseProvider
+from app.providers.query_compiler import compile_query
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ class CrossrefProvider(BaseProvider):
         self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None
     ) -> list[Paper]:
         """Search Crossref works."""
+        query = compile_query(self.name, query)
         params: dict = {
             "query": query,
             "rows": self._max_results,
@@ -57,7 +59,10 @@ class CrossrefProvider(BaseProvider):
                 f"{self._base_url}/works", params=params
             )
             data = response.json()
-            items = data.get("message", {}).get("items", [])
+            msg = data.get("message", {})
+            items = msg.get("items", [])
+            total_hits = msg.get("total-results", 0)
+            self.last_total_hits = total_hits
             papers = []
             for item in items:
                 try:
@@ -65,7 +70,10 @@ class CrossrefProvider(BaseProvider):
                     papers.append(paper)
                 except Exception as e:
                     logger.warning(f"{self.name}: failed to normalize item: {e}")
-            logger.info(f"{self.name}: found {len(papers)} results for query '{query[:60]}...'")
+            logger.info(
+                f"{self.name}: returned {len(papers)} papers "
+                f"(total available: {total_hits}) for query '{query[:60]}...'"
+            )
             return papers
         except Exception as e:
             logger.error(f"{self.name}: search failed: {e}")

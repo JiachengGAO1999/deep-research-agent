@@ -11,7 +11,13 @@ from pydantic import BaseModel, Field
 
 from app.models.paper import Paper
 from app.models.search_plan import SearchPlan
-from app.models.evidence import ExtractedEvidence, GapAnalysis
+from app.models.evidence import (
+    EvidenceQualitySummary,
+    ExtractedEvidence,
+    GapAnalysis,
+    ResearchClaim,
+    RetrievedPassage,
+)
 
 
 class TaskStatus(str, Enum):
@@ -30,6 +36,10 @@ class TaskMetrics(BaseModel):
     # Provider request counts
     provider_requests: Dict[str, int] = Field(default_factory=dict)
     provider_results: Dict[str, int] = Field(default_factory=dict)
+    provider_total_hits: Dict[str, int] = Field(
+        default_factory=dict,
+        description="Total hits reported by each provider API (not just returned count)",
+    )
     # Paper counts
     raw_paper_count: int = 0
     after_dedup_count: int = 0
@@ -101,6 +111,9 @@ class TaskState(BaseModel):
 
     # Extracted evidence
     evidence: List[ExtractedEvidence] = Field(default_factory=list)
+    retrieved_passages: List[RetrievedPassage] = Field(default_factory=list)
+    claims: List[ResearchClaim] = Field(default_factory=list)
+    evidence_quality: Optional[EvidenceQualitySummary] = None
 
     # Gap analysis
     gap_analysis: Optional[GapAnalysis] = None
@@ -112,6 +125,7 @@ class TaskState(BaseModel):
 
     # Final output
     report: Optional[str] = None
+    report_paper_ids: List[str] = Field(default_factory=list)
 
     # Citation validation
     citation_validation: Optional[CitationValidation] = None

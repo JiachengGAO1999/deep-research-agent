@@ -68,6 +68,42 @@ class Settings:
     HTTP_TIMEOUT: int = int(os.getenv("HTTP_TIMEOUT", "30"))
     HTTP_MAX_RETRIES: int = int(os.getenv("HTTP_MAX_RETRIES", "3"))
 
+    # PDF storage and parsing
+    PDF_CACHE_DIR: str = os.getenv("PDF_CACHE_DIR", "./storage/cache/pdf")
+    PDF_CACHE_TTL_DAYS: int = int(os.getenv("PDF_CACHE_TTL_DAYS", "7"))
+    DELETE_PDF_AFTER_PARSE: bool = os.getenv(
+        "DELETE_PDF_AFTER_PARSE", "false"
+    ).lower() in ("1", "true", "yes")
+    PERSIST_PARSED_CHUNKS: bool = os.getenv(
+        "PERSIST_PARSED_CHUNKS", "true"
+    ).lower() in ("1", "true", "yes")
+    PDF_MAX_SIZE_MB: int = int(os.getenv("PDF_MAX_SIZE_MB", "50"))
+    PDF_DOWNLOAD_TIMEOUT: int = int(os.getenv("PDF_DOWNLOAD_TIMEOUT", "60"))
+    ENABLE_FULL_TEXT: bool = os.getenv(
+        "ENABLE_FULL_TEXT", "false"
+    ).lower() in ("1", "true", "yes")
+    PDF_PARSER_BACKEND: str = os.getenv("PDF_PARSER_BACKEND", "pymupdf")
+
+    # Evidence engine
+    EVIDENCE_BACKEND: str = os.getenv("EVIDENCE_BACKEND", "abstract")
+    EVIDENCE_TOP_K: int = int(os.getenv("EVIDENCE_TOP_K", "8"))
+    EVIDENCE_MAX_PER_PAPER: int = int(os.getenv("EVIDENCE_MAX_PER_PAPER", "3"))
+    PAPERQA_INDEX_DIR: str = os.getenv(
+        "PAPERQA_INDEX_DIR", "./storage/paperqa"
+    )
+    PAPERQA_SETTINGS: str = os.getenv("PAPERQA_SETTINGS", "high_quality")
+    PAPERQA_LLM: str = os.getenv("PAPERQA_LLM", "")
+    PAPERQA_SUMMARY_LLM: str = os.getenv("PAPERQA_SUMMARY_LLM", "")
+    PAPERQA_EMBEDDING: str = os.getenv(
+        "PAPERQA_EMBEDDING", "text-embedding-3-small"
+    )
+
+    # Report quality gates
+    MIN_CORE_CLAIM_SUPPORT: int = int(os.getenv("MIN_CORE_CLAIM_SUPPORT", "1"))
+    MAX_UNSUPPORTED_IMPORTANT_CLAIMS: int = int(
+        os.getenv("MAX_UNSUPPORTED_IMPORTANT_CLAIMS", "0")
+    )
+
     # Mock mode (no API keys required)
     MOCK_MODE: bool = os.getenv("MOCK_MODE", "").lower() in ("1", "true", "yes")
 

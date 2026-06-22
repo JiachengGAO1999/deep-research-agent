@@ -1,0 +1,202 @@
+[
+  {
+    "case_id": "cs_llm_multiturn",
+    "question": "How does dialogue history affect reasoning reliability in large language models?",
+    "domain": "computer_science",
+    "year_from": 2020,
+    "expected_concepts": ["multi-turn", "reasoning", "context"],
+    "must_cover": ["effect of turn count", "evaluation methods", "mitigation"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "cs_rag_hallucination",
+    "question": "Which retrieval-augmented generation techniques most consistently reduce factual hallucination?",
+    "domain": "computer_science",
+    "year_from": 2020,
+    "expected_concepts": ["retrieval", "hallucination", "factual"],
+    "must_cover": ["retrieval quality", "citation grounding", "evaluation"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "cs_small_models_reasoning",
+    "question": "What methods improve mathematical reasoning in language models below 10B parameters?",
+    "domain": "computer_science",
+    "year_from": 2021,
+    "expected_concepts": ["mathematical reasoning", "small language model"],
+    "must_cover": ["training", "inference-time methods", "benchmarks"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "cs_long_context",
+    "question": "Does increasing context length reliably improve long-document question answering?",
+    "domain": "computer_science",
+    "year_from": 2020,
+    "expected_concepts": ["long context", "question answering"],
+    "must_cover": ["lost-in-the-middle effects", "retrieval comparison"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "cs_llm_agents",
+    "question": "What evidence supports or contradicts the benefit of multi-agent LLM systems over single-agent systems?",
+    "domain": "computer_science",
+    "year_from": 2022,
+    "expected_concepts": ["multi-agent", "single-agent"],
+    "must_cover": ["task types", "cost", "failure modes"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "bio_crispr_offtarget",
+    "question": "Which approaches best reduce off-target effects in CRISPR-Cas9 genome editing?",
+    "domain": "biology",
+    "year_from": 2015,
+    "expected_concepts": ["CRISPR", "off-target"],
+    "must_cover": ["guide design", "Cas variants", "measurement"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "bio_spatial_transcriptomics",
+    "question": "How do sequencing-based and imaging-based spatial transcriptomics methods differ?",
+    "domain": "biology",
+    "year_from": 2016,
+    "expected_concepts": ["spatial transcriptomics", "sequencing", "imaging"],
+    "must_cover": ["resolution", "throughput", "limitations"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "bio_microbiome_depression",
+    "question": "What is the strength of evidence linking the gut microbiome to major depressive disorder?",
+    "domain": "biology",
+    "year_from": 2015,
+    "expected_concepts": ["gut microbiome", "depression"],
+    "must_cover": ["association", "causality", "interventions"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "med_glp1_cardiovascular",
+    "question": "What cardiovascular outcomes are associated with GLP-1 receptor agonists in adults with obesity?",
+    "domain": "medicine",
+    "year_from": 2015,
+    "expected_concepts": ["GLP-1", "cardiovascular", "obesity"],
+    "must_cover": ["major adverse cardiovascular events", "population", "adverse effects"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "med_long_covid",
+    "question": "Which interventions have randomized evidence for treating long COVID symptoms?",
+    "domain": "medicine",
+    "year_from": 2020,
+    "expected_concepts": ["long COVID", "randomized"],
+    "must_cover": ["symptom categories", "trial quality", "uncertainty"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "med_ai_radiology",
+    "question": "Do prospective clinical studies show that AI assistance improves radiologist diagnostic performance?",
+    "domain": "medicine",
+    "year_from": 2018,
+    "expected_concepts": ["radiology", "AI assistance", "prospective"],
+    "must_cover": ["sensitivity", "specificity", "workflow"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "neuro_sleep_memory",
+    "question": "How does sleep deprivation affect memory consolidation in adults?",
+    "domain": "neuroscience",
+    "year_from": 2000,
+    "expected_concepts": ["sleep deprivation", "memory consolidation"],
+    "must_cover": ["memory types", "sleep stages", "effect size"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "neuro_psychedelic_depression",
+    "question": "What mechanisms and clinical evidence are proposed for psilocybin in treatment-resistant depression?",
+    "domain": "neuroscience",
+    "year_from": 2010,
+    "expected_concepts": ["psilocybin", "treatment-resistant depression"],
+    "must_cover": ["clinical outcomes", "mechanisms", "safety"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "physics_perovskite_stability",
+    "question": "Which degradation mechanisms limit the operational stability of perovskite solar cells?",
+    "domain": "physics",
+    "year_from": 2012,
+    "expected_concepts": ["perovskite solar cell", "stability", "degradation"],
+    "must_cover": ["moisture", "thermal", "ion migration"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "physics_quantum_error",
+    "question": "What experimental evidence supports practical quantum error correction below threshold?",
+    "domain": "physics",
+    "year_from": 2015,
+    "expected_concepts": ["quantum error correction", "threshold"],
+    "must_cover": ["logical error rate", "code distance", "hardware"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "climate_cdr",
+    "question": "How do direct air capture and enhanced weathering compare as carbon dioxide removal strategies?",
+    "domain": "climate_science",
+    "year_from": 2010,
+    "expected_concepts": ["direct air capture", "enhanced weathering"],
+    "must_cover": ["cost", "energy", "permanence", "scale"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "climate_heat_mortality",
+    "question": "What evidence links urban heat adaptation measures to reductions in heat-related mortality?",
+    "domain": "climate_science",
+    "year_from": 2000,
+    "expected_concepts": ["urban heat", "mortality", "adaptation"],
+    "must_cover": ["cooling centers", "greening", "early warning"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "social_remote_work",
+    "question": "What causal evidence exists on remote work's effects on productivity and collaboration?",
+    "domain": "social_science",
+    "year_from": 2010,
+    "expected_concepts": ["remote work", "productivity", "collaboration"],
+    "must_cover": ["causal design", "occupation differences", "long-term effects"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "education_tutoring",
+    "question": "How effective is high-dosage tutoring for improving mathematics achievement?",
+    "domain": "education",
+    "year_from": 2000,
+    "expected_concepts": ["high-dosage tutoring", "mathematics achievement"],
+    "must_cover": ["effect size", "delivery model", "equity"],
+    "gold_papers": [],
+    "status": "seed"
+  },
+  {
+    "case_id": "zh_llm_science",
+    "question": "大语言模型在科学文献综述中最常见的引用错误有哪些，哪些方法能够降低这些错误？",
+    "domain": "computer_science",
+    "year_from": 2020,
+    "expected_concepts": ["引用", "文献综述"],
+    "must_cover": ["虚构引用", "错误归因", "检索增强"],
+    "gold_papers": [],
+    "status": "seed"
+  }
+]

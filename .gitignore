@@ -24,6 +24,10 @@ storage/*.db
 .DS_Store
 Thumbs.db
 
+# PDF cache
+storage/cache/
+*.pdf
+
 # Testing
 .pytest_cache/
 htmlcov/

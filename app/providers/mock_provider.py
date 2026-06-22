@@ -263,5 +263,9 @@ class MockProvider(BaseProvider):
             # Return all if nothing matches (for broader coverage)
             results = self._papers[:5]
 
-        logger.info(f"{self.name}: found {len(results)} results for query '{query[:60]}...'")
+        self.last_total_hits = len(self._papers)
+        logger.info(
+            f"{self.name}: returned {len(results)} papers "
+            f"(total available: {self.last_total_hits}) for query '{query[:60]}...'"
+        )
         return results
