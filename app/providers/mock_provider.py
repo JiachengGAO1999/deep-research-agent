@@ -237,7 +237,8 @@ class MockProvider(BaseProvider):
         return True
 
     async def search(
-        self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None
+        self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None,
+        search_intent=None,
     ) -> list[Paper]:
         """Return mock papers filtered by query and year."""
         query_lower = query.lower()

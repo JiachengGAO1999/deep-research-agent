@@ -88,7 +88,8 @@ class BaseProvider(ABC):
 
     @abstractmethod
     async def search(
-        self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None
+        self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None,
+        search_intent=None,
     ) -> list[Paper]:
         """Execute a search and return normalized Paper objects."""
         ...

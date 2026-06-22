@@ -169,50 +169,61 @@ async def plan_queries_node(state: dict) -> dict:
     llm = _get_llm_client()
     settings = get_settings()
 
-    system_prompt = """You are an expert academic research strategist. Given a research question, create a structured search plan.
+    system_prompt = """You are an expert academic research strategist. Given a research question, produce a search plan and a detailed search intent.
 
-Analyze the research question and produce:
-1. A refined research topic statement
-2. Core concepts (3-6)
-3. Synonyms for each concept
-4. 3-6 structured search queries (in English, optimized for academic search APIs)
-5. Appropriate year range if applicable
-6. Relevant academic domains
-7. Inclusion and exclusion criteria
+The SearchPlan should include:
+1. Research topic, core concepts (3-6), synonyms for each concept
+2. Inclusion and exclusion criteria
+3. Relevant academic domains (e.g., cs.CL, cs.AI, cs.LG, cs.HC)
 
-Each query should be a concise string suitable for API search (not natural language questions).
-Focus on Boolean-like keyword combinations that work well with academic search engines."""
+The SearchIntent is the critical part for high recall. It should include:
+- 3-5 sub-questions that decompose the main question
+- 3-5 query families, each targeting a sub-question
+- Each family has broad queries (high recall), narrow queries (precise phrases), and synonym variants
+- Use DIVERSE terminology across families. If one uses "dialogue history", another must use "conversation history", "multi-turn interaction", "chat context", etc. Gold papers may use any synonym — diversity is critical.
+
+IMPORTANT: Generate >= 6 total query strings across all families. More queries = better recall.
+
+Respond with JSON: {"search_plan": {...}, "search_intent": {...}}"""
 
     user_prompt = f"""Research Question: {state['original_question']}
 
 Year constraints: from {state.get('year_from') or 'any'} to {state.get('year_to') or 'any'}
 
-Generate a structured search plan in JSON format."""
+Generate a SearchPlan and a SearchIntent with diverse query families. Return valid JSON."""
 
     from app.models.search_plan import SearchPlan as SP
+    from app.models.search_intent import SearchIntent as SI
+    from pydantic import BaseModel
+
+    class PlanAndIntentOutput(BaseModel):
+        search_plan: SP
+        search_intent: SI
+
     result, usage = await llm.generate_structured(
         system_prompt=system_prompt,
         user_prompt=user_prompt,
-        output_model=SP,
+        output_model=PlanAndIntentOutput,
         model=settings.model_fast,
         max_tokens=settings.LLM_FAST_MAX_TOKENS,
         enable_thinking=settings.LLM_FAST_ENABLE_THINKING,
     )
 
     if result:
-        state["search_plan"] = result
-        queries = result.all_query_strings()
-        concept_query = " ".join(result.core_concepts[:5]).strip()
-        evaluation_query = (
-            f"{concept_query} benchmark empirical evaluation".strip()
-        )
+        state["search_plan"] = result.search_plan
+        state["search_intent"] = result.search_intent
+        # Flatten all query families into diverse query strings
+        queries = result.search_intent.all_query_strings()
+        if not queries:
+            queries = result.search_plan.all_query_strings()
+        # Augment with concept query + evaluation query
+        concept_query = " ".join(result.search_plan.core_concepts[:5]).strip()
+        evaluation_query = f"{concept_query} benchmark empirical evaluation".strip()
         for query in (concept_query, evaluation_query):
             if query and query not in queries:
                 queries.append(query)
-        depth_limits = {"quick": 2, "standard": 5, "deep": 8}
-        query_limit = depth_limits.get(
-            state.get("research_depth", "standard"), 5
-        )
+        depth_limits = {"quick": 2, "standard": 6, "deep": 10}
+        query_limit = depth_limits.get(state.get("research_depth", "standard"), 6)
         state["queries"] = queries[:query_limit]
     else:
         logger.warning("Search plan generation failed, using fallback")
@@ -254,6 +265,7 @@ async def search_sources_node(state: dict) -> dict:
         return state
 
     queries = state.get("queries", [])
+    search_intent = state.get("search_intent")
     year_from = state.get("year_from")
     year_to = state.get("year_to")
     mt = state.get("metrics", TaskMetrics())
@@ -262,7 +274,11 @@ async def search_sources_node(state: dict) -> dict:
 
     async def search_provider(provider, query: str):
         try:
-            papers = await provider.search(query, year_from=year_from, year_to=year_to)
+            # Pass SearchIntent for provider-specific query compilation
+            papers = await provider.search(
+                query, year_from=year_from, year_to=year_to,
+                search_intent=search_intent,
+            )
             total_hits = getattr(provider, "last_total_hits", 0)
             return provider.name, papers, total_hits, True
         except Exception as e:
@@ -776,7 +792,10 @@ async def supplementary_search_node(state: dict) -> dict:
 
     async def search_provider(provider, query: str):
         try:
-            papers = await provider.search(query, year_from=year_from, year_to=year_to)
+            papers = await provider.search(
+                query, year_from=year_from, year_to=year_to,
+                search_intent=state.get("search_intent"),
+            )
             total_hits = getattr(provider, "last_total_hits", 0)
             return provider.name, papers, total_hits
         except Exception as e:

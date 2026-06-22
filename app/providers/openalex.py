@@ -37,10 +37,11 @@ class OpenAlexProvider(BaseProvider):
             return False
 
     async def search(
-        self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None
+        self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None,
+        search_intent=None,
     ) -> list[Paper]:
         """Search OpenAlex works."""
-        query = compile_query(self.name, query)
+        query = compile_query(self.name, query, search_intent=search_intent)
         params: dict = {
             "search": query,
             "per_page": min(self._max_results, 50),

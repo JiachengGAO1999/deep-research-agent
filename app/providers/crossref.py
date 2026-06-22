@@ -34,10 +34,11 @@ class CrossrefProvider(BaseProvider):
             return False
 
     async def search(
-        self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None
+        self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None,
+        search_intent=None,
     ) -> list[Paper]:
         """Search Crossref works."""
-        query = compile_query(self.name, query)
+        query = compile_query(self.name, query, search_intent=search_intent)
         params: dict = {
             "query": query,
             "rows": self._max_results,

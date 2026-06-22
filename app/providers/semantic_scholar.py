@@ -66,10 +66,11 @@ class SemanticScholarProvider(BaseProvider):
         return headers
 
     async def search(
-        self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None
+        self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None,
+        search_intent=None,
     ) -> list[Paper]:
         """Search Semantic Scholar papers."""
-        query = compile_query(self.name, query)
+        query = compile_query(self.name, query, search_intent=search_intent)
         params: dict = {
             "query": query,
             "limit": min(self._max_results, 50),

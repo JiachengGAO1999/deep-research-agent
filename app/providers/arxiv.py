@@ -42,17 +42,13 @@ class ArxivProvider(BaseProvider):
             return False
 
     async def search(
-        self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None
+        self, query: str, year_from: Optional[int] = None, year_to: Optional[int] = None,
+        search_intent=None,
     ) -> list[Paper]:
         """Search arXiv for papers."""
-        query = compile_query(self.name, query)
-        # Build arXiv query (AND between terms)
-        search_terms = " AND ".join(f'all:"{t}"' for t in query.split() if t)
-        if not search_terms:
-            search_terms = f'all:"{query}"'
-
+        search_query = compile_query(self.name, query, search_intent=search_intent)
         params = {
-            "search_query": search_terms,
+            "search_query": search_query,
             "max_results": str(self._max_results),
             "sortBy": "relevance",
         }
