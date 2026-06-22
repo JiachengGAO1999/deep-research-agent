@@ -47,6 +47,8 @@ class TaskMetrics(BaseModel):
     # LLM usage
     llm_call_count: int = 0
     llm_tokens_used: int = 0
+    estimated_cost_usd: float = 0.0
+    model_calls: List[Dict] = Field(default_factory=list)
     # Retries
     provider_retries: Dict[str, int] = Field(default_factory=dict)
     provider_failures: Dict[str, int] = Field(default_factory=dict)
@@ -91,9 +93,12 @@ class TaskState(BaseModel):
     year_to: Optional[int] = None
     max_papers: int = 12
     research_depth: str = "standard"
-    evidence_backend: str = "abstract"
-    enable_full_text: bool = False
+    retrieval_profile: str = "quality"
+    evidence_backend: str = "hybrid"
+    enable_full_text: bool = True
+    full_text_required: bool = False
     report_language: str = "zh-CN"
+    max_cost_usd: Optional[float] = None
 
     # Current round tracking
     current_round: int = 0

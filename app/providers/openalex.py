@@ -26,7 +26,10 @@ class OpenAlexProvider(BaseProvider):
         self._base_url = self._settings.OPENALEX_BASE_URL
         self._api_key = self._settings.OPENALEX_API_KEY
         self._mailto = self._settings.OPENALEX_MAILTO
-        self._max_results = self._settings.MAX_RESULTS_PER_QUERY_OPENALEX
+        self._max_results = min(
+            self._settings.MAX_RESULTS_PER_QUERY_OPENALEX,
+            self._settings.MAX_PAPERS_PER_SOURCE,
+        )
 
     async def is_available(self) -> bool:
         """OpenAlex is always available (no auth required)."""

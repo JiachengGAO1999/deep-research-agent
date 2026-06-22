@@ -28,7 +28,11 @@ class ArxivProvider(BaseProvider):
     def __init__(self, settings=None):
         super().__init__(settings)
         self._base_url = self._settings.ARXIV_BASE_URL
-        self._max_results = min(self._settings.MAX_RESULTS_PER_QUERY_ARXIV, 30)
+        self._max_results = min(
+            self._settings.MAX_RESULTS_PER_QUERY_ARXIV,
+            self._settings.MAX_PAPERS_PER_SOURCE,
+            30,
+        )
 
     async def is_available(self) -> bool:
         """Check if arXiv API is reachable."""

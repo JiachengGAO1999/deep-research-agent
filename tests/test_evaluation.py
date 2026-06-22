@@ -69,3 +69,43 @@ def test_all_seed_cases_have_multiple_gold_anchors():
     gold = json.loads((root / "evals/gold_annotations.json").read_text())
     assert set(gold["cases"]) == {case["case_id"] for case in questions}
     assert all(len(items) >= 2 for items in gold["cases"].values())
+
+
+def test_layered_passage_and_claim_metrics():
+    dataset = [{
+        "case_id": "layered",
+        "question": "Question",
+        "domain": "test",
+        "gold_papers": [{"paper_id": "p1", "title": "Gold Paper"}],
+        "gold_passages": [{
+            "paper_id": "p1",
+            "text": "hybrid retrieval improves scientific evidence recall",
+            "relevance": 3,
+        }],
+        "gold_claims": [{
+            "text": "hybrid retrieval improves scientific evidence recall"
+        }],
+    }]
+    artifact = {"results": [{
+        "case_id": "layered",
+        "discovery_candidates": [{"internal_id": "p1", "title": "Gold Paper"}],
+        "selected_papers": [{"internal_id": "p1", "title": "Gold Paper"}],
+        "retrieved_passages": [{
+            "paper_id": "p1",
+            "text": "Results show hybrid retrieval improves scientific evidence recall.",
+        }],
+        "claims": [{
+            "claim_text": "Hybrid retrieval improves scientific evidence recall.",
+            "support_status": "supported",
+            "validation_status": "validated",
+        }],
+        "evidence_quality": {"evidence_count": 1, "verified_evidence_count": 1},
+        "citation_validation": {"is_valid": True},
+        "report": "",
+    }]}
+    summary = score(dataset, artifact)
+    case = summary.cases[0]
+    assert case.discovery_recall_at_50 == 1.0
+    assert case.passage_recall_at_10 == 1.0
+    assert case.passage_ndcg_at_10 == 1.0
+    assert case.claim_entailment_precision == 1.0

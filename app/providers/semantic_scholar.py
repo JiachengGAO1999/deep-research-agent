@@ -35,7 +35,10 @@ class SemanticScholarProvider(BaseProvider):
         super().__init__(settings)
         self._base_url = self._settings.SEMANTIC_SCHOLAR_BASE_URL
         self._api_key = self._settings.SEMANTIC_SCHOLAR_API_KEY
-        self._max_results = self._settings.MAX_RESULTS_PER_QUERY_S2
+        self._max_results = min(
+            self._settings.MAX_RESULTS_PER_QUERY_S2,
+            self._settings.MAX_PAPERS_PER_SOURCE,
+        )
 
     async def _rate_limit(self) -> None:
         """Enforce S2's 1 req/s global limit across all instances."""

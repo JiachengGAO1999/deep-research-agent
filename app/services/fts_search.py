@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import engine, async_session_factory
 from app.db.models import DocumentChunkRecord
+from app.models.document import DocumentChunk
 
 logger = logging.getLogger(__name__)
 
@@ -238,6 +239,42 @@ async def search_by_keywords(
     if not fts_query:
         return []
     return await search_chunks(task_id, fts_query, paper_ids, limit)
+
+
+async def list_chunks(
+    task_id: str,
+    paper_ids: Optional[List[str]] = None,
+) -> List[DocumentChunk]:
+    """Load persisted chunks for dense retrieval without leaking ORM records."""
+    from sqlalchemy import select
+
+    stmt = select(DocumentChunkRecord).where(
+        DocumentChunkRecord.task_id == task_id
+    )
+    if paper_ids:
+        stmt = stmt.where(DocumentChunkRecord.paper_id.in_(paper_ids))
+    async with async_session_factory() as session:
+        rows = list((await session.execute(stmt)).scalars().all())
+    return [
+        DocumentChunk(
+            chunk_id=row.chunk_id,
+            paper_id=row.paper_id,
+            task_id=row.task_id,
+            chunk_index=row.chunk_index,
+            section_title=row.section_title,
+            page_start=row.page_start,
+            page_end=row.page_end,
+            text=row.text,
+            parent_chunk_id=row.parent_chunk_id,
+            child_chunk_ids=json.loads(row.child_chunk_ids_json or "[]"),
+            source_url=row.source_url,
+            pdf_sha256=row.pdf_sha256,
+            parser_name=row.parser_name,
+            parser_version=row.parser_version,
+            created_at=row.created_at,
+        )
+        for row in rows
+    ]
 
 
 async def save_chunks(chunks: list) -> None:

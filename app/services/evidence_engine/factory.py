@@ -6,6 +6,7 @@ from app.core.config import get_settings
 from app.services.evidence_engine.abstract import AbstractEvidenceEngine
 from app.services.evidence_engine.base import EvidenceEngine
 from app.services.evidence_engine.fts import FTSEvidenceEngine
+from app.services.evidence_engine.hybrid import HybridEvidenceEngine
 from app.services.evidence_engine.paperqa import PaperQAEvidenceEngine
 
 
@@ -15,8 +16,10 @@ def get_evidence_engine(name: str | None = None) -> EvidenceEngine:
         return AbstractEvidenceEngine()
     if backend == "fts":
         return FTSEvidenceEngine()
+    if backend == "hybrid":
+        return HybridEvidenceEngine(settings=get_settings())
     if backend == "paperqa":
         return PaperQAEvidenceEngine(settings=get_settings())
     raise ValueError(
-        f"Unknown EVIDENCE_BACKEND={backend!r}; expected abstract, fts, or paperqa"
+        f"Unknown EVIDENCE_BACKEND={backend!r}; expected abstract, fts, hybrid, or paperqa"
     )

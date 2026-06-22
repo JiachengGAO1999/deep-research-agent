@@ -64,6 +64,39 @@ def get_runtime_progress(task_id: str) -> dict:
     return _runtime_progress.get(task_id, {})
 
 
+def _record_model_usage(state: dict, usage: dict, purpose: str) -> None:
+    if not usage:
+        return
+    metrics = state.get("metrics", TaskMetrics())
+    metrics.model_calls.append(
+        {
+            "purpose": purpose,
+            "model": usage.get("model", "unknown"),
+            "prompt_tokens": usage.get("prompt_tokens", 0),
+            "completion_tokens": usage.get("completion_tokens", 0),
+            "total_tokens": usage.get("total_tokens", 0),
+            "latency_seconds": usage.get("latency_seconds"),
+            "input_source": "validated_claims" if purpose == "report" else purpose,
+        }
+    )
+    settings = get_settings()
+    metrics.estimated_cost_usd += (
+        float(usage.get("prompt_tokens", 0) or 0)
+        * settings.LLM_INPUT_COST_PER_1M
+        + float(usage.get("completion_tokens", 0) or 0)
+        * settings.LLM_OUTPUT_COST_PER_1M
+    ) / 1_000_000
+    state["metrics"] = metrics
+
+
+def _budget_exceeded(state: dict) -> bool:
+    budget = state.get("max_cost_usd")
+    if budget is None or budget <= 0:
+        return False
+    metrics = state.get("metrics", TaskMetrics())
+    return metrics.estimated_cost_usd >= budget
+
+
 class ResearchState(Dict):
     """LangGraph state for the research workflow. Uses plain dict for serialization."""
     pass
@@ -202,6 +235,7 @@ Generate a structured search plan with diverse terminology in JSON format."""
         max_tokens=settings.LLM_FAST_MAX_TOKENS,
         enable_thinking=settings.LLM_FAST_ENABLE_THINKING,
     )
+    _record_model_usage(state, usage1, "search_plan")
 
     search_plan = None
     if sp_result:
@@ -256,6 +290,7 @@ Return a valid SearchIntent JSON object."""
         max_tokens=settings.LLM_FAST_MAX_TOKENS,
         enable_thinking=False,  # Force off for structured output
     )
+    _record_model_usage(state, usage2, "search_intent")
 
     if si_result:
         state["search_intent"] = si_result
@@ -312,6 +347,7 @@ async def search_sources_node(state: dict) -> dict:
     mt = state.get("metrics", TaskMetrics())
 
     all_papers: List[Paper] = []
+    ranked_identity_lists: list[list[str]] = []
 
     async def search_provider(provider, query: str):
         try:
@@ -352,9 +388,16 @@ async def search_sources_node(state: dict) -> dict:
 
             for p in papers:
                 p.search_round = state.get("current_round", 1)
+            ranked_identity_lists.append(
+                [
+                    (paper.doi or paper.normalized_title or paper.title).casefold()
+                    for paper in papers
+                ]
+            )
             all_papers.extend(papers)
 
     state["normalized_papers"] = all_papers
+    state["_paper_ranked_identity_lists"] = ranked_identity_lists
     mt.raw_paper_count = len(all_papers)
     sd = getattr(mt, "stage_durations", {})
     sd["search_sources"] = time.time() - t0
@@ -379,9 +422,23 @@ async def normalize_and_deduplicate_node(state: dict) -> dict:
 
     before = len(papers)
     deduped = deduplicate_papers(papers)
+    ranked_lists = state.pop("_paper_ranked_identity_lists", [])
+    if ranked_lists:
+        from app.services.ranking import reciprocal_rank_fusion
+
+        fusion = reciprocal_rank_fusion(ranked_lists)
+        deduped.sort(
+            key=lambda paper: fusion.get(
+                (paper.doi or paper.normalized_title or paper.title).casefold(),
+                0.0,
+            ),
+            reverse=True,
+        )
     after = len(deduped)
 
     state["normalized_papers"] = deduped
+    state["discovery_candidates"] = list(deduped[:50])
+    state.setdefault("retrieval_diagnostics", {})["discovery_count"] = len(deduped)
     mt = state.get("metrics", TaskMetrics())
     mt.after_dedup_count = after
     sd = getattr(mt, "stage_durations", {})
@@ -412,7 +469,24 @@ async def rank_and_select_node(state: dict) -> dict:
         state["selected_papers"] = papers[:settings.MAX_SELECTED_PAPERS]
         return state
 
-    prefiltered = deterministic_prefilter(papers, search_plan)
+    final_count = state.get("max_papers", settings.MAX_SELECTED_PAPERS)
+    candidate_pool_size = max(
+        final_count * settings.CANDIDATE_POOL_MULTIPLIER,
+        settings.MAX_CANDIDATES_FOR_RERANK,
+    )
+    candidate_pool_size = min(candidate_pool_size, settings.MAX_CANDIDATES_AFTER_DEDUP)
+    prefiltered = deterministic_prefilter(
+        papers,
+        search_plan,
+        max_after_prefilter=candidate_pool_size,
+    )
+    state["rerank_candidates"] = list(prefiltered)
+    state.setdefault("retrieval_diagnostics", {}).update(
+        {
+            "rerank_candidate_count": len(prefiltered),
+            "candidate_pool_multiplier": settings.CANDIDATE_POOL_MULTIPLIER,
+        }
+    )
 
     llm = _get_llm_client()
     selected, usage = await llm_rank_papers(
@@ -428,6 +502,7 @@ async def rank_and_select_node(state: dict) -> dict:
         max_tokens=settings.LLM_FAST_MAX_TOKENS,
         enable_thinking=settings.LLM_FAST_ENABLE_THINKING,
     )
+    _record_model_usage(state, usage, "paper_rerank")
 
     mt = state.get("metrics", TaskMetrics())
     mt.llm_call_count = (
@@ -449,6 +524,7 @@ async def rank_and_select_node(state: dict) -> dict:
         state["new_papers_this_round"] = len(selected)
 
     state["selected_papers"] = selected
+    state.setdefault("retrieval_diagnostics", {})["selected_count"] = len(selected)
     mt.after_selection_count = len(selected)
     sd = getattr(mt, "stage_durations", {})
     sd["rank_and_select"] = time.time() - t0
@@ -518,6 +594,18 @@ async def download_pdfs_node(state: dict) -> dict:
             )
 
     state["_downloaded_pdfs"] = downloaded
+    if state.get("full_text_required"):
+        available_ids = set(downloaded)
+        unavailable = [
+            paper for paper in papers if paper.internal_id not in available_ids
+        ]
+        if unavailable:
+            state.setdefault("warnings", []).append(
+                f"full_text_required excluded {len(unavailable)} papers without downloadable PDFs"
+            )
+        state["selected_papers"] = [
+            paper for paper in papers if paper.internal_id in available_ids
+        ]
     mt = state.get("metrics", TaskMetrics())
     sd = getattr(mt, "stage_durations", {})
     sd["download_pdfs"] = time.time() - t0
@@ -680,6 +768,12 @@ async def extract_evidence_node(state: dict) -> dict:
 
     evidence_list = state.pop("_evidence_batches", [])
     state["retrieved_passages"] = passages
+    state.setdefault("retrieval_diagnostics", {}).update(
+        {
+            "passage_count": len(passages),
+            "retrieval_backend": engine.name,
+        }
+    )
 
     state["evidence"] = evidence_list
     mt = state.get("metrics", TaskMetrics())
@@ -973,6 +1067,7 @@ Max supplementary rounds: {settings.MAX_SEARCH_ROUNDS - 1}
         max_tokens=min(settings.LLM_STRONG_MAX_TOKENS, 2048),
         enable_thinking=settings.LLM_STRONG_ENABLE_THINKING,
     )
+    _record_model_usage(state, usage, "gap_analysis")
 
     mt = state.get("metrics", TaskMetrics())
     mt.llm_call_count = getattr(mt, "llm_call_count", 0) + 1
@@ -1076,10 +1171,23 @@ async def synthesize_report_node(state: dict) -> dict:
     t0 = time.time()
 
     papers = state.get("selected_papers", [])
-    evidence = state.get("evidence", [])
-    gap_analysis = state.get("gap_analysis")
+    validated_claims = [
+        claim
+        for claim in state.get("claims", [])
+        if claim.validation_status == "validated"
+        and claim.support_status == "supported"
+    ]
     search_plan = state.get("search_plan")
     settings = get_settings()
+    target_language = state.get("report_language", "zh-CN")
+    language_name = "English" if target_language == "en" else "Simplified Chinese"
+
+    if _budget_exceeded(state):
+        state["report"] = _build_fallback_report(state)
+        state.setdefault("warnings", []).append(
+            "Cost budget reached; used deterministic ValidatedClaims-only report"
+        )
+        return state
 
     if not papers:
         state["report"] = "# 研究报告\n\n未找到相关文献，无法生成报告。"
@@ -1088,8 +1196,6 @@ async def synthesize_report_node(state: dict) -> dict:
 
     # 8K context safeguard
     MAX_PAPERS_IN_PROMPT = 12
-    ABSTRACT_CHARS = 300
-
     papers_for_report = papers[:MAX_PAPERS_IN_PROMPT]
     if len(papers) > MAX_PAPERS_IN_PROMPT:
         state.setdefault("warnings", []).append(
@@ -1097,45 +1203,38 @@ async def synthesize_report_node(state: dict) -> dict:
         )
     state["report_paper_ids"] = [p.internal_id for p in papers_for_report]
 
-    # Build paper summaries: title + year + venue + abstract excerpt + key findings
+    # Metadata is only used for labels and references. Factual prose comes from
+    # ValidatedClaims exclusively.
     paper_summaries = []
     for i, paper in enumerate(papers_for_report):
-        ev_items = [e for e in evidence if e.paper_id == paper.internal_id]
-        findings = []
-        for ev in ev_items[:2]:
-            if ev.key_findings:
-                findings.extend(ev.key_findings[:2])
-        findings_text = "; ".join(findings[:4]) if findings else "N/A"
-
-        abstract_text = (paper.abstract or "N/A")[:ABSTRACT_CHARS]
-        if len(paper.abstract or "") > ABSTRACT_CHARS:
-            abstract_text += "..."
-
         venue_year = f"{paper.venue or 'Unknown venue'}, {paper.publication_year or 'n.d.'}"
         summary = (
             f"[P{i + 1}] {paper.title}\n"
-            f"    {venue_year} | Citations: {paper.citation_count or 0}\n"
-            f"    Abstract: {abstract_text}\n"
-            f"    Key findings: {findings_text}"
+            f"    {venue_year}"
         )
         paper_summaries.append(summary)
 
     paper_list_text = "\n\n".join(paper_summaries)
-
-    # Gap text
-    gap_items = []
-    if gap_analysis and gap_analysis.gaps:
-        for g in gap_analysis.gaps:
-            gap_items.append(
-                f"- **{g.sub_question}** (severity: {g.severity})\n"
-                f"  Current: {g.current_coverage}\n"
-                f"  Missing: {g.what_is_missing}"
-            )
-    gap_text = "\n".join(gap_items) if gap_items else "No gaps formally identified."
-
-    covered = ""
-    if gap_analysis and gap_analysis.covered_aspects:
-        covered = "\n".join(f"- {a}" for a in gap_analysis.covered_aspects)
+    paper_markers = {
+        paper.internal_id: f"P{index + 1}"
+        for index, paper in enumerate(papers_for_report)
+    }
+    claims_text = "\n".join(
+        (
+            f"- claim_id={claim.claim_id}; claim={claim.claim_text}; "
+            f"citations={[paper_markers[pid] for pid in claim.paper_ids if pid in paper_markers]}; "
+            f"type={claim.claim_type}; confidence={claim.confidence}; "
+            f"scope={claim.scope or 'unspecified'}"
+        )
+        for claim in validated_claims
+        if any(pid in paper_markers for pid in claim.paper_ids)
+    )
+    if not claims_text:
+        state["report"] = _build_fallback_report(state)
+        state.setdefault("warnings", []).append(
+            "No validated claims were available; emitted a metadata-only report"
+        )
+        return state
 
     # Search info
     search_info = f"检索轮次: {state.get('current_round', 0) + 1}"
@@ -1149,20 +1248,16 @@ async def synthesize_report_node(state: dict) -> dict:
     system_prompt = f"""
 <role>
 You are an evidence-grounded academic research synthesizer.
-Write a Chinese research report for domain experts.
+Write a {language_name} research report for domain experts.
 Your purpose is faithful synthesis, not producing a complete-looking report.
 </role>
 
 <source_of_truth>
-You may use only the information supplied in:
-1. validated_claims
-2. evidence_cards
-3. paper_metadata
-
-Priority: validated_claims > evidence_cards > paper_metadata.
+You may use validated_claims as the only source of factual content.
+paper_metadata may be used only for titles, years, venues and citations.
 
 Do not use outside knowledge.
-Do not infer experimental results from paper titles.
+Do not use abstracts, raw passages or unvalidated evidence.
 A paper citation proves provenance, not entailment.
 </source_of_truth>
 
@@ -1254,7 +1349,7 @@ If unavailable, write "未评估".
 </metadata_policy>
 
 <writing_policy>
-Write in Simplified Chinese.
+Write in {language_name}. Translate the prescribed section headings when needed.
 Prefer precise, narrow statements over broad summaries.
 If evidence is insufficient, explicitly state the limitation.
 Do not repeat the reference list because it is generated separately.
@@ -1298,20 +1393,6 @@ Delete any sentence that fails a check.
             "Do NOT list any paper pairs as consensus or disagreement."
         )
 
-    # Inject real numbers from validated evidence (keep short for 8K budget)
-    numbers = state.get("_paper_numbers", {})
-    numbers_text = ""
-    if numbers:
-        numbers_text = "=== REAL QUANTITATIVE DATA (copy exactly, max 5 papers) ===\n"
-        count = 0
-        for pid, nums in sorted(numbers.items()):
-            if count >= 5:
-                break
-            unique_nums = list({n["value"]: n for n in nums}.values())[:2]
-            for n in unique_nums:
-                numbers_text += f"  {pid}: {n['value']} — \"{n['context'][:100]}\" (p.{n.get('page','?')})\n"
-            count += 1
-
     user_prompt = f"""Research Question: {state['original_question']}
 
 {search_info}
@@ -1319,13 +1400,8 @@ Delete any sentence that fails a check.
 === SELECTED PAPERS (only these can be cited) ===
 {paper_list_text}
 
-{numbers_text}
-
-=== COVERED ASPECTS ===
-{covered or 'None formally identified'}
-
-=== EVIDENCE GAPS ===
-{gap_text}
+=== VALIDATED CLAIMS (the only factual source) ===
+{claims_text}
 
 {relations_text}
 
@@ -1333,7 +1409,7 @@ Delete any sentence that fails a check.
 Generate a comprehensive Deep Research report following the specified structure.
 - Use the PRE-COMPUTED CONSENSUS and COMPLEMENTARY PERSPECTIVES for §4.
   If consensus_text is empty, write "当前证据不足以确定共识".
-- Use REAL QUANTITATIVE DATA for §3. Copy numbers exactly. If empty, write qualitative.
+- Quantitative statements are permitted only when already present in a validated claim.
 - Do NOT invent your own consensus, disagreement, or numbers.
 - Do NOT generate a reference list placeholder like [P1]...[P12].
   Only use [P#] in citations within the text body.
@@ -1349,6 +1425,7 @@ Cite papers using [P#] markers ONLY from the list above."""
         max_tokens=report_max_tokens,
         enable_thinking=settings.LLM_STRONG_ENABLE_THINKING,
     )
+    _record_model_usage(state, usage, "report")
 
     mt = state.get("metrics", TaskMetrics())
     mt.llm_call_count = getattr(mt, "llm_call_count", 0) + 1
@@ -1378,7 +1455,7 @@ Cite papers using [P#] markers ONLY from the list above."""
             report_text += f"\n\n## 参考文献\n\n{ref_entries}"
 
         # Post-generation number audit: flag any dubious percentages/metrics
-        _audit_numbers_in_report(report_text, evidence, state)
+        _audit_numbers_in_report(report_text, [], state)
 
         state["report"] = report_text
     else:
@@ -1396,7 +1473,7 @@ Cite papers using [P#] markers ONLY from the list above."""
 
 
 def _build_fallback_report(state: dict) -> str:
-    """Build a basic report without LLM."""
+    """Build a conservative ValidatedClaims-only report without an LLM."""
     papers_by_id = {
         paper.internal_id: paper for paper in state.get("selected_papers", [])
     }
@@ -1404,8 +1481,50 @@ def _build_fallback_report(state: dict) -> str:
     papers = [papers_by_id[paper_id] for paper_id in report_ids if paper_id in papers_by_id]
     if not papers:
         papers = state.get("selected_papers", [])
-    evidence = state.get("evidence", [])
-    gap_analysis = state.get("gap_analysis")
+    claims = [
+        claim
+        for claim in state.get("claims", [])
+        if claim.validation_status == "validated"
+        and claim.support_status == "supported"
+    ]
+    marker_by_id = {
+        paper.internal_id: f"P{index + 1}" for index, paper in enumerate(papers)
+    }
+
+    if state.get("report_language") == "en":
+        report = f"""# Research Report: {state['original_question']}
+
+## Research Question
+
+{state['original_question']}
+
+## Search Scope and Method
+
+- Search rounds: {state.get('current_round', 0) + 1}
+- Year range: {state.get('year_from', 'any')} - {state.get('year_to', 'any')}
+- Included papers: {len(papers)}
+
+## Core Findings
+
+"""
+        if claims:
+            for claim in claims:
+                markers = [
+                    marker_by_id[paper_id]
+                    for paper_id in claim.paper_ids
+                    if paper_id in marker_by_id
+                ]
+                if markers:
+                    report += f"- {claim.claim_text} [{' '.join(markers)}]\n"
+        else:
+            report += "No validated claims are available; no factual synthesis was generated.\n"
+        report += (
+            "\n## Limitations\n\nOnly claims passing EvidenceCard and Claim "
+            "validation are shown; unvalidated material was omitted.\n\n"
+            "## References\n\n"
+        )
+        report += build_reference_entries(papers)
+        return report
 
     report = f"""# 研究报告: {state['original_question']}
 
@@ -1422,19 +1541,20 @@ def _build_fallback_report(state: dict) -> str:
 ## 核心发现
 
 """
-    for i, paper in enumerate(papers):
-        ev = next((e for e in evidence if e.paper_id == paper.internal_id), None)
-        report += f"### [{i + 1}] {paper.title}\n\n"
-        if paper.abstract:
-            report += f"{paper.abstract[:500]}...\n\n"
-        if ev and ev.key_findings:
-            report += f"关键发现: {'; '.join(ev.key_findings)}\n\n"
+    if claims:
+        for claim in claims:
+            markers = [
+                marker_by_id[paper_id]
+                for paper_id in claim.paper_ids
+                if paper_id in marker_by_id
+            ]
+            if markers:
+                report += f"- {claim.claim_text} [{' '.join(markers)}]\n"
+    else:
+        report += "当前没有通过验证的 Claim，因而不生成事实性总结。\n"
 
-    if gap_analysis and gap_analysis.gaps:
-        report += "## 研究局限与证据缺口\n\n"
-        for gap in gap_analysis.gaps:
-            report += f"- **{gap.sub_question}** ({gap.severity}): {gap.what_is_missing}\n"
-        report += "\n"
+    report += "\n## 研究局限\n\n"
+    report += "本报告仅呈现通过 EvidenceCard 与 Claim 验证的内容；未验证信息已省略。\n\n"
 
     report += "## 参考文献\n\n"
     report += build_reference_entries(papers)

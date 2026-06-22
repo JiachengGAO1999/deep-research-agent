@@ -111,7 +111,7 @@ class PDFParser:
     async def _parse_with_docling(
         self, pdf_path: str, paper: Paper, task_id: str, sha256: str
     ) -> ParseResult:
-        """Docling: structure-aware parsing with heading/section detection."""
+        """Docling official HybridChunker adapted to the project chunk schema."""
         import asyncio
 
         loop = asyncio.get_running_loop()
@@ -128,71 +128,42 @@ class PDFParser:
         except Exception:
             pass
 
-        parent_chunks: List[DocumentChunk] = []
         child_chunks: List[DocumentChunk] = []
-        chunk_idx = 0
+        from docling.chunking import HybridChunker
 
-        # Strategy: use Docling's item tree. Group items under headings.
-        sections = self._extract_sections_from_docling(doc)
-        if not sections:
-            # Fallback: export full markdown, split by ## headings
-            md_text = doc.export_to_markdown() if hasattr(doc, "export_to_markdown") else ""
-            sections = self._extract_sections_from_markdown(md_text)
-
-        for sec_idx, section in enumerate(sections):
-            section_title = section["title"]
-            section_text = section["text"]
-            page_start = section.get("page_start")
-            page_end = section.get("page_end")
-
-            if not section_text or len(section_text.strip()) < 20:
+        chunker = HybridChunker()
+        for chunk_idx, chunk in enumerate(chunker.chunk(dl_doc=doc)):
+            text = chunker.contextualize(chunk).strip()
+            if len(text) < 30:
                 continue
-
-            # Parent chunk = entire section
-            parent = DocumentChunk(
-                chunk_id=f"{paper.internal_id}_s{chunk_idx}",
-                paper_id=paper.internal_id,
-                task_id=task_id,
-                chunk_index=chunk_idx,
-                section_title=section_title,
-                page_start=page_start,
-                page_end=page_end,
-                text=section_text,
-                source_url=paper.full_text_url or paper.url,
-                pdf_sha256=sha256,
-                parser_name="docling",
-                parser_version=_DOCLING_VERSION,
-            )
-            parent_chunks.append(parent)
-            chunk_idx += 1
-
-            # Child chunks = paragraphs within section
-            paragraphs = self._split_into_paragraphs(section_text)
-            for para_text in paragraphs:
-                if len(para_text.strip()) < 30:
-                    continue
-                child = DocumentChunk(
-                    chunk_id=f"{paper.internal_id}_c{chunk_idx}",
+            meta = getattr(chunk, "meta", None)
+            headings = list(getattr(meta, "headings", None) or [])
+            pages: list[int] = []
+            for item in getattr(meta, "doc_items", None) or []:
+                for prov in getattr(item, "prov", None) or []:
+                    page_no = getattr(prov, "page_no", None)
+                    if page_no is not None:
+                        pages.append(int(page_no))
+            child_chunks.append(
+                DocumentChunk(
+                    chunk_id=f"{paper.internal_id}_h{chunk_idx}",
                     paper_id=paper.internal_id,
                     task_id=task_id,
                     chunk_index=chunk_idx,
-                    section_title=section_title,
-                    page_start=page_start,
-                    page_end=page_end,
-                    text=para_text,
-                    parent_chunk_id=parent.chunk_id,
+                    section_title=" / ".join(headings[-3:]) or None,
+                    page_start=min(pages) if pages else None,
+                    page_end=max(pages) if pages else None,
+                    text=text,
                     source_url=paper.full_text_url or paper.url,
                     pdf_sha256=sha256,
-                    parser_name="docling",
+                    parser_name="docling-hybrid",
                     parser_version=_DOCLING_VERSION,
                 )
-                parent.child_chunk_ids.append(child.chunk_id)
-                child_chunks.append(child)
-                chunk_idx += 1
+            )
 
         logger.info(
-            f"Docling: {paper.internal_id} → {len(parent_chunks)} sections, "
-            f"{len(child_chunks)} paragraphs (pages: {num_pages})"
+            f"Docling HybridChunker: {paper.internal_id} → "
+            f"{len(child_chunks)} structural chunks (pages: {num_pages})"
         )
 
         return ParseResult(
@@ -201,9 +172,13 @@ class PDFParser:
             parser_name="docling",
             parser_version=_DOCLING_VERSION,
             num_pages=num_pages,
-            num_sections=len(parent_chunks),
-            parent_chunks=parent_chunks,
-            child_chunks=child_chunks,
+            num_sections=len(
+                {chunk.section_title for chunk in child_chunks if chunk.section_title}
+            ),
+            # Official HybridChunker emits standalone structural chunks; they
+            # are stored in the legacy parent slot for schema compatibility.
+            parent_chunks=child_chunks,
+            child_chunks=[],
         )
 
     async def _parse_with_pymupdf(

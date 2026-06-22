@@ -25,8 +25,11 @@ router = APIRouter()
 # ---- Request/Response models ----
 
 class ResearchRequest(BaseModel):
-    question: Optional[str] = Field(
+    research_question: Optional[str] = Field(
         default=None, description="The research question to investigate"
+    )
+    question: Optional[str] = Field(
+        default=None, description="Backward-compatible alias for research_question"
     )
     topic: Optional[str] = Field(
         default=None, description="User-facing alias for question"
@@ -36,27 +39,52 @@ class ResearchRequest(BaseModel):
     max_papers: int = Field(
         default=12, ge=3, le=30, description="Maximum papers in the final report"
     )
+    num_papers: Optional[int] = Field(
+        default=None, ge=3, le=30, description="Alias for max_papers"
+    )
     research_depth: str = Field(
         default="standard", pattern="^(quick|standard|deep)$"
     )
-    evidence_backend: str = Field(
-        default="abstract", pattern="^(abstract|fts|paperqa)$"
+    retrieval_profile: str = Field(
+        default="quality", pattern="^(quality|balanced|local)$"
     )
-    enable_full_text: bool = False
+    evidence_backend: Optional[str] = Field(
+        default=None, pattern="^(abstract|fts|paperqa|hybrid)$",
+        description="Administrative/testing override; normal clients should omit it",
+        exclude=True,
+    )
+    enable_full_text: Optional[bool] = None
+    full_text_required: bool = False
     report_language: str = Field(default="zh-CN", pattern="^(zh-CN|en)$")
+    language: Optional[str] = Field(default=None, pattern="^(zh-CN|en)$")
+    max_cost_usd: Optional[float] = Field(default=None, ge=0)
 
     @model_validator(mode="after")
     def validate_request(self):
-        value = (self.question or self.topic or "").strip()
+        value = (self.research_question or self.question or self.topic or "").strip()
         if not value:
-            raise ValueError("question or topic is required")
+            raise ValueError("research_question or topic is required")
+        self.research_question = value
         self.question = value
+        if self.num_papers is not None:
+            self.max_papers = self.num_papers
+        if self.language is not None:
+            self.report_language = self.language
         if self.year_from and self.year_to and self.year_from > self.year_to:
             raise ValueError("year_from must be less than or equal to year_to")
+        from app.core.config import get_settings
+
+        profile_backends = {
+            "quality": get_settings().QUALITY_EVIDENCE_BACKEND,
+            "balanced": "hybrid",
+            "local": "hybrid",
+        }
+        if self.evidence_backend is None:
+            self.evidence_backend = profile_backends[self.retrieval_profile]
+        if self.enable_full_text is None:
+            self.enable_full_text = self.evidence_backend != "abstract"
         if self.evidence_backend != "abstract" and not self.enable_full_text:
-            raise ValueError(
-                "enable_full_text must be true for fts or paperqa evidence backend"
-            )
+            raise ValueError("full-text retrieval requires enable_full_text=true")
         return self
 
 
@@ -79,6 +107,11 @@ class TaskStatusResponse(BaseModel):
     updated_at: str
     current_stage: Optional[str] = None
     progress_percent: int = 0
+    retrieval_backend: Optional[str] = None
+    retrieved_passages: int = 0
+    verified_evidence: int = 0
+    llm_calls: int = 0
+    estimated_cost_usd: float = 0.0
 
 
 class PaperResponse(BaseModel):
@@ -125,9 +158,12 @@ async def _run_research_background(state: TaskState) -> None:
             "year_to": state.year_to,
             "max_papers": state.max_papers,
             "research_depth": state.research_depth,
+            "retrieval_profile": state.retrieval_profile,
             "evidence_backend": state.evidence_backend,
             "enable_full_text": state.enable_full_text,
+            "full_text_required": state.full_text_required,
             "report_language": state.report_language,
+            "max_cost_usd": state.max_cost_usd,
             "current_round": 0,
             "max_rounds": state.max_rounds,
             "queries": [],
@@ -211,9 +247,12 @@ async def create_research(
         year_to=request.year_to,
         max_papers=request.max_papers,
         research_depth=request.research_depth,
+        retrieval_profile=request.retrieval_profile,
         evidence_backend=request.evidence_backend,
         enable_full_text=request.enable_full_text,
+        full_text_required=request.full_text_required,
         report_language=request.report_language,
+        max_cost_usd=request.max_cost_usd,
         status=TaskStatus.PENDING,
         max_rounds=min(
             settings.MAX_SEARCH_ROUNDS,
@@ -250,6 +289,10 @@ async def get_task_status(
     from app.workflow.graph import get_runtime_progress
 
     runtime = get_runtime_progress(task_id) or _runtime_states.get(task_id, {})
+    metrics = runtime.get("metrics", TaskMetrics())
+    if isinstance(metrics, dict):
+        metrics = TaskMetrics.model_validate(metrics)
+    evidence = runtime.get("evidence", [])
 
     return TaskStatusResponse(
         task_id=record.task_id,
@@ -265,6 +308,15 @@ async def get_task_status(
         updated_at=record.updated_at,
         current_stage=runtime.get("current_stage"),
         progress_percent=runtime.get("progress_percent", 100 if record.status == "completed" else 0),
+        retrieval_backend=runtime.get("evidence_backend", record.evidence_backend),
+        retrieved_passages=len(runtime.get("retrieved_passages", [])),
+        verified_evidence=sum(
+            getattr(item.verification_status, "value", item.verification_status)
+            == "verified"
+            for item in evidence
+        ),
+        llm_calls=metrics.llm_call_count,
+        estimated_cost_usd=metrics.estimated_cost_usd,
     )
 
 

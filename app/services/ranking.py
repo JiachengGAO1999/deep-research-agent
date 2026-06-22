@@ -156,6 +156,10 @@ async def llm_rank_papers(
             total_usage["call_count"] = total_usage.get("call_count", 0) + int(
                 usage.get("call_count", 1)
             )
+            total_usage["latency_seconds"] = total_usage.get(
+                "latency_seconds", 0.0
+            ) + float(usage.get("latency_seconds", 0.0) or 0.0)
+            total_usage["model"] = usage.get("model", model or "unknown")
         all_selected.sort(
             key=lambda paper: paper.relevance_score or 0,
             reverse=True,

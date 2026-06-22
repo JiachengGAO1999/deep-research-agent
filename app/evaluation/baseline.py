@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import json
 import os
+import time
 from pathlib import Path
 
 
@@ -34,6 +35,7 @@ async def _run(args) -> None:
     cases = _load_cases(Path(args.dataset), args.limit)
     results = []
     for case in cases:
+        started = time.perf_counter()
         state = {
             "task_id": f"baseline_{case.case_id}",
             "original_question": case.question,
@@ -66,6 +68,18 @@ async def _run(args) -> None:
                     }
                     for paper in final.get("selected_papers", [])
                 ],
+                "discovery_candidates": [
+                    {
+                        "internal_id": paper.internal_id,
+                        "title": paper.title,
+                        "doi": paper.doi,
+                    }
+                    for paper in final.get("discovery_candidates", [])[:50]
+                ],
+                "retrieved_passages": [
+                    item.model_dump(mode="json")
+                    for item in final.get("retrieved_passages", [])[:10]
+                ],
                 "evidence": [
                     {
                         "evidence_id": item.evidence_id,
@@ -93,6 +107,8 @@ async def _run(args) -> None:
                     else None
                 ),
                 "report": final.get("report"),
+                "metrics": final.get("metrics", TaskMetrics()).model_dump(mode="json"),
+                "elapsed_seconds": time.perf_counter() - started,
                 "warnings": final.get("warnings", []),
                 "errors": final.get("errors", []),
             }
@@ -124,7 +140,7 @@ def main() -> None:
     parser.add_argument("--mock", action="store_true")
     parser.add_argument(
         "--backend",
-        choices=("abstract", "fts", "paperqa"),
+        choices=("abstract", "fts", "hybrid", "paperqa"),
         default="abstract",
     )
     parser.add_argument("--full-text", action="store_true")

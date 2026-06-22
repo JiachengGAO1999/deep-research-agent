@@ -14,6 +14,16 @@ from app.models.evidence import ExtractedEvidence, GapAnalysis
 from app.models.task import TaskState, TaskMetrics
 
 
+def pytest_runtest_setup(item):
+    """Python 3.11 no longer creates a default loop after asyncio.run closes it."""
+    import asyncio
+
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
+
+
 @pytest.fixture
 def sample_papers():
     """Create a set of sample papers for testing."""

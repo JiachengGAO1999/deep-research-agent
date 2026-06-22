@@ -141,21 +141,22 @@ class PaperQAEvidenceEngine(EvidenceEngine):
         return passages
 
     def _build_settings(self):
-        from paperqa import Settings
+        from paperqa.settings import get_settings
 
-        kwargs = {
+        overrides = {
             "embedding": self._settings.PAPERQA_EMBEDDING,
         }
         if self._settings.PAPERQA_LLM:
-            kwargs["llm"] = self._settings.PAPERQA_LLM
+            overrides["llm"] = self._settings.PAPERQA_LLM
         if self._settings.PAPERQA_SUMMARY_LLM:
-            kwargs["summary_llm"] = self._settings.PAPERQA_SUMMARY_LLM
+            overrides["summary_llm"] = self._settings.PAPERQA_SUMMARY_LLM
         api_config = {
             "api_base": self._settings.LLM_BASE_URL,
             "api_key": self._settings.LLM_API_KEY,
         }
         if self._settings.PAPERQA_LLM:
-            kwargs["llm_config"] = api_config
+            overrides["llm_config"] = api_config
         if self._settings.PAPERQA_SUMMARY_LLM:
-            kwargs["summary_llm_config"] = api_config
-        return Settings(**kwargs)
+            overrides["summary_llm_config"] = api_config
+        base = get_settings(self._settings.PAPERQA_SETTINGS)
+        return base.model_copy(update=overrides, deep=True)

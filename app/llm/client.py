@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from typing import Any, Dict, Optional, Type
 
 import httpx
@@ -150,12 +151,17 @@ class LLMClient:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ]
+        started = time.perf_counter()
         response = await self.chat(
             messages, model, temperature,
             max_tokens=max_tokens or 4096,
             enable_thinking=enable_thinking,
         )
-        return self._extract_content(response), self._extract_usage(response)
+        usage = self._extract_usage(response)
+        usage.update(
+            {"model": model, "latency_seconds": time.perf_counter() - started}
+        )
+        return self._extract_content(response), usage
 
     async def generate_structured(
         self,
@@ -198,6 +204,7 @@ class LLMClient:
 
         for attempt in range(3):
             try:
+                started = time.perf_counter()
                 # Try with response_format json_object
                 try:
                     response = await self.chat(
@@ -216,6 +223,12 @@ class LLMClient:
 
                 content = self._extract_content(response)
                 usage = self._extract_usage(response)
+                usage.update(
+                    {
+                        "model": model_name,
+                        "latency_seconds": time.perf_counter() - started,
+                    }
+                )
 
                 parsed = self._parse_json_response(content, output_model)
                 if parsed is not None:

@@ -48,6 +48,10 @@ async function poll(taskId) {
     $("rounds").textContent = status.current_round + 1;
     $("papers-found").textContent = status.papers_found;
     $("papers-selected").textContent = status.papers_selected;
+    $("passages").textContent = status.retrieved_passages;
+    $("verified-evidence").textContent = status.verified_evidence;
+    $("llm-calls").textContent = status.llm_calls;
+    $("runtime-meta").textContent = `retrieval=${status.retrieval_backend || "—"} · estimated cost $${Number(status.estimated_cost_usd || 0).toFixed(4)}`;
     showMessages(status.warnings, status.errors);
     if (status.status === "completed") {
       clearInterval(pollTimer);
@@ -105,14 +109,16 @@ $("research-form").addEventListener("submit", async (event) => {
   $("progress-panel").classList.remove("hidden");
   try {
     const payload = {
-      topic: $("topic").value.trim(),
+      research_question: $("research-question").value.trim(),
+      topic: $("topic").value.trim() || null,
       year_from: numberOrNull("year-from"),
       year_to: numberOrNull("year-to"),
       max_papers: Number($("max-papers").value),
       research_depth: $("depth").value,
-      evidence_backend: $("backend").value,
-      enable_full_text: $("full-text").checked,
-      report_language: $("language").value
+      retrieval_profile: $("profile").value,
+      full_text_required: $("full-text-required").checked,
+      language: $("language").value,
+      max_cost_usd: numberOrNull("max-cost")
     };
     const task = await api("/api/research", {
       method: "POST", headers: {"Content-Type": "application/json"},
@@ -136,10 +142,6 @@ document.querySelectorAll(".tabs button").forEach(button => {
     button.classList.add("active");
     $(button.dataset.tab).classList.add("active");
   });
-});
-
-$("backend").addEventListener("change", () => {
-  if ($("backend").value !== "abstract") $("full-text").checked = true;
 });
 
 api("/health").then(() => {

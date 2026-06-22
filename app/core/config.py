@@ -20,6 +20,12 @@ class Settings:
     LLM_MODEL_STRONG: str = os.getenv("LLM_MODEL_STRONG", "")
     LLM_TIMEOUT: int = int(os.getenv("LLM_TIMEOUT", "120"))
     LLM_MAX_RETRIES: int = int(os.getenv("LLM_MAX_RETRIES", "2"))
+    LLM_INPUT_COST_PER_1M: float = float(
+        os.getenv("LLM_INPUT_COST_PER_1M", "0")
+    )
+    LLM_OUTPUT_COST_PER_1M: float = float(
+        os.getenv("LLM_OUTPUT_COST_PER_1M", "0")
+    )
 
     # Token limits per role
     LLM_FAST_MAX_TOKENS: int = int(os.getenv("LLM_FAST_MAX_TOKENS", "1024"))
@@ -67,6 +73,7 @@ class Settings:
     MAX_CANDIDATES_AFTER_DEDUP: int = int(os.getenv("MAX_CANDIDATES_AFTER_DEDUP", "100"))
     MAX_CANDIDATES_FOR_RERANK: int = int(os.getenv("MAX_CANDIDATES_FOR_RERANK", "40"))
     MAX_CANDIDATES_FOR_LLM: int = int(os.getenv("MAX_CANDIDATES_FOR_LLM", "15"))
+    CANDIDATE_POOL_MULTIPLIER: int = int(os.getenv("CANDIDATE_POOL_MULTIPLIER", "5"))
 
     # Backward-compatible fallback
     MAX_PAPERS_PER_SOURCE: int = int(os.getenv("MAX_PAPERS_PER_SOURCE", "20"))
@@ -97,9 +104,19 @@ class Settings:
     PDF_PARSER_BACKEND: str = os.getenv("PDF_PARSER_BACKEND", "docling")
 
     # Evidence engine
+    # Direct workflow callers retain an abstract-safe default. Product API
+    # profiles select PaperQA2/Hybrid explicitly.
     EVIDENCE_BACKEND: str = os.getenv("EVIDENCE_BACKEND", "abstract")
     EVIDENCE_TOP_K: int = int(os.getenv("EVIDENCE_TOP_K", "8"))
     EVIDENCE_MAX_PER_PAPER: int = int(os.getenv("EVIDENCE_MAX_PER_PAPER", "3"))
+    HYBRID_DENSE_MODEL: str = os.getenv("HYBRID_DENSE_MODEL", "BAAI/bge-m3")
+    HYBRID_RERANK_MODEL: str = os.getenv(
+        "HYBRID_RERANK_MODEL", "BAAI/bge-reranker-v2-m3"
+    )
+    HYBRID_RRF_K: int = int(os.getenv("HYBRID_RRF_K", "60"))
+    HYBRID_CANDIDATE_MULTIPLIER: int = int(
+        os.getenv("HYBRID_CANDIDATE_MULTIPLIER", "5")
+    )
     PAPERQA_INDEX_DIR: str = os.getenv(
         "PAPERQA_INDEX_DIR", "./storage/paperqa"
     )
@@ -109,6 +126,15 @@ class Settings:
     PAPERQA_EMBEDDING: str = os.getenv(
         "PAPERQA_EMBEDDING", "text-embedding-3-small"
     )
+
+    # Product profiles and cost guardrails
+    DEFAULT_RETRIEVAL_PROFILE: str = os.getenv(
+        "DEFAULT_RETRIEVAL_PROFILE", "quality"
+    )
+    QUALITY_EVIDENCE_BACKEND: str = os.getenv(
+        "QUALITY_EVIDENCE_BACKEND", "hybrid"
+    )
+    DEFAULT_MAX_COST_USD: float = float(os.getenv("DEFAULT_MAX_COST_USD", "0"))
 
     # Report quality gates
     MIN_CORE_CLAIM_SUPPORT: int = int(os.getenv("MIN_CORE_CLAIM_SUPPORT", "1"))

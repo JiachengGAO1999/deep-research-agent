@@ -20,9 +20,10 @@
     <section class="panel form-panel">
       <form id="research-form">
         <label class="topic-field">
-          <span>研究主题或问题</span>
-          <textarea id="topic" required rows="4" placeholder="例如：对话历史如何影响大语言模型的推理可靠性？"></textarea>
+          <span>研究问题</span>
+          <textarea id="research-question" required rows="4" placeholder="例如：对话历史如何影响大语言模型的推理可靠性？"></textarea>
         </label>
+        <label><span>主题范围（可选）</span><input id="topic" placeholder="例如：多轮对话中的推理可靠性"></label>
 
         <div class="grid">
           <label><span>开始年份</span><input id="year-from" type="number" min="1900" max="2100" placeholder="2020"></label>
@@ -40,22 +41,23 @@
         <details>
           <summary>高级设置</summary>
           <div class="grid advanced">
-            <label><span>证据后端</span>
-              <select id="backend">
-                <option value="abstract" selected>摘要（稳定）</option>
-                <option value="fts">本地全文 FTS</option>
-                <option value="paperqa">PaperQA2</option>
+            <label><span>检索档位</span>
+              <select id="profile">
+                <option value="quality" selected>质量优先（赛马胜出后端）</option>
+                <option value="balanced">均衡（Hybrid）</option>
+                <option value="local">本地（Hybrid）</option>
               </select>
             </label>
-            <label class="check"><input id="full-text" type="checkbox"><span>启用全文下载与解析</span></label>
+            <label class="check"><input id="full-text-required" type="checkbox"><span>必须获得全文</span></label>
             <label><span>报告语言</span>
               <select id="language">
                 <option value="zh-CN" selected>中文</option>
                 <option value="en">English</option>
               </select>
             </label>
+            <label><span>最大预算 USD（可选）</span><input id="max-cost" type="number" min="0" step="0.1" placeholder="5"></label>
           </div>
-          <p class="hint">全文模式需要论文存在开放访问 PDF；PaperQA2 还需要可用的 embedding 配置。</p>
+          <p class="hint">普通用户选择档位即可；具体 retrieval backend 由服务端配置和评测结果决定。</p>
         </details>
 
         <button id="submit" type="submit">开始研究</button>
@@ -75,7 +77,11 @@
         <span>轮次 <strong id="rounds">0</strong></span>
         <span>发现论文 <strong id="papers-found">0</strong></span>
         <span>纳入论文 <strong id="papers-selected">0</strong></span>
+        <span>证据片段 <strong id="passages">0</strong></span>
+        <span>已验证证据 <strong id="verified-evidence">0</strong></span>
+        <span>LLM 调用 <strong id="llm-calls">0</strong></span>
       </div>
+      <p id="runtime-meta" class="task-id"></p>
       <p id="task-id" class="task-id"></p>
       <div id="messages"></div>
     </section>

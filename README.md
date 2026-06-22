@@ -152,7 +152,7 @@ MAX_PAPERS_PER_SOURCE=20
 MAX_SELECTED_PAPERS=20
 
 # Evidence backend: abstract | fts | paperqa
-EVIDENCE_BACKEND=abstract
+EVIDENCE_BACKEND=hybrid
 ENABLE_FULL_TEXT=false
 PDF_PARSER_BACKEND=pymupdf
 HOST=0.0.0.0
@@ -365,3 +365,15 @@ deep-research-agent/
 6. **任务恢复**：服务重启后自动恢复中断任务
 7. **流式输出**：SSE 实时推送研究进度
 8. **用户管理**：多用户、认证、任务历史
+分层评测会分别报告 Discovery Recall、Selected-paper Recall、Passage
+Recall/nDCG、EvidenceCard 有效率、Claim precision、引用完整率、成本和耗时。
+当前 gold passage 尚未完成原文复核时，passage 指标会显示 `null`，不会用论文
+标题或摘要伪装 passage gold。
+
+```bash
+deep-research-baseline --backend hybrid --output evals/baselines/hybrid.json
+deep-research-eval --artifact evals/baselines/hybrid.json --output evals/baselines/hybrid-score.json
+deep-research-race \
+  --hybrid evals/baselines/hybrid-score.json \
+  --paperqa evals/baselines/paperqa-score.json
+```

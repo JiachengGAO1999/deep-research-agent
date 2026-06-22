@@ -92,3 +92,31 @@ class EvidenceEngine(ABC):
                 )
             )
         return evidence
+
+    async def retrieve_many(
+        self,
+        question: str,
+        subquestions: list[str],
+        papers: list[Paper],
+        limit: int,
+        *,
+        task_id: str | None = None,
+    ) -> list[RetrievedPassage]:
+        """Batch-friendly project contract with stable de-duplication."""
+        seen: set[str] = set()
+        results: list[RetrievedPassage] = []
+        paper_ids = [paper.internal_id for paper in papers]
+        for subquestion in subquestions or [question]:
+            passages = await self.retrieve(
+                question=question,
+                sub_question=subquestion,
+                paper_ids=paper_ids,
+                limit=limit,
+                task_id=task_id,
+            )
+            for passage in passages:
+                if passage.passage_id in seen:
+                    continue
+                seen.add(passage.passage_id)
+                results.append(passage)
+        return results

@@ -28,12 +28,15 @@ dev = [
 ]
 fulltext = [
     "PyMuPDF>=1.24.0",
-    "docling>=2.0.0",
+    "docling==2.104.0",
     "typer==0.20.0",
     "click==8.1.8",
 ]
+hybrid = [
+    "sentence-transformers>=5.0.0,<6",
+]
 paperqa = [
-    "paper-qa>=5",
+    "paper-qa==2026.3.18",
     "typer==0.20.0",
     "click==8.1.8",
 ]
@@ -41,6 +44,7 @@ paperqa = [
 [project.scripts]
 deep-research-baseline = "app.evaluation.baseline:main"
 deep-research-eval = "app.evaluation.runner:main"
+deep-research-race = "app.evaluation.race:main"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
