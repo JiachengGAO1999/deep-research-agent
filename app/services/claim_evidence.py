@@ -21,14 +21,52 @@ def build_claims(evidence: list[ExtractedEvidence]) -> list[ResearchClaim]:
     for item in evidence:
         if item.verification_status != VerificationStatus.VERIFIED:
             continue
+        section = (item.section_title or "").casefold()
+        if any(
+            excluded in section
+            for excluded in ("references", "bibliography", "acknowledg")
+        ):
+            continue
         finding = next((x.strip() for x in item.key_findings if x.strip()), "")
         if not finding:
             finding = (item.evidence_quote or "").strip()
         if not finding:
             continue
-        first_sentence = re.split(r"(?<=[.!?。！？])\s+", finding, maxsplit=1)[0]
-        if len(first_sentence) >= 40:
+        lines = [line.strip() for line in finding.splitlines() if line.strip()]
+        if len(lines) >= 2:
+            first_line = re.sub(r"\s+", " ", lines[0]).strip()
+            looks_like_heading = (
+                len(first_line) <= 100
+                and (
+                    first_line.upper() == first_line
+                    or bool(re.match(r"^\d+(?:\.\d+)*\s+\S+", first_line))
+                    or first_line.casefold()
+                    in {
+                        "abstract",
+                        "introduction",
+                        "conclusion",
+                        "discussion",
+                        "results",
+                        "methods",
+                    }
+                )
+            )
+            if looks_like_heading:
+                lines = lines[1:]
+        finding = " ".join(lines).strip()
+        if not finding:
+            continue
+        first_sentence = re.split(
+            r"(?<=[.!?。！？])\s+(?=[A-Z\u4e00-\u9fff])",
+            finding,
+            maxsplit=1,
+        )[0]
+        if len(first_sentence) >= 20:
             finding = first_sentence
+        if len(finding.split()) < 3:
+            continue
+        if re.match(r"^(figure|table|references?\b)", finding, re.I):
+            continue
         if len(finding) > 500:
             finding = finding[:497].rstrip() + "..."
         dedup_key = (item.paper_id, finding.casefold())
@@ -44,6 +82,7 @@ def build_claims(evidence: list[ExtractedEvidence]) -> list[ResearchClaim]:
                 paper_ids=[item.paper_id],
                 support_status="supported",
                 confidence=item.confidence,
+                section_id=item.section_title,
             )
         )
     return claims
@@ -70,11 +109,20 @@ def evaluate_evidence_quality(
     abstract = [
         item for item in evidence if item.evidence_type == EvidenceType.ABSTRACT
     ]
-    supported = [claim for claim in claims if claim.support_status == "supported"]
+    supported = [
+        claim
+        for claim in claims
+        if claim.support_status == "supported"
+        and claim.validation_status == "validated"
+    ]
     unsupported_important = [
         claim
         for claim in claims
-        if claim.importance == "core" and claim.support_status != "supported"
+        if claim.importance == "core"
+        and (
+            claim.support_status != "supported"
+            or claim.validation_status != "validated"
+        )
     ]
     quote_rate = len(verified_direct) / len(direct) if direct else 1.0
     completeness = len(supported) / len(claims) if claims else 0.0

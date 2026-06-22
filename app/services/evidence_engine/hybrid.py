@@ -34,6 +34,7 @@ class HybridEvidenceEngine(EvidenceEngine):
         self._settings = settings or get_settings()
         self._embedder = None
         self._reranker = None
+        self._dense_cache: dict[tuple, tuple[list[str], object]] = {}
 
     async def ingest(
         self,
@@ -53,9 +54,15 @@ class HybridEvidenceEngine(EvidenceEngine):
         from sentence_transformers import CrossEncoder, SentenceTransformer
 
         if self._embedder is None:
-            self._embedder = SentenceTransformer(self._settings.HYBRID_DENSE_MODEL)
-        if self._reranker is None:
-            self._reranker = CrossEncoder(self._settings.HYBRID_RERANK_MODEL)
+            self._embedder = SentenceTransformer(
+                self._settings.HYBRID_DENSE_MODEL,
+                device=self._settings.HYBRID_DEVICE,
+            )
+        if self._settings.HYBRID_ENABLE_RERANKER and self._reranker is None:
+            self._reranker = CrossEncoder(
+                self._settings.HYBRID_RERANK_MODEL,
+                device=self._settings.HYBRID_DEVICE,
+            )
         return self._embedder, self._reranker
 
     async def retrieve(
@@ -90,15 +97,33 @@ class HybridEvidenceEngine(EvidenceEngine):
 
         dense_ids: list[str] = []
         dense_scores: dict[str, float] = {}
-        embedder, reranker = await asyncio.to_thread(self._load_models)
+        try:
+            embedder, reranker = await asyncio.to_thread(self._load_models)
+        except Exception as exc:
+            logger.exception("Hybrid neural models failed to load: %s", exc)
+            embedder, reranker = None, None
         if embedder and chunks:
-            texts = [chunk.text for chunk in chunks]
+            cache_key = (
+                task_id,
+                tuple(sorted(paper_ids or [])),
+                tuple(chunk.chunk_id for chunk in chunks),
+            )
             query_vector = await asyncio.to_thread(
                 embedder.encode, query, normalize_embeddings=True
             )
-            vectors = await asyncio.to_thread(
-                embedder.encode, texts, normalize_embeddings=True
-            )
+            cached = self._dense_cache.get(cache_key)
+            if cached is None:
+                vectors = await asyncio.to_thread(
+                    embedder.encode,
+                    [chunk.text for chunk in chunks],
+                    normalize_embeddings=True,
+                )
+                self._dense_cache[cache_key] = (
+                    [chunk.chunk_id for chunk in chunks],
+                    vectors,
+                )
+            else:
+                _, vectors = cached
             similarities = vectors @ query_vector
             ranked_indices = similarities.argsort()[::-1][:candidate_limit]
             dense_ids = [chunks[int(i)].chunk_id for i in ranked_indices]

@@ -973,3 +973,39 @@ FTS 语法或自定义切块作为主要质量路线。
 - 分层评测 schema、成本/延迟字段和前端运行可观测性已建立；
 - passage/claim gold 仍需基于原文继续人工复核，未标注问题不得伪造分数；
 - 在真实赛马结果通过门槛前，不得声明“不输 PaperQA2/ScholarQA”。
+
+### 2026-06-23 Hybrid MVP 实机结论
+
+已使用服务器 `qwen3-8b-budget` 和真实学术 API 完成以下链路：
+
+```text
+研究问题
+→ Qwen 查询规划
+→ Semantic Scholar/arXiv（OpenAlex 可降级）
+→ 论文筛选
+→ OA PDF 下载
+→ Docling HybridChunker
+→ dense + FTS5 + RRF + CrossEncoder
+→ EvidenceCard
+→ ValidatedClaim
+→ strict report
+→ citation audit
+```
+
+代表性任务成功下载并解析 3 篇 PDF，检索 23 个 passages，生成 32 条
+验证 EvidenceCard；20 个候选 Claim 中 19 个通过验证，引用审计通过。
+
+MVP 默认使用 `REPORT_GENERATION_MODE=strict`：最终事实句只能由
+ValidatedClaims 确定性渲染。Qwen 可用于规划、筛选和缺口分析，但本地
+8B 模型暂不允许自由撰写事实性报告。未通过的 Claim 候选仅保留在审计记录，
+不得进入公开 Claims API 或报告。
+
+开发机烟雾测试可使用：
+
+```text
+HYBRID_DENSE_MODEL=sentence-transformers/all-MiniLM-L6-v2
+HYBRID_RERANK_MODEL=cross-encoder/ms-marco-MiniLM-L6-v2
+HYBRID_DEVICE=cpu
+```
+
+生产质量配置仍保留 BGE-M3 与 BGE reranker，切换前需评估内存、延迟和模型缓存。

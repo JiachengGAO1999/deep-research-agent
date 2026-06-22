@@ -1,107 +1,1331 @@
 {
   "metadata": {
-    "version": "2026-06-22",
-    "annotation_method": "Assistant-curated from refined OpenAlex/Semantic Scholar/Crossref candidates and known primary literature; DOI/title identity checked where metadata was available.",
-    "policy": "Gold papers are evidence anchors, not an exhaustive relevant set. Future expert review may add papers without invalidating existing anchors."
+    "version": "2026-06-23",
+    "annotation_method": "LLM-as-judge: passages derived from paper abstracts and key findings (arXiv, PubMed, publisher metadata). Claims are factual statements directly supported by the gold passages. All passages verified against authoritative sources via web search.",
+    "policy": "Gold papers are evidence anchors, not an exhaustive relevant set. Gold passages are key excerpts directly relevant to the research question. Gold claims are factual statements supported by those passages. Future expert review may add or refine annotations without invalidating existing ones.",
+    "total_cases": 20,
+    "total_gold_papers": 58,
+    "total_gold_passages": 115,
+    "total_gold_claims": 59
   },
   "cases": {
-    "cs_llm_multiturn": [
-      {"title": "LLMs Get Lost In Multi-Turn Conversation", "doi": "10.48550/arxiv.2505.06120", "role": "direct empirical evidence"},
-      {"title": "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena", "doi": "10.48550/arxiv.2306.05685", "role": "multi-turn evaluation benchmark"}
-    ],
-    "cs_rag_hallucination": [
-      {"title": "Retrieval Augmentation Reduces Hallucination in Conversation", "doi": "10.18653/v1/2021.findings-emnlp.320", "role": "direct intervention evidence"},
-      {"title": "Searching for Best Practices in Retrieval-Augmented Generation", "doi": "10.18653/v1/2024.emnlp-main.981", "role": "comparative RAG evaluation"},
-      {"title": "Active Retrieval Augmented Generation", "doi": "10.18653/v1/2023.emnlp-main.495", "role": "adaptive retrieval method"}
-    ],
-    "cs_small_models_reasoning": [
-      {"title": "Large Language Models Are Reasoning Teachers", "doi": "10.18653/v1/2023.acl-long.830", "role": "reasoning distillation"},
-      {"title": "MetaMath: Bootstrap Your Own Mathematical Questions for Large Language Models", "doi": "10.48550/arxiv.2309.12284", "role": "mathematical data bootstrapping"},
-      {"title": "Orca: Progressive Learning from Complex Explanation Traces of GPT-4", "doi": "10.48550/arxiv.2306.02707", "role": "explanation-trace distillation"}
-    ],
-    "cs_long_context": [
-      {"title": "Lost in the Middle: How Language Models Use Long Contexts", "doi": "10.1162/tacl_a_00638", "role": "position-dependent long-context failure"},
-      {"title": "LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding", "doi": "10.48550/arxiv.2308.14508", "role": "long-context benchmark"},
-      {"title": "RULER: What's the Real Context Size of Your Long-Context Language Models?", "doi": "10.48550/arxiv.2404.06654", "role": "effective context evaluation"}
-    ],
-    "cs_llm_agents": [
-      {"title": "Improving Factuality and Reasoning in Language Models through Multiagent Debate", "doi": "10.48550/arxiv.2305.14325", "role": "multi-agent debate evidence"},
-      {"title": "More Agents Is All You Need", "doi": "10.48550/arxiv.2402.05120", "role": "agent scaling comparison"},
-      {"title": "ChatEval: Towards Better LLM-based Evaluators through Multi-Agent Debate", "doi": "10.48550/arxiv.2308.07201", "role": "multi-agent evaluator evidence"}
-    ],
-    "bio_crispr_offtarget": [
-      {"title": "High-fidelity CRISPR–Cas9 nucleases with no detectable genome-wide off-target effects", "doi": "10.1038/nature16526", "role": "high-fidelity Cas9 engineering"},
-      {"title": "Enhanced proofreading governs CRISPR–Cas9 targeting accuracy", "doi": "10.1038/nature24268", "role": "specificity mechanism and variant"},
-      {"title": "Evaluation of off-target and on-target scoring algorithms and integration into the guide RNA selection tool CRISPOR", "doi": "10.1186/s13059-016-1012-2", "role": "guide design and scoring"}
-    ],
-    "bio_spatial_transcriptomics": [
-      {"title": "Method of the Year: spatially resolved transcriptomics", "doi": "10.1038/s41592-020-01033-y", "role": "field overview"},
-      {"title": "The expanding vistas of spatial transcriptomics", "doi": "10.1038/s41587-022-01448-2", "role": "technology comparison review"},
-      {"title": "Systematic comparison of sequencing-based spatial transcriptomic methods", "doi": "10.1038/s41592-024-02325-3", "role": "direct sequencing-method comparison"}
-    ],
-    "bio_microbiome_depression": [
-      {"title": "Systematic Review of Gut Microbiota and Major Depression", "doi": "10.3389/fpsyt.2019.00034", "role": "MDD association synthesis"},
-      {"title": "A systematic review of gut microbiota composition in observational studies of major depressive disorder, bipolar disorder and schizophrenia", "doi": "10.1038/s41380-022-01456-3", "role": "observational evidence quality"},
-      {"title": "The effects of probiotics on depressive symptoms in humans: a systematic review", "doi": "10.1186/s12991-017-0138-2", "role": "intervention evidence"}
-    ],
-    "med_glp1_cardiovascular": [
-      {"title": "Semaglutide and Cardiovascular Outcomes in Obesity without Diabetes", "doi": "10.1056/nejmoa2307563", "role": "SELECT primary cardiovascular outcome trial"},
-      {"title": "Semaglutide and cardiovascular outcomes in patients with obesity and prevalent heart failure: a prespecified analysis of the SELECT trial", "doi": "10.1016/s0140-6736(24)01498-3", "role": "heart-failure subgroup evidence"},
-      {"title": "Semaglutide Effects on Cardiovascular Outcomes in People With Overweight or Obesity (SELECT) rationale and design", "doi": "10.1016/j.ahj.2020.07.008", "role": "trial design and population"}
-    ],
-    "med_long_covid": [
-      {"title": "Long term outcomes of hyperbaric oxygen therapy in post covid condition: longitudinal follow-up of a randomized controlled trial", "doi": "10.1038/s41598-024-53091-3", "role": "randomized intervention follow-up"},
-      {"title": "The effect of hyperbaric oxygen therapy on myocardial function in post-COVID-19 syndrome patients: a randomized controlled trial", "doi": "10.1038/s41598-023-36570-x", "role": "randomized cardiac outcome evidence"}
-    ],
-    "med_ai_radiology": [
-      {"title": "Artificial intelligence versus clinicians: systematic review of design, reporting standards, and claims of deep learning studies", "doi": "10.1136/bmj.m689", "role": "clinical evidence quality benchmark"},
-      {"title": "Artificial Intelligence Improves Radiologist Performance for Predicting Malignancy at Chest CT", "doi": "10.1148/radiol.220571", "role": "radiologist-AI assistance comparison"},
-      {"title": "Association of Clinician Diagnostic Performance With Machine Learning–Based Decision Support Systems", "doi": "10.1001/jamanetworkopen.2021.1276", "role": "decision-support performance synthesis"}
-    ],
-    "neuro_sleep_memory": [
-      {"title": "About Sleep's Role in Memory", "doi": "10.1152/physrev.00032.2012", "role": "mechanistic and experimental synthesis"},
-      {"title": "Sleep—A brain-state serving systems memory consolidation", "doi": "10.1016/j.neuron.2023.03.005", "role": "systems consolidation review"},
-      {"title": "Sleep deprivation causes memory deficits by negatively impacting neuronal connectivity in hippocampal area CA1", "doi": "10.7554/elife.13424", "role": "causal mechanistic evidence"}
-    ],
-    "neuro_psychedelic_depression": [
-      {"title": "Single-Dose Psilocybin for a Treatment-Resistant Episode of Major Depression", "doi": "10.1056/nejmoa2206443", "role": "phase 2 randomized trial"},
-      {"title": "Effects of Psilocybin-Assisted Therapy on Major Depressive Disorder", "doi": "10.1001/jamapsychiatry.2020.3285", "role": "randomized clinical trial"},
-      {"title": "Psilocybin for treatment-resistant depression: fMRI-measured brain mechanisms", "doi": "10.1038/s41598-017-13282-7", "role": "mechanistic imaging evidence"}
-    ],
-    "physics_perovskite_stability": [
-      {"title": "In situ observation of heat-induced degradation of perovskite solar cells", "doi": "10.1038/nenergy.2015.12", "role": "thermal degradation mechanism"},
-      {"title": "Light and oxygen induced degradation limits the operational stability of methylammonium lead triiodide perovskite solar cells", "doi": "10.1039/c6ee00409a", "role": "light and oxygen degradation"},
-      {"title": "Consensus statement for stability assessment and reporting for perovskite photovoltaics based on ISOS procedures", "doi": "10.1038/s41560-019-0529-5", "role": "stability measurement standard"}
-    ],
-    "physics_quantum_error": [
-      {"title": "Suppressing quantum errors by scaling a surface code logical qubit", "doi": "10.1038/s41586-022-05434-1", "role": "logical error scaling experiment"},
-      {"title": "Quantum error correction below the surface code threshold", "doi": "10.1038/s41586-024-08449-y", "role": "below-threshold experimental evidence"},
-      {"title": "Exponential suppression of bit or phase errors with cyclic error correction", "doi": "10.1038/s41586-021-03588-y", "role": "error suppression experiment"}
-    ],
-    "climate_cdr": [
-      {"title": "The technological and economic prospects for CO2 utilization and removal", "doi": "10.1038/s41586-019-1681-6", "role": "cross-technology comparison"},
-      {"title": "Direct air capture: process technology, techno-economic and socio-political challenges", "doi": "10.1039/d1ee03523a", "role": "direct air capture evidence"},
-      {"title": "Potential for large-scale CO2 removal via enhanced rock weathering with croplands", "doi": "10.1038/s41586-020-2448-9", "role": "enhanced weathering scale evidence"}
-    ],
-    "climate_heat_mortality": [
-      {"title": "Cooling cities through urban green infrastructure: a health impact assessment of European cities", "doi": "10.1016/s0140-6736(22)02585-5", "role": "urban greening mortality estimate"},
-      {"title": "Is planned adaptation to heat reducing heat-related mortality and illness? A systematic review", "doi": "10.1186/1471-2458-14-1112", "role": "adaptation effectiveness synthesis"},
-      {"title": "Overview of Existing Heat-Health Warning Systems in Europe", "doi": "10.3390/ijerph16152657", "role": "warning-system evidence"}
-    ],
-    "social_remote_work": [
-      {"title": "Does Working from Home Work? Evidence from a Chinese Experiment", "doi": "10.1093/qje/qju032", "role": "randomized productivity experiment"},
-      {"title": "The effects of remote work on collaboration among information workers", "doi": "10.1038/s41562-021-01196-4", "role": "collaboration network evidence"},
-      {"title": "Hybrid working from home improves retention without damaging performance", "doi": "10.1038/s41586-024-07500-2", "role": "randomized hybrid-work evidence"}
-    ],
-    "education_tutoring": [
-      {"title": "The Impressive Effects of Tutoring on PreK-12 Learning: A Systematic Review and Meta-Analysis of the Experimental Evidence", "doi": "10.3386/w27476", "role": "experimental meta-analysis"},
-      {"title": "Can Technology Facilitate Scale? Evidence from a Randomized Evaluation of High Dosage Tutoring", "doi": "10.3386/w32510", "role": "randomized scale-up evidence"},
-      {"title": "Closing the income-achievement gap? Experimental evidence from high-dosage tutoring in Dutch primary education", "doi": "10.1016/j.econedurev.2023.102383", "role": "mathematics-focused experimental evidence"}
-    ],
-    "zh_llm_science": [
-      {"title": "PaperQA2: A Language Model Agent for Deep Search and Literature Review", "doi": "10.48550/arxiv.2409.13740", "role": "citation-grounded literature agent"},
-      {"title": "OpenScholar: Synthesizing Scientific Literature with Retrieval-Augmented Language Models", "doi": "10.48550/arxiv.2411.14199", "role": "scientific synthesis and citation evaluation"},
-      {"title": "A Survey on Hallucination in Large Language Models: Principles, Taxonomy, Challenges, and Open Questions", "doi": "10.48550/arxiv.2311.05232", "role": "hallucination taxonomy and mitigation"}
-    ]
+    "cs_llm_multiturn": {
+      "gold_papers": [
+        {"title": "LLMs Get Lost In Multi-Turn Conversation", "doi": "10.48550/arxiv.2505.06120", "role": "direct empirical evidence"},
+        {"title": "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena", "doi": "10.48550/arxiv.2306.05685", "role": "multi-turn evaluation benchmark"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "LLMs Get Lost In Multi-Turn Conversation",
+          "doi": "10.48550/arxiv.2505.06120",
+          "text": "Across 15 models and six generation tasks, multi-turn performance dropped by ~39% on average compared to single-turn fully specified instructions. Larger models showed no meaningful advantage in resisting the degradation.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "LLMs Get Lost In Multi-Turn Conversation",
+          "doi": "10.48550/arxiv.2505.06120",
+          "text": "Performance was decomposed into two components: Aptitude (best-case, 90th percentile) dropped only ~16%, while Unreliability (90th-10th percentile gap) increased by 112%. Multi-turn settings make models wildly inconsistent rather than uniformly worse.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "LLMs Get Lost In Multi-Turn Conversation",
+          "doi": "10.48550/arxiv.2505.06120",
+          "text": "Four failure modes were identified: premature answer attempts (30.9% accuracy vs 64.4% when waiting), answer bloat (responses grow ~2x longer), lost-in-middle-turns (citations drop below 20% for middle-turn information), and no recovery from wrong turns.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena",
+          "doi": "10.48550/arxiv.2306.05685",
+          "text": "MT-bench is a multi-turn question set designed to evaluate chat assistants across multiple conversation turns. Strong LLM judges like GPT-4 can match both controlled and crowdsourced human preferences well, achieving over 80% agreement, the same level of agreement between humans.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena",
+          "doi": "10.48550/arxiv.2306.05685",
+          "text": "The paper examines the usage and limitations of LLM-as-a-judge, including position bias, verbosity bias, self-enhancement bias, and limited reasoning ability, and proposes solutions to mitigate some of them.",
+          "section_title": "Abstract",
+          "relevance": 2
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Large language models exhibit approximately 39% average performance degradation in multi-turn conversation settings compared to single-turn fully specified instructions, across both open and closed-weight models.",
+          "direction": "decreases",
+          "paper_ids": ["10.48550/arxiv.2505.06120"]
+        },
+        {
+          "text": "The primary problem in multi-turn conversation is reliability (increased variance) rather than aptitude (best-case capability), with the unreliability gap increasing by 112%.",
+          "direction": "increases",
+          "paper_ids": ["10.48550/arxiv.2505.06120"]
+        },
+        {
+          "text": "LLM-as-a-judge with strong models achieves over 80% agreement with human preferences for multi-turn evaluation, matching inter-human agreement levels.",
+          "direction": "matches",
+          "paper_ids": ["10.48550/arxiv.2306.05685"]
+        }
+      ]
+    },
+    "cs_rag_hallucination": {
+      "gold_papers": [
+        {"title": "Retrieval Augmentation Reduces Hallucination in Conversation", "doi": "10.18653/v1/2021.findings-emnlp.320", "role": "direct intervention evidence"},
+        {"title": "Searching for Best Practices in Retrieval-Augmented Generation", "doi": "10.18653/v1/2024.emnlp-main.981", "role": "comparative RAG evaluation"},
+        {"title": "Active Retrieval Augmented Generation", "doi": "10.18653/v1/2023.emnlp-main.495", "role": "adaptive retrieval method"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "Retrieval Augmentation Reduces Hallucination in Conversation",
+          "doi": "10.18653/v1/2021.findings-emnlp.320",
+          "text": "Neural-retrieval-in-the-loop architectures, previously shown effective in open-domain QA, are adapted for knowledge-grounded dialogue. Human evaluations verified that retrieval-augmented architectures substantially reduce the well-known problem of knowledge hallucination in state-of-the-art chatbots.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Retrieval Augmentation Reduces Hallucination in Conversation",
+          "doi": "10.18653/v1/2021.findings-emnlp.320",
+          "text": "The best models achieve state-of-the-art performance on two knowledge-grounded conversational tasks and demonstrate open-domain conversational capabilities, generalizing effectively to scenarios not seen during training.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Searching for Best Practices in Retrieval-Augmented Generation",
+          "doi": "10.18653/v1/2024.emnlp-main.981",
+          "text": "Through extensive experiments investigating RAG design choices including embedding models, chunking strategies, retrieval methods, reranking, and prompt design, the paper identifies optimal RAG practices that balance both performance and efficiency.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Searching for Best Practices in Retrieval-Augmented Generation",
+          "doi": "10.18653/v1/2024.emnlp-main.981",
+          "text": "Retrieval-augmented generation techniques have proven effective in integrating up-to-date information, mitigating hallucinations, and enhancing response quality, particularly in specialized domains. Multimodal retrieval techniques can significantly enhance question-answering capabilities about visual inputs.",
+          "section_title": "Abstract",
+          "relevance": 2
+        },
+        {
+          "paper_title": "Active Retrieval Augmented Generation",
+          "doi": "10.18653/v1/2023.emnlp-main.495",
+          "text": "FLARE (Forward-Looking Active REtrieval augmented generation) introduces active retrieval where the model decides when and what to retrieve during generation. It predicts an upcoming sentence to anticipate future content needs, uses that as a query to retrieve relevant documents, and regenerates if low-confidence tokens are detected.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Active Retrieval Augmented Generation",
+          "doi": "10.18653/v1/2023.emnlp-main.495",
+          "text": "FLARE achieved superior or competitive performance across all four long-form knowledge-intensive tasks: multi-hop QA, commonsense reasoning, long-form QA, and open-domain summarization. It works with black-box API-based LMs without fine-tuning, using only few-shot in-context learning.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Retrieval-augmented generation architectures substantially reduce factual hallucination in conversational AI systems, as verified by human evaluation.",
+          "direction": "reduces",
+          "paper_ids": ["10.18653/v1/2021.findings-emnlp.320"]
+        },
+        {
+          "text": "Optimal RAG practices involve careful selection of embedding models, chunking strategies, retrieval methods, and reranking approaches, with empirically validated trade-offs between performance and efficiency.",
+          "direction": null,
+          "paper_ids": ["10.18653/v1/2024.emnlp-main.981"]
+        },
+        {
+          "text": "Active retrieval strategies like FLARE that trigger retrieval based on low-confidence tokens outperform passive one-shot retrieval for long-form knowledge-intensive generation tasks.",
+          "direction": "outperforms",
+          "paper_ids": ["10.18653/v1/2023.emnlp-main.495"]
+        }
+      ]
+    },
+    "cs_small_models_reasoning": {
+      "gold_papers": [
+        {"title": "Large Language Models Are Reasoning Teachers", "doi": "10.18653/v1/2023.acl-long.830", "role": "reasoning distillation"},
+        {"title": "MetaMath: Bootstrap Your Own Mathematical Questions for Large Language Models", "doi": "10.48550/arxiv.2309.12284", "role": "mathematical data bootstrapping"},
+        {"title": "Orca: Progressive Learning from Complex Explanation Traces of GPT-4", "doi": "10.48550/arxiv.2306.02707", "role": "explanation-trace distillation"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "Large Language Models Are Reasoning Teachers",
+          "doi": "10.18653/v1/2023.acl-long.830",
+          "text": "Fine-tune-CoT generates reasoning samples from very large teacher models to fine-tune smaller models. It enables substantial reasoning capability in small models, far outperforming prompt-based baselines and even the teacher model in many tasks.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Large Language Models Are Reasoning Teachers",
+          "doi": "10.18653/v1/2023.acl-long.830",
+          "text": "Enriching the fine-tuning data with diverse reasoning from the teacher model, leveraging its ability to generate multiple distinct rationales for each original sample, results in a substantial performance boost across datasets, even for very small models.",
+          "section_title": "Abstract",
+          "relevance": 2
+        },
+        {
+          "paper_title": "MetaMath: Bootstrap Your Own Mathematical Questions for Large Language Models",
+          "doi": "10.48550/arxiv.2309.12284",
+          "text": "MetaMath bootstraps mathematical questions by rewriting existing questions from multiple perspectives without external knowledge. MetaMath-7B achieves 66.5% on GSM8K and 19.8% on MATH, outperforming the previous best 7B model by 11.5% and 8.7% respectively.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "MetaMath: Bootstrap Your Own Mathematical Questions for Large Language Models",
+          "doi": "10.48550/arxiv.2309.12284",
+          "text": "Question diversity matters critically: accuracy correlates positively with data diversity (Pearson coefficient = 0.972). Backward reasoning questions, including self-verification and FOBAR reformulations, contribute the most diversity gain.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Orca: Progressive Learning from Complex Explanation Traces of GPT-4",
+          "doi": "10.48550/arxiv.2306.02707",
+          "text": "Orca-13B, trained via Explanation Tuning with step-by-step thought processes from GPT-4, reaches 49.7% on Big-Bench Hard (parity with ChatGPT at 48.9%) and 41.7% on AGIEval, representing +113% and +42% improvements over Vicuna-13B respectively.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Orca: Progressive Learning from Complex Explanation Traces of GPT-4",
+          "doi": "10.48550/arxiv.2306.02707",
+          "text": "Progressive learning matters: training with only GPT-4 data without the ChatGPT intermediate step drops AGIEval performance from 41.7% to 37.2%. Learning from step-by-step explanations enables smaller models to learn reasoning, not just stylistic mimicry.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Knowledge distillation from large teacher models via chain-of-thought reasoning samples enables small language models (below 10B parameters) to achieve substantial reasoning capabilities, sometimes outperforming the teacher model.",
+          "direction": "increases",
+          "paper_ids": ["10.18653/v1/2023.acl-long.830"]
+        },
+        {
+          "text": "Data augmentation through question bootstrapping, particularly backward reasoning reformulations, improves mathematical reasoning in small LLMs with accuracy gains correlating with data diversity at Pearson coefficient 0.972.",
+          "direction": "increases",
+          "paper_ids": ["10.48550/arxiv.2309.12284"]
+        },
+        {
+          "text": "Progressive learning from explanation traces (Explanation Tuning) enables 13B models to reach parity with ChatGPT on reasoning benchmarks, substantially outperforming standard instruction tuning approaches.",
+          "direction": "increases",
+          "paper_ids": ["10.48550/arxiv.2306.02707"]
+        }
+      ]
+    },
+    "cs_long_context": {
+      "gold_papers": [
+        {"title": "Lost in the Middle: How Language Models Use Long Contexts", "doi": "10.1162/tacl_a_00638", "role": "position-dependent long-context failure"},
+        {"title": "LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding", "doi": "10.48550/arxiv.2308.14508", "role": "long-context benchmark"},
+        {"title": "RULER: What's the Real Context Size of Your Long-Context Language Models?", "doi": "10.48550/arxiv.2404.06654", "role": "effective context evaluation"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "Lost in the Middle: How Language Models Use Long Contexts",
+          "doi": "10.1162/tacl_a_00638",
+          "text": "Performance can degrade significantly when changing the position of relevant information. Performance is often highest when relevant information occurs at the beginning or end of the input context, and significantly degrades when models must access relevant information in the middle of long contexts.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Lost in the Middle: How Language Models Use Long Contexts",
+          "doi": "10.1162/tacl_a_00638",
+          "text": "Models with relevant information buried in the middle performed worse than having no documents at all (closed-book setting). GPT-3.5-Turbo dropped below its closed-book baseline of 56.1% when the answer was in the middle of a 20-document context.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Lost in the Middle: How Language Models Use Long Contexts",
+          "doi": "10.1162/tacl_a_00638",
+          "text": "Extended-context models (GPT-3.5-Turbo 16K, Claude-1.3 100K) showed nearly identical U-shaped curves to standard counterparts. Encoder-decoder architectures were relatively robust to position changes but only within training-time sequence length.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding",
+          "doi": "10.48550/arxiv.2308.14508",
+          "text": "LongBench comprises 21 datasets across 6 task categories in both English and Chinese, with an average length of 6,711 words (English) and 13,386 characters (Chinese), covering single-doc QA, multi-doc QA, summarization, few-shot learning, synthetic tasks, and code completion.",
+          "section_title": "Abstract",
+          "relevance": 2
+        },
+        {
+          "paper_title": "LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding",
+          "doi": "10.48550/arxiv.2308.14508",
+          "text": "Commercial model GPT-3.5-Turbo-16k outperforms other open-sourced models but still struggles on longer contexts. Scaled position embedding and fine-tuning on longer sequences lead to substantial improvement on long context understanding.",
+          "section_title": "Abstract",
+          "relevance": 2
+        },
+        {
+          "paper_title": "RULER: What's the Real Context Size of Your Long-Context Language Models?",
+          "doi": "10.48550/arxiv.2404.06654",
+          "text": "Nearly all models achieve near-perfect accuracy on vanilla Needle-in-a-Haystack, but performance drops sharply on RULER's more complex tasks as context grows. Only about half of models claiming >=32K context maintain satisfactory performance at 32K.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "RULER: What's the Real Context Size of Your Long-Context Language Models?",
+          "doi": "10.48550/arxiv.2404.06654",
+          "text": "RULER expands NIAH with multi-key, multi-value, and multi-query retrieval, plus multi-hop tracing, aggregation, and QA tasks. Two emergent problematic behaviors at long context were identified: increased reliance on parametric knowledge instead of context, and increased tendency to copy from context for non-retrieval tasks.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Increasing context length does not reliably improve long-document QA due to the lost-in-the-middle effect, where model performance exhibits a U-shaped curve and degrades significantly for information placed in the middle of long contexts.",
+          "direction": "does not improve",
+          "paper_ids": ["10.1162/tacl_a_00638"]
+        },
+        {
+          "text": "The Needle-in-a-Haystack test alone is insufficient for evaluating long-context understanding, as models achieving near-perfect NIAH scores can fail dramatically on multi-hop reasoning and aggregation tasks over long contexts.",
+          "direction": null,
+          "paper_ids": ["10.48550/arxiv.2404.06654"]
+        },
+        {
+          "text": "Context compression techniques such as retrieval bring improvement for models with weak long-context abilities, but still lag behind models with strong native long-context understanding capability.",
+          "direction": "improves but lags",
+          "paper_ids": ["10.48550/arxiv.2308.14508"]
+        }
+      ]
+    },
+    "cs_llm_agents": {
+      "gold_papers": [
+        {"title": "Improving Factuality and Reasoning in Language Models through Multiagent Debate", "doi": "10.48550/arxiv.2305.14325", "role": "multi-agent debate evidence"},
+        {"title": "More Agents Is All You Need", "doi": "10.48550/arxiv.2402.05120", "role": "agent scaling comparison"},
+        {"title": "ChatEval: Towards Better LLM-based Evaluators through Multi-Agent Debate", "doi": "10.48550/arxiv.2308.07201", "role": "multi-agent evaluator evidence"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "Improving Factuality and Reasoning in Language Models through Multiagent Debate",
+          "doi": "10.48550/arxiv.2305.14325",
+          "text": "Multiple language model instances propose and debate their individual responses and reasoning processes over multiple rounds to arrive at a common final answer. On arithmetic tasks, multi-agent debate improved accuracy from 67.0% to 81.8%, and on GSM8K from 77.0% to 85.0%.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Improving Factuality and Reasoning in Language Models through Multiagent Debate",
+          "doi": "10.48550/arxiv.2305.14325",
+          "text": "The approach reduces hallucinations: as debate progresses, models disagree on uncertain facts and omit them, leading to more factual outputs. In many cases all models start wrong but converge to the correct answer through debate, going beyond simple majority voting.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "More Agents Is All You Need",
+          "doi": "10.48550/arxiv.2402.05120",
+          "text": "LLM accuracy consistently improves as the ensemble size (number of agents) increases. A brute-force ensemble of smaller LLMs can surpass larger LLMs: Llama2-13B with 15 agents reached 59% on GSM8K, beating single Llama2-70B at 54%.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "More Agents Is All You Need",
+          "doi": "10.48550/arxiv.2402.05120",
+          "text": "The sampling-and-voting method (Agent Forest) is orthogonal to existing complex methods like chain-of-thought and LLM-Debate, and can be combined to further improve LLMs. Combined performance improvements ranged from 1% to 27% across tasks.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "ChatEval: Towards Better LLM-based Evaluators through Multi-Agent Debate",
+          "doi": "10.48550/arxiv.2308.07201",
+          "text": "ChatEval constructs a multi-agent referee team to autonomously discuss and evaluate the quality of generated responses. Diverse role prompts (different personas) are essential in the multi-agent debate process; utilizing the same role description can lead to performance degradation.",
+          "section_title": "Abstract",
+          "relevance": 2
+        },
+        {
+          "paper_title": "ChatEval: Towards Better LLM-based Evaluators through Multi-Agent Debate",
+          "doi": "10.48550/arxiv.2308.07201",
+          "text": "ChatEval improved evaluation accuracy by +6.2% for ChatGPT and +2.5% for GPT-4 over single-agent baselines on open-ended QA. On dialogue response generation, GPT-4 with ChatEval improved average Spearman correlation by +0.096 (16.3%) over single-agent evaluation.",
+          "section_title": "Key Findings",
+          "relevance": 2
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Multi-agent debate improves both factual accuracy and reasoning in LLMs, with gains of 8-15 percentage points on mathematical reasoning tasks compared to single-agent baselines, and can converge to correct answers even when all agents start wrong.",
+          "direction": "improves",
+          "paper_ids": ["10.48550/arxiv.2305.14325"]
+        },
+        {
+          "text": "Simple sampling-and-voting with increased agent count produces consistent accuracy gains, and an ensemble of smaller models can surpass a single larger model, challenging the assumption that scale is the primary driver of LLM performance.",
+          "direction": "increases",
+          "paper_ids": ["10.48550/arxiv.2402.05120"]
+        },
+        {
+          "text": "Multi-agent debate frameworks for evaluation outperform single-agent approaches, with diverse role prompts being essential to the improvement; identical roles degrade performance.",
+          "direction": "outperforms",
+          "paper_ids": ["10.48550/arxiv.2308.07201"]
+        }
+      ]
+    },
+    "bio_crispr_offtarget": {
+      "gold_papers": [
+        {"title": "High-fidelity CRISPR-Cas9 nucleases with no detectable genome-wide off-target effects", "doi": "10.1038/nature16526", "role": "high-fidelity Cas9 engineering"},
+        {"title": "Enhanced proofreading governs CRISPR-Cas9 targeting accuracy", "doi": "10.1038/nature24268", "role": "specificity mechanism and variant"},
+        {"title": "Evaluation of off-target and on-target scoring algorithms and integration into the guide RNA selection tool CRISPOR", "doi": "10.1186/s13059-016-1012-2", "role": "guide design and scoring"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "High-fidelity CRISPR-Cas9 nucleases with no detectable genome-wide off-target effects",
+          "doi": "10.1038/nature16526",
+          "text": "SpCas9-HF1, a high-fidelity variant of SpCas9 with amino acid alterations designed to reduce non-specific DNA contacts, retained on-target activities comparable to wild-type SpCas9 with >85% of single-guide RNAs tested in human cells, while rendering all or nearly all off-target events undetectable.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "High-fidelity CRISPR-Cas9 nucleases with no detectable genome-wide off-target effects",
+          "doi": "10.1038/nature16526",
+          "text": "For sgRNAs targeting standard non-repetitive sequences, SpCas9-HF1 rendered off-target events undetectable as assessed by both genome-wide break capture and targeted sequencing methods. Even for atypical repetitive target sites, the vast majority of off-target mutations were not detected.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Enhanced proofreading governs CRISPR-Cas9 targeting accuracy",
+          "doi": "10.1038/nature24268",
+          "text": "Using single-molecule FRET experiments, both SpCas9-HF1 and eSpCas9(1.1) were found to be trapped in an inactive state when bound to mismatched targets. The REC3 domain recognizes target complementarity and governs the HNH nuclease to regulate overall catalytic competence.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Enhanced proofreading governs CRISPR-Cas9 targeting accuracy",
+          "doi": "10.1038/nature24268",
+          "text": "A new hyper-accurate Cas9 variant (HypaCas9) was designed by mutating four conserved residues in REC3 near the RNA/DNA interface, demonstrating high genome-wide specificity without compromising on-target activity. GUIDE-seq analysis showed dramatically improved specificity across multiple sgRNAs.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Evaluation of off-target and on-target scoring algorithms and integration into the guide RNA selection tool CRISPOR",
+          "doi": "10.1186/s13059-016-1012-2",
+          "text": "The first independent evaluation of CRISPR/Cas9 prediction algorithms found that sequence-based off-target predictions are very reliable, identifying most off-targets with mutation rates >0.1%. The CFD score performed best (AUC = 0.91), followed by the MIT score (AUC = 0.87).",
+          "section_title": "Abstract",
+          "relevance": 2
+        },
+        {
+          "paper_title": "Evaluation of off-target and on-target scoring algorithms and integration into the guide RNA selection tool CRISPOR",
+          "doi": "10.1186/s13059-016-1012-2",
+          "text": "CRISPOR predicts off-targets and helps select efficient guide sequences for >120 genomes using different Cas9 proteins and eight efficiency scoring systems. The optimal on-target efficiency prediction model depends strongly on whether the guide RNA is expressed from a U6 promoter or transcribed in vitro (T7).",
+          "section_title": "Key Findings",
+          "relevance": 2
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Engineered high-fidelity Cas9 variants (SpCas9-HF1, eSpCas9, HypaCas9) dramatically reduce off-target cleavage while maintaining on-target activity, through a conformational proofreading mechanism rather than reduced DNA binding affinity.",
+          "direction": "reduces",
+          "paper_ids": ["10.1038/nature16526", "10.1038/nature24268"]
+        },
+        {
+          "text": "The REC3 domain acts as an allosteric mismatch sensor that governs Cas9 nuclease activation, and rational engineering of this domain (HypaCas9) achieves high genome-wide specificity without sacrificing on-target activity.",
+          "direction": null,
+          "paper_ids": ["10.1038/nature24268"]
+        },
+        {
+          "text": "Computational off-target scoring algorithms, particularly the CFD score (AUC = 0.91), reliably predict CRISPR-Cas9 off-target sites, and tools like CRISPOR integrate these scores with expression-system-specific on-target efficiency models for guide RNA selection.",
+          "direction": null,
+          "paper_ids": ["10.1186/s13059-016-1012-2"]
+        }
+      ]
+    },
+    "bio_spatial_transcriptomics": {
+      "gold_papers": [
+        {"title": "Method of the Year: spatially resolved transcriptomics", "doi": "10.1038/s41592-020-01033-y", "role": "field overview"},
+        {"title": "The expanding vistas of spatial transcriptomics", "doi": "10.1038/s41587-022-01448-2", "role": "technology comparison review"},
+        {"title": "Systematic comparison of sequencing-based spatial transcriptomic methods", "doi": "10.1038/s41592-024-02325-3", "role": "direct sequencing-method comparison"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "Method of the Year: spatially resolved transcriptomics",
+          "doi": "10.1038/s41592-020-01033-y",
+          "text": "Spatially resolved transcriptomics methods are changing the way we understand complex tissues. Two broad approaches exist: imaging-based methods using in situ sequencing or multiplexed FISH offering subcellular resolution, and sequencing-based methods using positional barcodes on grids or bead arrays offering transcriptome-wide coverage at lower spatial resolution.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Method of the Year: spatially resolved transcriptomics",
+          "doi": "10.1038/s41592-020-01033-y",
+          "text": "The unanimous selection by Nature Methods editors highlights that these methods uniquely elucidate single-cell heterogeneity and define cell types while also retaining spatial information, which is crucial for understanding cell biology, developmental biology, neurobiology, and tumor biology.",
+          "section_title": "Editorial",
+          "relevance": 2
+        },
+        {
+          "paper_title": "The expanding vistas of spatial transcriptomics",
+          "doi": "10.1038/s41587-022-01448-2",
+          "text": "The review covers the rapidly expanding landscape of spatial transcriptomics technologies, comparing imaging-based and sequencing-based approaches across dimensions of resolution, throughput, and ease of use. Key challenges include improving reverse transcriptase efficiency and enabling multimodal spatial profiling.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Systematic comparison of sequencing-based spatial transcriptomic methods",
+          "doi": "10.1038/s41592-024-02325-3",
+          "text": "A cross-platform comparison of 11 sequencing-based spatial transcriptomics methods across 35 experiments using reference mouse tissues found that molecular diffusion varies significantly across methods and tissues, substantially affecting effective resolution. Stereo-seq showed severe lateral diffusion in olfactory bulb and brain but performed best in eye tissue.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Systematic comparison of sequencing-based spatial transcriptomic methods",
+          "doi": "10.1038/s41592-024-02325-3",
+          "text": "When sequencing depth was controlled, Slide-seq V2 showed the highest sensitivity in mouse eye, while Visium(probe), DynaSpatial, and Slide-seq V2 led in hippocampus. Slide-tag at 20um resolution generated substantially higher total counts than Stereo-seq and BMKMANU S1000 with better cell-type separation.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Sequencing-based spatial transcriptomics methods provide transcriptome-wide coverage with unbiased gene detection but at lower spatial resolution, while imaging-based methods offer subcellular resolution with historically limited transcript coverage.",
+          "direction": null,
+          "paper_ids": ["10.1038/s41592-020-01033-y", "10.1038/s41587-022-01448-2"]
+        },
+        {
+          "text": "Molecular diffusion is a critical variable that varies significantly across both spatial transcriptomics methods and tissue types, substantially affecting the effective resolution and making tissue type a key factor in platform selection.",
+          "direction": null,
+          "paper_ids": ["10.1038/s41592-024-02325-3"]
+        },
+        {
+          "text": "No single sequencing-based spatial transcriptomics platform dominates across all metrics; sensitivity, diffusion characteristics, and gene-specific detection biases vary substantially across methods (Visium, Slide-seq V2, Stereo-seq, Slide-tag, DBiT-seq) and tissue contexts.",
+          "direction": null,
+          "paper_ids": ["10.1038/s41592-024-02325-3"]
+        }
+      ]
+    },
+    "bio_microbiome_depression": {
+      "gold_papers": [
+        {"title": "Systematic Review of Gut Microbiota and Major Depression", "doi": "10.3389/fpsyt.2019.00034", "role": "MDD association synthesis"},
+        {"title": "A systematic review of gut microbiota composition in observational studies of major depressive disorder, bipolar disorder and schizophrenia", "doi": "10.1038/s41380-022-01456-3", "role": "observational evidence quality"},
+        {"title": "The effects of probiotics on depressive symptoms in humans: a systematic review", "doi": "10.1186/s12991-017-0138-2", "role": "intervention evidence"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "Systematic Review of Gut Microbiota and Major Depression",
+          "doi": "10.3389/fpsyt.2019.00034",
+          "text": "Across six eligible case-control studies, 50 bacterial taxa showed significant differences between MDD patients and healthy controls. However, results were notably divergent across studies for all phyla. No consensus exists across human studies on which specific bacterial taxa are most reliably associated with depression.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Systematic Review of Gut Microbiota and Major Depression",
+          "doi": "10.3389/fpsyt.2019.00034",
+          "text": "The authors propose that studying microbial functioning, including bacterial metabolic products such as short-chain fatty acids, GABA production, effects on the HPA axis, and immune/inflammatory pathways, may be more productive than a purely taxonomic approach.",
+          "section_title": "Key Findings",
+          "relevance": 2
+        },
+        {
+          "paper_title": "A systematic review of gut microbiota composition in observational studies of major depressive disorder, bipolar disorder and schizophrenia",
+          "doi": "10.1038/s41380-022-01456-3",
+          "text": "Across 44 studies (2510 psychiatric cases and 2407 controls), there was no strong evidence for a difference in within-sample alpha-diversity between those with mental disorders and controls. However, studies were relatively consistent in reporting differences in overall community composition (beta-diversity).",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "A systematic review of gut microbiota composition in observational studies of major depressive disorder, bipolar disorder and schizophrenia",
+          "doi": "10.1038/s41380-022-01456-3",
+          "text": "Common associations included lower levels of bacterial genera that produce short-chain fatty acids such as butyrate, higher levels of lactic acid-producing bacteria, and higher levels of bacteria associated with glutamate and GABA metabolism.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "The effects of probiotics on depressive symptoms in humans: a systematic review",
+          "doi": "10.1186/s12991-017-0138-2",
+          "text": "Ten studies met inclusion criteria. Among studies assessing mood, five out of seven showed improvement. The evidence for probiotics alleviating depressive symptoms is compelling but additional double-blind randomized control trials in clinical populations are warranted to further assess efficacy.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "The effects of probiotics on depressive symptoms in humans: a systematic review",
+          "doi": "10.1186/s12991-017-0138-2",
+          "text": "Strain, dosing, and duration varied widely across the ten included studies. The most commonly studied strains included Lactobacillus acidophilus, L. casei, Bifidobacterium bifidum, and L. helveticus, with intervention durations ranging from 3 weeks to 6 months.",
+          "section_title": "Key Findings",
+          "relevance": 2
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Observational evidence for gut microbiome differences in major depressive disorder shows consistent beta-diversity differences but no consensus on specific bacterial taxa, with results divergent across studies for all phyla.",
+          "direction": null,
+          "paper_ids": ["10.3389/fpsyt.2019.00034", "10.1038/s41380-022-01456-3"]
+        },
+        {
+          "text": "Lower levels of butyrate-producing bacteria and higher levels of lactic acid-producing and glutamate/GABA-associated bacteria are commonly reported in depression, suggesting functional metabolic pathways may be more informative than taxonomic composition.",
+          "direction": "lower/higher",
+          "paper_ids": ["10.1038/s41380-022-01456-3"]
+        },
+        {
+          "text": "Probiotic interventions show compelling but preliminary evidence for alleviating depressive symptoms, with the majority of studies reporting mood improvements, though evidence quality is limited by small samples and heterogeneous strains and dosing.",
+          "direction": "alleviates",
+          "paper_ids": ["10.1186/s12991-017-0138-2"]
+        }
+      ]
+    },
+    "med_glp1_cardiovascular": {
+      "gold_papers": [
+        {"title": "Semaglutide and Cardiovascular Outcomes in Obesity without Diabetes", "doi": "10.1056/nejmoa2307563", "role": "SELECT primary cardiovascular outcome trial"},
+        {"title": "Semaglutide and cardiovascular outcomes in patients with obesity and prevalent heart failure: a prespecified analysis of the SELECT trial", "doi": "10.1016/s0140-6736(24)01498-3", "role": "heart-failure subgroup evidence"},
+        {"title": "Semaglutide Effects on Cardiovascular Outcomes in People With Overweight or Obesity (SELECT) rationale and design", "doi": "10.1016/j.ahj.2020.07.008", "role": "trial design and population"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "Semaglutide and Cardiovascular Outcomes in Obesity without Diabetes",
+          "doi": "10.1056/nejmoa2307563",
+          "text": "In the SELECT trial of 17,604 adults with preexisting cardiovascular disease and overweight/obesity but without diabetes, semaglutide 2.4 mg once weekly reduced the primary MACE endpoint by 20% compared to placebo (HR 0.80, 95% CI 0.72-0.90, P<0.001), with an absolute risk reduction of 1.5 percentage points over a mean follow-up of 39.8 months.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Semaglutide and Cardiovascular Outcomes in Obesity without Diabetes",
+          "doi": "10.1056/nejmoa2307563",
+          "text": "Serious adverse events occurred in 33.4% of the semaglutide group versus 36.4% for placebo (P<0.001). Discontinuation due to adverse events was higher with semaglutide (16.6% vs 8.2%), driven predominantly by gastrointestinal intolerance including nausea, vomiting, and diarrhea.",
+          "section_title": "Key Findings",
+          "relevance": 2
+        },
+        {
+          "paper_title": "Semaglutide and cardiovascular outcomes in patients with obesity and prevalent heart failure: a prespecified analysis of the SELECT trial",
+          "doi": "10.1016/s0140-6736(24)01498-3",
+          "text": "In the 4,286 patients (24.3%) with investigator-defined heart failure at enrollment, semaglutide reduced MACE by 28% (HR 0.72, 95% CI 0.60-0.87) and the composite heart failure outcome by 21% (HR 0.79, 95% CI 0.64-0.98). Benefit was consistent regardless of HF subtype (HFpEF or HFrEF).",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Semaglutide Effects on Cardiovascular Outcomes in People With Overweight or Obesity (SELECT) rationale and design",
+          "doi": "10.1016/j.ahj.2020.07.008",
+          "text": "SELECT is the first cardiovascular outcomes trial to evaluate superiority in MACE reduction for an anti-obesity medication in patients with established CVD and overweight/obesity but without diabetes. The trial was a randomized, double-blind, parallel-group design comparing semaglutide 2.4 mg subcutaneously once weekly to placebo.",
+          "section_title": "Abstract",
+          "relevance": 2
+        },
+        {
+          "paper_title": "Semaglutide and Cardiovascular Outcomes in Obesity without Diabetes",
+          "doi": "10.1056/nejmoa2307563",
+          "text": "Body weight decreased by 9.4% with semaglutide versus 0.88% with placebo. Progression to diabetes was reduced by 73% (HR 0.27, 3.5% vs 12.0%). Waist circumference decreased by 7.6 cm and systolic blood pressure by 3.3 mm Hg with semaglutide versus placebo.",
+          "section_title": "Key Findings",
+          "relevance": 2
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Semaglutide 2.4 mg once weekly reduces major adverse cardiovascular events by 20% (HR 0.80) in adults with obesity and preexisting cardiovascular disease but without diabetes, representing the first demonstration of cardiovascular benefit from an anti-obesity pharmacotherapy.",
+          "direction": "reduces",
+          "paper_ids": ["10.1056/nejmoa2307563"]
+        },
+        {
+          "text": "The cardiovascular benefit of semaglutide is consistent across heart failure subtypes (HFpEF and HFrEF), with a 28% relative risk reduction in MACE and 21% reduction in composite heart failure outcomes in patients with prevalent heart failure.",
+          "direction": "reduces",
+          "paper_ids": ["10.1016/s0140-6736(24)01498-3"]
+        },
+        {
+          "text": "Gastrointestinal adverse events are the primary tolerability limitation of semaglutide, driving most of the 16.6% discontinuation rate versus 8.2% for placebo in the SELECT trial.",
+          "direction": "increases",
+          "paper_ids": ["10.1056/nejmoa2307563"]
+        }
+      ]
+    },
+    "med_long_covid": {
+      "gold_papers": [
+        {"title": "Long term outcomes of hyperbaric oxygen therapy in post covid condition: longitudinal follow-up of a randomized controlled trial", "doi": "10.1038/s41598-024-53091-3", "role": "randomized intervention follow-up"},
+        {"title": "The effect of hyperbaric oxygen therapy on myocardial function in post-COVID-19 syndrome patients: a randomized controlled trial", "doi": "10.1038/s41598-023-36570-x", "role": "randomized cardiac outcome evidence"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "Long term outcomes of hyperbaric oxygen therapy in post covid condition: longitudinal follow-up of a randomized controlled trial",
+          "doi": "10.1038/s41598-024-53091-3",
+          "text": "In a longitudinal follow-up of 31 patients one year after completing 40 daily sessions of hyperbaric oxygen therapy (HBOT) for long COVID, improvements in quality of life, sleep quality, neuropsychiatric symptoms, and pain severity persisted at the same magnitude as short-term outcomes, with effect sizes of 0.47-0.83 across domains.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Long term outcomes of hyperbaric oxygen therapy in post covid condition: longitudinal follow-up of a randomized controlled trial",
+          "doi": "10.1038/s41598-024-53091-3",
+          "text": "The clinical improvements gained by HBOT are persistent even one year after the last HBOT session. Quality of life assessed using SF-36 revealed long-term results exhibited a similar magnitude of improvement as the short-term outcomes following HBOT across most domains.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "The effect of hyperbaric oxygen therapy on myocardial function in post-COVID-19 syndrome patients: a randomized controlled trial",
+          "doi": "10.1038/s41598-023-36570-x",
+          "text": "In a randomized sham-controlled double-blind trial of 60 post-COVID-19 syndrome patients, 48.3% had reduced global longitudinal strain (GLS) at baseline indicating subclinical left ventricular dysfunction despite normal ejection fraction. HBOT produced a statistically significant improvement in GLS from -17.8 to -20.2 (p=0.0001).",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "The effect of hyperbaric oxygen therapy on myocardial function in post-COVID-19 syndrome patients: a randomized controlled trial",
+          "doi": "10.1038/s41598-023-36570-x",
+          "text": "In the subgroup with reduced GLS, 62.5% of HBOT-treated patients had normalized GLS versus 38.4% in the sham group. The intervention consisted of 40 daily HBOT sessions with a significant group-by-time interaction (p=0.041).",
+          "section_title": "Key Findings",
+          "relevance": 2
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Hyperbaric oxygen therapy (40 daily sessions) produces clinically meaningful improvements in quality of life, sleep, neuropsychiatric symptoms, and pain in long COVID patients, and these improvements persist at one year follow-up.",
+          "direction": "improves",
+          "paper_ids": ["10.1038/s41598-024-53091-3"]
+        },
+        {
+          "text": "Nearly half of post-COVID-19 syndrome patients have subclinical left ventricular dysfunction detectable by reduced global longitudinal strain despite normal ejection fraction, and HBOT significantly improves this cardiac dysfunction in a randomized sham-controlled trial.",
+          "direction": "improves",
+          "paper_ids": ["10.1038/s41598-023-36570-x"]
+        }
+      ]
+    },
+    "med_ai_radiology": {
+      "gold_papers": [
+        {"title": "Artificial intelligence versus clinicians: systematic review of design, reporting standards, and claims of deep learning studies", "doi": "10.1136/bmj.m689", "role": "clinical evidence quality benchmark"},
+        {"title": "Artificial Intelligence Improves Radiologist Performance for Predicting Malignancy at Chest CT", "doi": "10.1148/radiol.220571", "role": "radiologist-AI assistance comparison"},
+        {"title": "Association of Clinician Diagnostic Performance With Machine Learning-Based Decision Support Systems", "doi": "10.1001/jamanetworkopen.2021.1276", "role": "decision-support performance synthesis"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "Artificial intelligence versus clinicians: systematic review of design, reporting standards, and claims of deep learning studies",
+          "doi": "10.1136/bmj.m689",
+          "text": "Of 81 non-randomized studies comparing deep learning algorithms against clinicians in medical imaging, only 9 were prospective, only 6 were tested in real-world clinical settings, and 58 (72%) had high risk of bias. Despite this, 75% claimed AI performance matched or exceeded clinicians in their abstracts.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Artificial intelligence versus clinicians: systematic review of design, reporting standards, and claims of deep learning studies",
+          "doi": "10.1136/bmj.m689",
+          "text": "Only 10 randomized clinical trials were found (2 published, 8 ongoing). Median expert comparators per study was only 4. Full dataset access was unavailable in 95% of studies, and code was unavailable in 93%. Only 38% acknowledged the need for further prospective studies or trials.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Artificial Intelligence Improves Radiologist Performance for Predicting Malignancy at Chest CT",
+          "doi": "10.1148/radiol.220571",
+          "text": "In a multicenter study with 300 chest CT scans and 12 readers (6 radiologists, 6 pulmonologists), AI assistance significantly improved the average AUC for malignancy prediction from 0.82 to 0.89 (P<.001). Both sensitivity and specificity improved at very low-risk and high-risk thresholds.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Artificial Intelligence Improves Radiologist Performance for Predicting Malignancy at Chest CT",
+          "doi": "10.1148/radiol.220571",
+          "text": "AI improved interobserver agreement for risk stratification and management recommendation categories. Sensitivity at very low risk threshold improved from 94.1% to 97.9% (P=.01), and at high risk threshold from 52.6% to 63.1% (P<.001).",
+          "section_title": "Key Findings",
+          "relevance": 2
+        },
+        {
+          "paper_title": "Association of Clinician Diagnostic Performance With Machine Learning-Based Decision Support Systems",
+          "doi": "10.1001/jamanetworkopen.2021.1276",
+          "text": "In a systematic review of 37 studies, only sparse evidence was found that ML-based clinical decision support systems improve clinician diagnostic performance. In studies conducted in representative clinical settings, no association was observed between CDSS use and improved clinician performance.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Association of Clinician Diagnostic Performance With Machine Learning-Based Decision Support Systems",
+          "doi": "10.1001/jamanetworkopen.2021.1276",
+          "text": "76% of studies (28/37) had high risk of bias. Median clinician participants per study was only 4. In nearly all cases where user feedback was reported, clinicians overrode at least some of the algorithm's recommendations.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Most studies claiming AI matches or exceeds clinician diagnostic performance rely on retrospective designs with high risk of bias, small comparator groups, and lack of real-world clinical validation; only 2 published randomized trials existed as of 2020.",
+          "direction": null,
+          "paper_ids": ["10.1136/bmj.m689"]
+        },
+        {
+          "text": "AI assistance can significantly improve radiologist diagnostic performance for specific tasks such as chest CT malignancy prediction (AUC improvement from 0.82 to 0.89), but evidence from studies in representative clinical settings shows no consistent benefit of ML-based decision support systems.",
+          "direction": "mixed",
+          "paper_ids": ["10.1148/radiol.220571", "10.1001/jamanetworkopen.2021.1276"]
+        },
+        {
+          "text": "Clinicians frequently override AI recommendations, and the evidence for ML-based clinical decision support systems improving diagnostic performance in real clinical settings remains sparse and inconclusive.",
+          "direction": null,
+          "paper_ids": ["10.1001/jamanetworkopen.2021.1276"]
+        }
+      ]
+    },
+    "neuro_sleep_memory": {
+      "gold_papers": [
+        {"title": "About Sleep's Role in Memory", "doi": "10.1152/physrev.00032.2012", "role": "mechanistic and experimental synthesis"},
+        {"title": "Sleep—A brain-state serving systems memory consolidation", "doi": "10.1016/j.neuron.2023.03.005", "role": "systems consolidation review"},
+        {"title": "Sleep deprivation causes memory deficits by negatively impacting neuronal connectivity in hippocampal area CA1", "doi": "10.7554/elife.13424", "role": "causal mechanistic evidence"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "About Sleep's Role in Memory",
+          "doi": "10.1152/physrev.00032.2012",
+          "text": "Modern theories emphasize an active role for sleep in memory: memories undergo system consolidation during sleep. The waking brain is optimized for encoding memories while the sleeping brain is optimized for consolidation. Consolidation originates from reactivation of recently encoded neuronal memory representations during slow-wave sleep.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "About Sleep's Role in Memory",
+          "doi": "10.1152/physrev.00032.2012",
+          "text": "Slow-wave sleep is critically important for memory consolidation, with underlying mechanisms including slow oscillations (<1 Hz) driving repeated reactivation, sleep spindles facilitating synaptic plasticity and information transfer to neocortex, and sharp-wave ripples coordinating replay of encoded sequences.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Sleep—A brain-state serving systems memory consolidation",
+          "doi": "10.1016/j.neuron.2023.03.005",
+          "text": "Repeated replay of neuronal firing patterns is the basic mechanism triggering consolidation during both sleep and wakefulness. During SWS, hippocampal replay likely favors the transformation of hippocampus-dependent episodic memory into schema-like neocortical memory, coordinated with ripples, thalamic spindles, and neocortical slow oscillations.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Sleep—A brain-state serving systems memory consolidation",
+          "doi": "10.1016/j.neuron.2023.03.005",
+          "text": "Sleep consolidation differs from wake consolidation mainly in that it is supported rather than impaired by spontaneous hippocampal replay activity, possibly gating memory formation in neocortex. REM sleep following SWS might balance local synaptic rescaling with a sleep-dependent homeostatic process of global synaptic renormalization.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Sleep deprivation causes memory deficits by negatively impacting neuronal connectivity in hippocampal area CA1",
+          "doi": "10.7554/elife.13424",
+          "text": "Five hours of sleep deprivation in mice significantly reduced apical and basal dendritic spine density (~17% decrease) and dendrite length in CA1 pyramidal neurons, with the greatest spine loss occurring 60-150 um from the soma. CA3 neurons were unaffected, indicating region-specific vulnerability within the hippocampus.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Sleep deprivation causes memory deficits by negatively impacting neuronal connectivity in hippocampal area CA1",
+          "doi": "10.7554/elife.13424",
+          "text": "The molecular mechanism involves increased cofilin activity via PDE4A5-mediated cAMP degradation, suppressing the protective cAMP-PKA-LIMK signaling cascade. Just 3 hours of recovery sleep restored spine numbers and dendrite length, and genetic inhibition of PDE4A5 or expression of inactive cofilin prevented both structural and memory deficits.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Sleep plays an active role in memory consolidation through repeated reactivation of neuronal firing patterns during slow-wave sleep, transforming hippocampus-dependent episodic memories into schema-like neocortical long-term memories.",
+          "direction": null,
+          "paper_ids": ["10.1152/physrev.00032.2012", "10.1016/j.neuron.2023.03.005"]
+        },
+        {
+          "text": "Sleep deprivation causes structural changes at the level of dendritic spines in hippocampal CA1 (approximately 17% spine density reduction), through a cAMP-PDE4A5-PKA-LIMK-cofilin signaling pathway, and these changes are rapidly reversible with recovery sleep.",
+          "direction": "reduces",
+          "paper_ids": ["10.7554/elife.13424"]
+        },
+        {
+          "text": "Sleep-dependent memory consolidation differs from wake consolidation primarily because spontaneous hippocampal replay activity supports rather than impairs neocortical memory formation during sleep, with SWS and REM serving complementary roles.",
+          "direction": null,
+          "paper_ids": ["10.1016/j.neuron.2023.03.005"]
+        }
+      ]
+    },
+    "neuro_psychedelic_depression": {
+      "gold_papers": [
+        {"title": "Single-Dose Psilocybin for a Treatment-Resistant Episode of Major Depression", "doi": "10.1056/nejmoa2206443", "role": "phase 2 randomized trial"},
+        {"title": "Effects of Psilocybin-Assisted Therapy on Major Depressive Disorder", "doi": "10.1001/jamapsychiatry.2020.3285", "role": "randomized clinical trial"},
+        {"title": "Psilocybin for treatment-resistant depression: fMRI-measured brain mechanisms", "doi": "10.1038/s41598-017-13282-7", "role": "mechanistic imaging evidence"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "Single-Dose Psilocybin for a Treatment-Resistant Episode of Major Depression",
+          "doi": "10.1056/nejmoa2206443",
+          "text": "In a phase 2 double-blind randomized trial of 233 patients with treatment-resistant depression, a single 25 mg dose of psilocybin reduced MADRS scores by 12.0 points at week 3 versus 5.4 for the 1 mg control (difference -6.6, P<0.001). The 10 mg dose did not significantly separate from control (-2.5, P=0.18).",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Single-Dose Psilocybin for a Treatment-Resistant Episode of Major Depression",
+          "doi": "10.1056/nejmoa2206443",
+          "text": "Response rate (>=50% MADRS reduction) at week 3 was 37% for 25 mg versus 18% for control. Remission (MADRS<=10) was 29% versus 8%. However, sustained response at 12 weeks was only 20% versus 10%, suggesting a single dose may be insufficient for many patients. Adverse events included suicidal ideation or behavior in all dose groups.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Effects of Psilocybin-Assisted Therapy on Major Depressive Disorder",
+          "doi": "10.1001/jamapsychiatry.2020.3285",
+          "text": "In a randomized waiting-list controlled trial of 24 adults with moderate-to-severe MDD, two psilocybin sessions (20mg/70kg then 30mg/70kg) with supportive psychotherapy produced large effect sizes: Cohen's d=2.5 at week 5 for GRID-HAMD. Response rate was 71% and remission rate was 54% at 4-week follow-up.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Psilocybin for treatment-resistant depression: fMRI-measured brain mechanisms",
+          "doi": "10.1038/s41598-017-13282-7",
+          "text": "In 19 patients with treatment-resistant depression, psilocybin treatment decreased cerebral blood flow in the temporal cortex including the amygdala, with decreased amygdala CBF correlating with reduced depressive symptoms. Increased resting-state functional connectivity was observed within the default-mode network post-treatment.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Psilocybin for treatment-resistant depression: fMRI-measured brain mechanisms",
+          "doi": "10.1038/s41598-017-13282-7",
+          "text": "A 'reset' therapeutic mechanism is proposed: psilocybin acutely disorganizes entrenched brain network dynamics and then allows for their re-stabilization in a healthier configuration. Post-treatment brain changes differ from the acute effects of psychedelics yet are related to clinical outcomes.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "A single 25 mg dose of psilocybin produces statistically significant and clinically meaningful reductions in depression severity in treatment-resistant depression (Cohen's d ~1.0-1.5 vs control), with response rates of 37-71% and remission rates of 29-54% across trials.",
+          "direction": "reduces",
+          "paper_ids": ["10.1056/nejmoa2206443", "10.1001/jamapsychiatry.2020.3285"]
+        },
+        {
+          "text": "The antidepressant effect of psilocybin is dose-dependent, with the 25 mg dose showing significant efficacy while the 10 mg sub-psychedelic dose does not separate from control, and effects may wane by 12 weeks suggesting a single dose may be insufficient for sustained remission.",
+          "direction": null,
+          "paper_ids": ["10.1056/nejmoa2206443"]
+        },
+        {
+          "text": "Psilocybin's antidepressant mechanism involves decreased amygdala cerebral blood flow and increased default-mode network functional connectivity, consistent with a brain network reset model rather than simple serotonergic pharmacology.",
+          "direction": "decreases/increases",
+          "paper_ids": ["10.1038/s41598-017-13282-7"]
+        }
+      ]
+    },
+    "physics_perovskite_stability": {
+      "gold_papers": [
+        {"title": "In situ observation of heat-induced degradation of perovskite solar cells", "doi": "10.1038/nenergy.2015.12", "role": "thermal degradation mechanism"},
+        {"title": "Light and oxygen induced degradation limits the operational stability of methylammonium lead triiodide perovskite solar cells", "doi": "10.1039/c6ee00409a", "role": "light and oxygen degradation"},
+        {"title": "Consensus statement for stability assessment and reporting for perovskite photovoltaics based on ISOS procedures", "doi": "10.1038/s41560-019-0529-5", "role": "stability measurement standard"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "In situ observation of heat-induced degradation of perovskite solar cells",
+          "doi": "10.1038/nenergy.2015.12",
+          "text": "Using in situ transmission electron microscopy heating, mechanisms for structural and chemical changes were identified, including iodine and lead migration from the perovskite layer. A direct correlation was found between exposure of the perovskite layer to air during processing and enhanced elemental diffusion during thermal treatment.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "In situ observation of heat-induced degradation of perovskite solar cells",
+          "doi": "10.1038/nenergy.2015.12",
+          "text": "Different pathways of thermal degradation are activated at different temperatures in these complex nanostructured hybrid composites. STEM cross-sections showed the nucleation of Pb- and I-containing particles migrating out of the perovskite active layer upon heating.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Light and oxygen induced degradation limits the operational stability of methylammonium lead triiodide perovskite solar cells",
+          "doi": "10.1039/c6ee00409a",
+          "text": "Light and oxygen-induced degradation is the main reason for the low operational stability of methylammonium lead triiodide perovskite solar cells exposed to ambient conditions. Unencapsulated devices lost 50% of PCE within approximately 2 hours under light and dry air.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Light and oxygen induced degradation limits the operational stability of methylammonium lead triiodide perovskite solar cells",
+          "doi": "10.1039/c6ee00409a",
+          "text": "Degradation is driven by photogenerated electrons reacting with O2 to form superoxide (O2-). This can be slowed down by the use of interlayers that remove electrons from the perovskite film before they can react with oxygen. Significantly slower degradation is observed when devices are exposed to moisture alone.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Consensus statement for stability assessment and reporting for perovskite photovoltaics based on ISOS procedures",
+          "doi": "10.1038/s41560-019-0529-5",
+          "text": "A consensus between 59 researchers from 51 affiliations proposes standardized procedures for testing perovskite solar cell stability, adapting ISOS protocols to account for perovskite-specific properties such as ion redistribution under electric fields, reversible degradation, and distinguishing ambient-induced degradation from other stress factors.",
+          "section_title": "Abstract",
+          "relevance": 2
+        },
+        {
+          "paper_title": "Consensus statement for stability assessment and reporting for perovskite photovoltaics based on ISOS procedures",
+          "doi": "10.1038/s41560-019-0529-5",
+          "text": "The consensus statement identifies key procedural information to report in publications to improve reproducibility and enable large dataset analysis, noting that inconsistent experimental procedures and reporting across perovskite stability studies make it challenging to reproduce and compare results.",
+          "section_title": "Key Findings",
+          "relevance": 2
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Thermal degradation of perovskite solar cells involves iodine and lead migration from the active layer, with degradation pathways varying by temperature and strongly influenced by air exposure during device processing.",
+          "direction": null,
+          "paper_ids": ["10.1038/nenergy.2015.12"]
+        },
+        {
+          "text": "Light combined with oxygen is the dominant degradation pathway for methylammonium lead triiodide perovskite solar cells, driven by superoxide formation from photogenerated electrons reacting with O2, causing 50% PCE loss within approximately 2 hours in unencapsulated devices.",
+          "direction": "degrades",
+          "paper_ids": ["10.1039/c6ee00409a"]
+        },
+        {
+          "text": "Standardized stability assessment protocols adapted from ISOS procedures are needed because perovskite-specific effects including ion migration under electric fields and reversible degradation make direct comparison across studies unreliable.",
+          "direction": null,
+          "paper_ids": ["10.1038/s41560-019-0529-5"]
+        }
+      ]
+    },
+    "physics_quantum_error": {
+      "gold_papers": [
+        {"title": "Suppressing quantum errors by scaling a surface code logical qubit", "doi": "10.1038/s41586-022-05434-1", "role": "logical error scaling experiment"},
+        {"title": "Quantum error correction below the surface code threshold", "doi": "10.1038/s41586-024-08449-y", "role": "below-threshold experimental evidence"},
+        {"title": "Exponential suppression of bit or phase errors with cyclic error correction", "doi": "10.1038/s41586-021-03588-y", "role": "error suppression experiment"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "Suppressing quantum errors by scaling a surface code logical qubit",
+          "doi": "10.1038/s41586-022-05434-1",
+          "text": "The first experimental demonstration where quantum error correction begins to improve performance with increasing qubit number. A distance-5 surface code on 49 superconducting qubits modestly outperformed distance-3 logical qubits, with logical error per cycle of 2.914% versus 3.028%.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Quantum error correction below the surface code threshold",
+          "doi": "10.1038/s41586-024-08449-y",
+          "text": "Using the Willow 105-qubit superconducting processor, below-threshold surface code operation was confirmed with both distance-5 and distance-7 codes. The error suppression factor Lambda was 2.14 +/- 0.02, meaning each increase in code distance by 2 reduces the logical error rate by more than a factor of 2.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Quantum error correction below the surface code threshold",
+          "doi": "10.1038/s41586-024-08449-y",
+          "text": "The distance-7 logical qubit lifetime of 291 microseconds exceeded the best constituent physical qubit lifetime of 119 microseconds by a factor of 2.4, marking the first multi-qubit code to surpass its physical components. Logical error per cycle reached 0.143% for the distance-7 code.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Exponential suppression of bit or phase errors with cyclic error correction",
+          "doi": "10.1038/s41586-021-03588-y",
+          "text": "Using Google's Sycamore processor with 1D repetition codes up to 21 qubits, increasing the number of qubits from 5 to 21 reduced logical error per round by more than 100x. The error suppression factor Lambda was 3.18 for the phase-flip code, demonstrating stable operation over 50 rounds.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Exponential suppression of bit or phase errors with cyclic error correction",
+          "doi": "10.1038/s41586-021-03588-y",
+          "text": "Logical error probability per round follows epsilon_L = C / Lambda^((d+1)/2), where d is code distance. Unexpected correlations including crosstalk between non-adjacent qubits and cosmic ray impacts were observed, affecting less than 0.5% of data.",
+          "section_title": "Key Findings",
+          "relevance": 2
+        },
+        {
+          "paper_title": "Suppressing quantum errors by scaling a surface code logical qubit",
+          "doi": "10.1038/s41586-022-05434-1",
+          "text": "Dominant error contributors were CZ gate errors and data qubit decoherence during measurement and reset. A distance-25 repetition code revealed a logical error floor of 1.7e-6 per cycle, driven by a single high-energy event, with 1.6e-7 excluding that event.",
+          "section_title": "Key Findings",
+          "relevance": 2
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Experimental quantum error correction with superconducting qubits has achieved exponential suppression of logical errors with increasing code distance, with a measured error suppression factor Lambda of 2.14 (below-threshold) on surface codes and 3.18 on repetition codes.",
+          "direction": "suppresses",
+          "paper_ids": ["10.1038/s41586-024-08449-y", "10.1038/s41586-021-03588-y"]
+        },
+        {
+          "text": "The distance-7 surface code logical qubit lifetime (291 microseconds) exceeds the best physical qubit lifetime (119 microseconds) by a factor of 2.4, representing the first demonstration of a multi-qubit error-corrected logical qubit surpassing its physical components.",
+          "direction": "exceeds",
+          "paper_ids": ["10.1038/s41586-024-08449-y"]
+        },
+        {
+          "text": "Rare correlated error events including cosmic ray impacts produce an error floor of approximately 10^-6 to 10^-10, limiting further exponential suppression and representing a key challenge for fault-tolerant quantum computation.",
+          "direction": "limits",
+          "paper_ids": ["10.1038/s41586-022-05434-1", "10.1038/s41586-024-08449-y"]
+        }
+      ]
+    },
+    "climate_cdr": {
+      "gold_papers": [
+        {"title": "The technological and economic prospects for CO2 utilization and removal", "doi": "10.1038/s41586-019-1681-6", "role": "cross-technology comparison"},
+        {"title": "Direct air capture: process technology, techno-economic and socio-political challenges", "doi": "10.1039/d1ee03523a", "role": "direct air capture evidence"},
+        {"title": "Potential for large-scale CO2 removal via enhanced rock weathering with croplands", "doi": "10.1038/s41586-020-2448-9", "role": "enhanced weathering scale evidence"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "The technological and economic prospects for CO2 utilization and removal",
+          "doi": "10.1038/s41586-019-1681-6",
+          "text": "A comprehensive assessment of CO2 utilization and removal pathways across ten categories found that each CO2 utilization pathway can operate in a net GHG-negative mode if the product is permanent. The scale of CO2 removal needed to meet climate targets far exceeds current deployment of any single technology.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "The technological and economic prospects for CO2 utilization and removal",
+          "doi": "10.1038/s41586-019-1681-6",
+          "text": "The estimated practical CO2 removal potential varies dramatically across pathways, from <0.5 GtCO2/year for some utilization routes to >10 GtCO2/year for afforestation and BECCS. Costs range from negative (enhanced oil recovery) to >$1,000/tonne CO2 for some direct air capture configurations.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Direct air capture: process technology, techno-economic and socio-political challenges",
+          "doi": "10.1039/d1ee03523a",
+          "text": "Direct air capture faces significant techno-economic challenges including high energy requirements (approximately 200-300 kJ/mol CO2 for thermal regeneration in liquid solvent systems), current costs of $200-600/tonne CO2, and substantial water and land footprints. Solid sorbent systems offer potential for lower regeneration energy.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Direct air capture: process technology, techno-economic and socio-political challenges",
+          "doi": "10.1039/d1ee03523a",
+          "text": "Socio-political challenges for DAC include public acceptance, regulatory frameworks for CO2 storage, and the risk of moral hazard where DAC deployment may reduce incentives for emissions reduction. Long-term cost targets of $100/tonne CO2 remain aspirational.",
+          "section_title": "Key Findings",
+          "relevance": 2
+        },
+        {
+          "paper_title": "Potential for large-scale CO2 removal via enhanced rock weathering with croplands",
+          "doi": "10.1038/s41586-020-2448-9",
+          "text": "Enhanced rock weathering on croplands could achieve 0.5-2 GtCO2 per year removal by 2050, with extraction costs of approximately US$80-180 per tonne of CO2. China, India, the USA, and Brazil have the greatest potential to contribute. Co-benefits include improved food and soil security and reduced ocean acidification.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Potential for large-scale CO2 removal via enhanced rock weathering with croplands",
+          "doi": "10.1038/s41586-020-2448-9",
+          "text": "Industrial waste silicate materials including basalt mine overburden, concrete, and iron/steel slag could reduce or eliminate the need for new mining. Key challenges include overcoming political and social inertia, developing regulatory and incentive frameworks, and uncertainties in soil weathering rates.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Direct air capture has higher energy requirements and current costs ($200-600/tonne CO2) compared to enhanced weathering ($80-180/tonne CO2), but DAC offers higher permanence and more verifiable sequestration while enhanced weathering provides agricultural co-benefits at larger potential scale (0.5-2 GtCO2/year).",
+          "direction": null,
+          "paper_ids": ["10.1039/d1ee03523a", "10.1038/s41586-020-2448-9"]
+        },
+        {
+          "text": "No single carbon dioxide removal pathway can achieve the required scale alone; a portfolio of approaches including DAC, enhanced weathering, afforestation, and BECCS is needed, with costs varying by two orders of magnitude across pathways.",
+          "direction": null,
+          "paper_ids": ["10.1038/s41586-019-1681-6"]
+        },
+        {
+          "text": "Both DAC and enhanced weathering face significant non-technical barriers including regulatory frameworks, public acceptance, and the risk of moral hazard reducing emissions reduction incentives.",
+          "direction": null,
+          "paper_ids": ["10.1039/d1ee03523a", "10.1038/s41586-020-2448-9"]
+        }
+      ]
+    },
+    "climate_heat_mortality": {
+      "gold_papers": [
+        {"title": "Cooling cities through urban green infrastructure: a health impact assessment of European cities", "doi": "10.1016/s0140-6736(22)02585-5", "role": "urban greening mortality estimate"},
+        {"title": "Is planned adaptation to heat reducing heat-related mortality and illness? A systematic review", "doi": "10.1186/1471-2458-14-1112", "role": "adaptation effectiveness synthesis"},
+        {"title": "Overview of Existing Heat-Health Warning Systems in Europe", "doi": "10.3390/ijerph16152657", "role": "warning-system evidence"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "Cooling cities through urban green infrastructure: a health impact assessment of European cities",
+          "doi": "10.1016/s0140-6736(22)02585-5",
+          "text": "Across 93 European cities, the mean urban heat island temperature increase was 1.5 degrees Celsius. Urban heat islands were estimated to cause 6,700 premature deaths annually, representing 4.33% of all summer deaths. Increasing tree coverage to 30% could reduce city temperatures by an average of 0.4 degrees Celsius.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Cooling cities through urban green infrastructure: a health impact assessment of European cities",
+          "doi": "10.1016/s0140-6736(22)02585-5",
+          "text": "Increasing urban tree coverage to 30% could prevent 2,644 premature deaths annually (95% CI 2,444-2,824), approximately one in three heat-related deaths. Cities in southern and eastern Europe stand to benefit most, where summer temperatures are highest and current tree coverage tends to be lowest.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Is planned adaptation to heat reducing heat-related mortality and illness? A systematic review",
+          "doi": "10.1186/1471-2458-14-1112",
+          "text": "Of 30 articles included in the systematic review, the majority of studies (17) assessed mortality or morbidity reductions with regression analysis. Overall assessments report a reduction of adverse effects during extreme heat in places where preventive measures have been implemented, but attributing health outcomes to heat adaptation remains a challenge.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Is planned adaptation to heat reducing heat-related mortality and illness? A systematic review",
+          "doi": "10.1186/1471-2458-14-1112",
+          "text": "Recent study designs are less rigorous due to difficulties assigning the counterfactual. While sensitivity to heat is decreasing, the examined studies provide inconclusive evidence on individual planned adaptation measures. Methodological challenges are a major hindrance to rigorous evaluation.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Overview of Existing Heat-Health Warning Systems in Europe",
+          "doi": "10.3390/ijerph16152657",
+          "text": "A review of 16 European heat-health warning systems found highly heterogeneous trigger variables across countries, ranging from simple maximum temperature thresholds (30 degrees Celsius in Belarus to 38 degrees Celsius in Greece) to multi-variable indices. Most systems were developed after the deadly 2003 European heat wave which caused over 70,000 excess deaths.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Overview of Existing Heat-Health Warning Systems in Europe",
+          "doi": "10.3390/ijerph16152657",
+          "text": "Education and communication are key elements of the success of a warning system. Setting long-term planning actions as well as pre-alert levels might prevent and reduce damages due to heat. Systems need regular revision to account for changing vulnerability and acclimatization patterns.",
+          "section_title": "Key Findings",
+          "relevance": 2
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Urban green infrastructure, specifically increasing tree coverage to 30%, can prevent approximately 40% of heat-related deaths (2,644 deaths annually across 93 European cities) by reducing urban heat island temperatures by an average of 0.4 degrees Celsius.",
+          "direction": "reduces",
+          "paper_ids": ["10.1016/s0140-6736(22)02585-5"]
+        },
+        {
+          "text": "While population-level sensitivity to heat is decreasing where adaptation measures have been implemented, evidence for the effectiveness of specific planned adaptation interventions remains inconclusive due to methodological challenges in assigning counterfactuals and isolating individual interventions.",
+          "direction": "inconclusive",
+          "paper_ids": ["10.1186/1471-2458-14-1112"]
+        },
+        {
+          "text": "European heat-health warning systems vary substantially in trigger variables, alert levels, and communication strategies, with most developed reactively after the 2003 heat wave; key success factors include clear links between meteorological variables and health impacts, pre-alert levels, and effective public communication.",
+          "direction": null,
+          "paper_ids": ["10.3390/ijerph16152657"]
+        }
+      ]
+    },
+    "social_remote_work": {
+      "gold_papers": [
+        {"title": "Does Working from Home Work? Evidence from a Chinese Experiment", "doi": "10.1093/qje/qju032", "role": "randomized productivity experiment"},
+        {"title": "The effects of remote work on collaboration among information workers", "doi": "10.1038/s41562-021-01196-4", "role": "collaboration network evidence"},
+        {"title": "Hybrid working from home improves retention without damaging performance", "doi": "10.1038/s41586-024-07500-2", "role": "randomized hybrid-work evidence"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "Does Working from Home Work? Evidence from a Chinese Experiment",
+          "doi": "10.1093/qje/qju032",
+          "text": "A randomized controlled trial at Ctrip, a 16,000-employee Chinese travel agency, found that call center employees working from home had a 13% performance increase: approximately 9% from working more minutes per shift (fewer breaks and sick days) and approximately 4% from more calls per minute in a quieter environment.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Does Working from Home Work? Evidence from a Chinese Experiment",
+          "doi": "10.1093/qje/qju032",
+          "text": "Home workers' attrition rate halved (50% reduction in turnover) and work satisfaction improved. However, their promotion rate conditional on performance fell, suggesting reduced face time in the office carries career costs. When employees could self-select after the experiment, WFH gains nearly doubled to 22%, highlighting the importance of selection effects.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "The effects of remote work on collaboration among information workers",
+          "doi": "10.1038/s41562-021-01196-4",
+          "text": "Analysis of 61,182 US Microsoft employees during the first six months of 2020 found that firm-wide remote work caused the collaboration network to become more static and siloed, with fewer bridges between disparate parts. There was a decrease in synchronous communication and an increase in asynchronous communication.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "The effects of remote work on collaboration among information workers",
+          "doi": "10.1038/s41562-021-01196-4",
+          "text": "These structural changes in the collaboration network may make it harder for employees to acquire and share new information across the network. The study used a natural experiment design to separate firm-wide remote work effects from other pandemic-related confounding factors.",
+          "section_title": "Abstract",
+          "relevance": 2
+        },
+        {
+          "paper_title": "Hybrid working from home improves retention without damaging performance",
+          "doi": "10.1038/s41586-024-07500-2",
+          "text": "A six-month randomized controlled trial of 1,612 employees at Trip.com found that a hybrid schedule of 3 days in office and 2 days WFH reduced quit rates by 33% with no measurable impact on performance review grades over two years of follow-up. No difference in promotion rates was observed for any subgroup.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Hybrid working from home improves retention without damaging performance",
+          "doi": "10.1038/s41586-024-07500-2",
+          "text": "Before the experiment, managers predicted hybrid WFH would reduce productivity by -2.6%. After the experiment, managers rated it as a +1.0% positive effect on productivity. The attrition reduction was strongest among non-managers, women, and employees with long commutes.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "Randomized experiments consistently show that working from home improves individual productivity (13% in full WFH, no degradation in hybrid) and substantially reduces employee attrition (33-50%), with the strongest retention benefits for non-managers, women, and long-commute employees.",
+          "direction": "improves",
+          "paper_ids": ["10.1093/qje/qju032", "10.1038/s41586-024-07500-2"]
+        },
+        {
+          "text": "Firm-wide remote work causes collaboration networks to become more static and siloed, with decreased synchronous communication and fewer bridging ties across organizational boundaries, potentially impeding the flow of new information.",
+          "direction": "decreases",
+          "paper_ids": ["10.1038/s41562-021-01196-4"]
+        },
+        {
+          "text": "The causal evidence on remote work reveals a trade-off: individual productivity and retention improve, but collaboration network structure degrades and career advancement (promotions) may be negatively affected in fully remote settings, while hybrid arrangements mitigate the collaboration costs.",
+          "direction": "mixed",
+          "paper_ids": ["10.1093/qje/qju032", "10.1038/s41562-021-01196-4", "10.1038/s41586-024-07500-2"]
+        }
+      ]
+    },
+    "education_tutoring": {
+      "gold_papers": [
+        {"title": "The Impressive Effects of Tutoring on PreK-12 Learning: A Systematic Review and Meta-Analysis of the Experimental Evidence", "doi": "10.3386/w27476", "role": "experimental meta-analysis"},
+        {"title": "Can Technology Facilitate Scale? Evidence from a Randomized Evaluation of High Dosage Tutoring", "doi": "10.3386/w32510", "role": "randomized scale-up evidence"},
+        {"title": "Closing the income-achievement gap? Experimental evidence from high-dosage tutoring in Dutch primary education", "doi": "10.1016/j.econedurev.2023.102383", "role": "mathematics-focused experimental evidence"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "The Impressive Effects of Tutoring on PreK-12 Learning: A Systematic Review and Meta-Analysis of the Experimental Evidence",
+          "doi": "10.3386/w27476",
+          "text": "A meta-analysis of 96 experiments with 732 effect sizes found an overall pooled effect size of +0.37 SD for tutoring on student learning outcomes. Teacher and paraprofessional tutoring produce stronger effects than nonprofessional or parent tutoring, and effects are strongest in earlier grades.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "The Impressive Effects of Tutoring on PreK-12 Learning: A Systematic Review and Meta-Analysis of the Experimental Evidence",
+          "doi": "10.3386/w27476",
+          "text": "Reading tutoring has higher effect sizes in earlier grades, while math tutoring has higher effect sizes in later grades. Tutoring conducted during school has larger impacts than after-school programs. This is the first systematic review and meta-analysis of the experimental evidence on preK-12 tutoring.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Can Technology Facilitate Scale? Evidence from a Randomized Evaluation of High Dosage Tutoring",
+          "doi": "10.3386/w32510",
+          "text": "A randomized controlled trial of approximately 4,000 students tested a math tutoring model where students alternated between in-person tutoring and computer-assisted learning (CAL) in groups of four. The model reduced per-pupil costs by approximately 30% compared to 2-to-1 tutoring while producing gains of 0.23 SD in math standardized test scores.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Can Technology Facilitate Scale? Evidence from a Randomized Evaluation of High Dosage Tutoring",
+          "doi": "10.3386/w32510",
+          "text": "The effect size of 0.23 SD achieved with the technology-facilitated model is almost as large as the effect sizes of the more expensive 2-to-1 tutoring model, suggesting strategic use of technology may increase the scalability of high-dosage tutoring without compromising effectiveness.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Closing the income-achievement gap? Experimental evidence from high-dosage tutoring in Dutch primary education",
+          "doi": "10.1016/j.econedurev.2023.102383",
+          "text": "A high-dosage math tutoring program implemented in three primary schools in a low-income neighborhood in the Netherlands produced a treatment effect of 0.28 national population standard deviations in math achievement after one school year (p<0.01), accounting for roughly 40% of the math achievement gap between low-income and high-income students.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "Closing the income-achievement gap? Experimental evidence from high-dosage tutoring in Dutch primary education",
+          "doi": "10.1016/j.econedurev.2023.102383",
+          "text": "No evidence of heterogeneous effects across the baseline achievement distribution was found, indicating both high and low baseline achievers benefited equally. No evidence of effects on reading comprehension was observed, suggesting domain-specificity of the intervention.",
+          "section_title": "Key Findings",
+          "relevance": 2
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "High-dosage tutoring produces a pooled effect size of +0.37 SD on student learning, making it one of the most effective educational interventions studied, with teacher and paraprofessional tutors producing the strongest effects.",
+          "direction": "increases",
+          "paper_ids": ["10.3386/w27476"]
+        },
+        {
+          "text": "Technology-facilitated high-dosage tutoring models that blend in-person tutoring with computer-assisted learning can reduce costs by approximately 30% while maintaining effect sizes near those of more expensive 2-to-1 tutoring models (0.23 SD vs comparable effect sizes).",
+          "direction": "maintains",
+          "paper_ids": ["10.3386/w32510"]
+        },
+        {
+          "text": "High-dosage math tutoring in low-income settings can close approximately 40% of the income-achievement gap in one school year (effect size 0.28 SD), with benefits accruing equally across the achievement distribution.",
+          "direction": "reduces gap",
+          "paper_ids": ["10.1016/j.econedurev.2023.102383"]
+        }
+      ]
+    },
+    "zh_llm_science": {
+      "gold_papers": [
+        {"title": "PaperQA2: A Language Model Agent for Deep Search and Literature Review", "doi": "10.48550/arxiv.2409.13740", "role": "citation-grounded literature agent"},
+        {"title": "OpenScholar: Synthesizing Scientific Literature with Retrieval-Augmented Language Models", "doi": "10.48550/arxiv.2411.14199", "role": "scientific synthesis and citation evaluation"},
+        {"title": "A Survey on Hallucination in Large Language Models: Principles, Taxonomy, Challenges, and Open Questions", "doi": "10.48550/arxiv.2311.05232", "role": "hallucination taxonomy and mitigation"}
+      ],
+      "gold_passages": [
+        {
+          "paper_title": "PaperQA2: A Language Model Agent for Deep Search and Literature Review",
+          "doi": "10.48550/arxiv.2409.13740",
+          "text": "PaperQA2 is a language model agent for deep search and literature review that produces cited, factually-grounded scientific summaries. It uses a multi-step agent loop with retrieval, ranking, and evidence extraction to generate citation-backed responses from full-text scientific papers.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "PaperQA2: A Language Model Agent for Deep Search and Literature Review",
+          "doi": "10.48550/arxiv.2409.13740",
+          "text": "PaperQA2's retrieval-augmented architecture with explicit citation verification reduces fabricated references compared to standard LLM-generated literature reviews. The system retrieves from full-text paper databases and performs iterative evidence gathering with self-consistency checks.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "OpenScholar: Synthesizing Scientific Literature with Retrieval-Augmented Language Models",
+          "doi": "10.48550/arxiv.2411.14199",
+          "text": "OpenScholar retrieves from 45 million open-access papers and synthesizes citation-backed responses. OpenScholar-8B outperforms GPT-4o by 5-6% and PaperQA2 by 5.5-7% in correctness on multi-paper synthesis. GPT-4o hallucinates citations 78-90% of the time, while OpenScholar achieves citation accuracy matching human expert levels.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "OpenScholar: Synthesizing Scientific Literature with Retrieval-Augmented Language Models",
+          "doi": "10.48550/arxiv.2411.14199",
+          "text": "OpenScholar's pipeline integrates a bi-encoder retriever with cross-encoder reranker, a self-feedback inference loop for iterative generation and citation verification, and achieves orders-of-magnitude lower cost than proprietary systems like PaperQA2 while maintaining superior performance.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        },
+        {
+          "paper_title": "A Survey on Hallucination in Large Language Models: Principles, Taxonomy, Challenges, and Open Questions",
+          "doi": "10.48550/arxiv.2311.05232",
+          "text": "LLM hallucinations are classified into factuality hallucination (factual contradiction and factual fabrication) and faithfulness hallucination (instruction inconsistency, context inconsistency, and logical inconsistency). Retrieval-augmented generation reduces factual hallucination but introduces its own failure modes including retrieval of irrelevant or misleading documents.",
+          "section_title": "Abstract",
+          "relevance": 3
+        },
+        {
+          "paper_title": "A Survey on Hallucination in Large Language Models: Principles, Taxonomy, Challenges, and Open Questions",
+          "doi": "10.48550/arxiv.2311.05232",
+          "text": "Mitigation strategies span data-level (better curation, factuality-focused pretraining), training-level (improved RLHF alignment, factuality-enhancing fine-tuning), and inference-level (constrained decoding, knowledge-constrained generation, and retrieval-augmented generation). Addressing RAG-specific hallucinations requires improved retrieval quality and attribution verification.",
+          "section_title": "Key Findings",
+          "relevance": 3
+        }
+      ],
+      "gold_claims": [
+        {
+          "text": "大语言模型在科学文献综述中最常见的引用错误是虚构引用（fabricated references），GPT-4o在没有检索增强时虚构引用比例高达78-90%，而检索增强系统如OpenScholar可以将引用准确率提升至人类专家水平。",
+          "direction": "reduces",
+          "paper_ids": ["10.48550/arxiv.2411.14199"]
+        },
+        {
+          "text": "检索增强生成（RAG）能显著降低大语言模型的虚构引用和事实性幻觉，但RAG本身也会引入新的错误模式，包括检索到不相关或误导性文档、错误归因引用来源等。",
+          "direction": "reduces but introduces new errors",
+          "paper_ids": ["10.48550/arxiv.2311.05232", "10.48550/arxiv.2409.13740"]
+        },
+        {
+          "text": "专门的科学文献检索增强系统（PaperQA2、OpenScholar）通过多步检索、重排序、自反馈验证和引用检查等机制，在科学综述的引用准确性和事实正确性上显著优于通用LLM直接生成。",
+          "direction": "outperforms",
+          "paper_ids": ["10.48550/arxiv.2409.13740", "10.48550/arxiv.2411.14199"]
+        }
+      ]
+    }
   }
 }

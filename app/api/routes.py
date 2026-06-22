@@ -294,16 +294,17 @@ async def get_task_status(
         metrics = TaskMetrics.model_validate(metrics)
     evidence = runtime.get("evidence", [])
 
+    effective_status = runtime.get("status", record.status)
     return TaskStatusResponse(
         task_id=record.task_id,
-        status=record.status,
+        status=effective_status,
         original_question=record.original_question,
         current_round=runtime.get("current_round", record.current_round),
         papers_found=len(runtime.get("normalized_papers", [])) or len(papers),
         papers_selected=len(runtime.get("selected_papers", [])) or len(selected),
         warnings=runtime.get("warnings", warnings),
         errors=runtime.get("errors", errors),
-        is_completed=record.status in ("completed", "failed", "interrupted"),
+        is_completed=effective_status in ("completed", "failed", "interrupted"),
         created_at=record.created_at,
         updated_at=record.updated_at,
         current_stage=runtime.get("current_stage"),

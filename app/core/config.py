@@ -113,6 +113,10 @@ class Settings:
     HYBRID_RERANK_MODEL: str = os.getenv(
         "HYBRID_RERANK_MODEL", "BAAI/bge-reranker-v2-m3"
     )
+    HYBRID_DEVICE: str = os.getenv("HYBRID_DEVICE", "cpu")
+    HYBRID_ENABLE_RERANKER: bool = os.getenv(
+        "HYBRID_ENABLE_RERANKER", "true"
+    ).lower() in ("1", "true", "yes")
     HYBRID_RRF_K: int = int(os.getenv("HYBRID_RRF_K", "60"))
     HYBRID_CANDIDATE_MULTIPLIER: int = int(
         os.getenv("HYBRID_CANDIDATE_MULTIPLIER", "5")
@@ -140,6 +144,9 @@ class Settings:
     MIN_CORE_CLAIM_SUPPORT: int = int(os.getenv("MIN_CORE_CLAIM_SUPPORT", "1"))
     MAX_UNSUPPORTED_IMPORTANT_CLAIMS: int = int(
         os.getenv("MAX_UNSUPPORTED_IMPORTANT_CLAIMS", "0")
+    )
+    REPORT_GENERATION_MODE: str = os.getenv(
+        "REPORT_GENERATION_MODE", "strict"
     )
 
     # Mock mode (no API keys required)

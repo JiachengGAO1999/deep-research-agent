@@ -860,19 +860,30 @@ async def build_claims_node(state: dict) -> dict:
         )
         validated_claims.append(claim)
 
+    accepted_claims = [
+        claim
+        for claim in validated_claims
+        if claim.validation_status == "validated"
+        and claim.support_status == "supported"
+    ]
+    rejected_claims = [
+        claim for claim in validated_claims if claim not in accepted_claims
+    ]
     quality = evaluate_evidence_quality(
-        evidence, validated_claims,
+        evidence, accepted_claims,
         max_unsupported_important_claims=get_settings().MAX_UNSUPPORTED_IMPORTANT_CLAIMS,
     )
-    state["claims"] = validated_claims
+    state["claim_candidates"] = validated_claims
+    state["claims"] = accepted_claims
+    state["rejected_claims"] = rejected_claims
     state["evidence_quality"] = quality
     if not quality.passed:
         state.setdefault("warnings", []).extend(
             f"Evidence quality: {issue}" for issue in quality.issues
         )
     logger.info(
-        f"[{state['task_id']}] Claims: {len(validated_claims)} built, "
-        f"{sum(1 for c in validated_claims if c.validation_status == 'validated')} validated"
+        f"[{state['task_id']}] Claims: {len(validated_claims)} candidates, "
+        f"{len(accepted_claims)} validated, {len(rejected_claims)} withheld"
     )
     return state
 
@@ -895,6 +906,8 @@ async def build_literature_relations_node(state: dict) -> dict:
     # Collect claims per paper with their key topics
     paper_claims: dict[str, list] = {}
     for claim in claims:
+        if claim.validation_status != "validated":
+            continue
         for pid in getattr(claim, "paper_ids", []):
             paper_claims.setdefault(pid, []).append(claim)
 
@@ -1182,13 +1195,6 @@ async def synthesize_report_node(state: dict) -> dict:
     target_language = state.get("report_language", "zh-CN")
     language_name = "English" if target_language == "en" else "Simplified Chinese"
 
-    if _budget_exceeded(state):
-        state["report"] = _build_fallback_report(state)
-        state.setdefault("warnings", []).append(
-            "Cost budget reached; used deterministic ValidatedClaims-only report"
-        )
-        return state
-
     if not papers:
         state["report"] = "# 研究报告\n\n未找到相关文献，无法生成报告。"
         state.setdefault("warnings", []).append("No papers available for report generation")
@@ -1196,12 +1202,28 @@ async def synthesize_report_node(state: dict) -> dict:
 
     # 8K context safeguard
     MAX_PAPERS_IN_PROMPT = 12
-    papers_for_report = papers[:MAX_PAPERS_IN_PROMPT]
-    if len(papers) > MAX_PAPERS_IN_PROMPT:
+    supported_paper_ids = {
+        paper_id
+        for claim in validated_claims
+        for paper_id in claim.paper_ids
+    }
+    supported_papers = [
+        paper for paper in papers if paper.internal_id in supported_paper_ids
+    ]
+    papers_for_report = supported_papers[:MAX_PAPERS_IN_PROMPT]
+    if len(supported_papers) > MAX_PAPERS_IN_PROMPT:
         state.setdefault("warnings", []).append(
-            f"Truncated papers from {len(papers)} to {MAX_PAPERS_IN_PROMPT} for report prompt"
+            f"Truncated supported papers from {len(supported_papers)} "
+            f"to {MAX_PAPERS_IN_PROMPT} for report"
         )
     state["report_paper_ids"] = [p.internal_id for p in papers_for_report]
+
+    if _budget_exceeded(state):
+        state["report"] = _build_fallback_report(state)
+        state.setdefault("warnings", []).append(
+            "Cost budget reached; used deterministic ValidatedClaims-only report"
+        )
+        return state
 
     # Metadata is only used for labels and references. Factual prose comes from
     # ValidatedClaims exclusively.
@@ -1234,6 +1256,16 @@ async def synthesize_report_node(state: dict) -> dict:
         state.setdefault("warnings", []).append(
             "No validated claims were available; emitted a metadata-only report"
         )
+        return state
+
+    if settings.REPORT_GENERATION_MODE != "llm":
+        state["report"] = _build_fallback_report(state)
+        mt = state.get("metrics", TaskMetrics())
+        sd = getattr(mt, "stage_durations", {})
+        sd["synthesize_report"] = time.time() - t0
+        mt.stage_durations = sd
+        state["metrics"] = mt
+        state["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
         return state
 
     # Search info
@@ -1490,6 +1522,34 @@ def _build_fallback_report(state: dict) -> str:
     marker_by_id = {
         paper.internal_id: f"P{index + 1}" for index, paper in enumerate(papers)
     }
+    section_priority = (
+        ("result", "conclusion", "finding", "discussion", "abstract"),
+        ("evaluation", "experiment", "analysis", "method"),
+        ("introduction", "background"),
+        ("related work", "reference", "dataset"),
+    )
+
+    def claim_priority(claim):
+        section = (claim.section_id or "").casefold()
+        for priority, keywords in enumerate(section_priority):
+            if any(keyword in section for keyword in keywords):
+                return priority
+        return 2
+
+    claims.sort(key=lambda claim: (claim_priority(claim), -claim.confidence))
+    selected_claims = []
+    per_paper: dict[str, int] = {}
+    for claim in claims:
+        primary_paper = next(
+            (paper_id for paper_id in claim.paper_ids if paper_id in marker_by_id),
+            None,
+        )
+        if not primary_paper or per_paper.get(primary_paper, 0) >= 4:
+            continue
+        per_paper[primary_paper] = per_paper.get(primary_paper, 0) + 1
+        selected_claims.append(claim)
+        if len(selected_claims) >= 12:
+            break
 
     if state.get("report_language") == "en":
         report = f"""# Research Report: {state['original_question']}
@@ -1507,8 +1567,8 @@ def _build_fallback_report(state: dict) -> str:
 ## Core Findings
 
 """
-        if claims:
-            for claim in claims:
+        if selected_claims:
+            for claim in selected_claims:
                 markers = [
                     marker_by_id[paper_id]
                     for paper_id in claim.paper_ids
@@ -1541,8 +1601,8 @@ def _build_fallback_report(state: dict) -> str:
 ## 核心发现
 
 """
-    if claims:
-        for claim in claims:
+    if selected_claims:
+        for claim in selected_claims:
             markers = [
                 marker_by_id[paper_id]
                 for paper_id in claim.paper_ids
@@ -1778,6 +1838,7 @@ async def _save_run_record(state: dict) -> None:
         ],
         # Claims
         "claims": [_safe(c) for c in state.get("claims", [])],
+        "rejected_claims": [_safe(c) for c in state.get("rejected_claims", [])],
         # Literature relations (consensus/contradiction/complementary)
         "literature_relations": state.get("literature_relations", []),
         # Gap analysis

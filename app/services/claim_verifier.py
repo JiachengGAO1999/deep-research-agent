@@ -251,6 +251,22 @@ async def verify_claim(
         claim.validation_reasons = dt_failures
         return claim
 
+    # Claims constructed as verbatim spans of verified source passages are
+    # deterministically entailed. Requiring an LLM to rediscover this relation
+    # caused qualitative source statements to be incorrectly rejected merely
+    # because they contained no numeric metric.
+    normalized_claim = re.sub(r"\s+", " ", claim.claim_text).strip().casefold()
+    if normalized_claim and any(
+        normalized_claim
+        in re.sub(r"\s+", " ", ev.evidence_quote or "").strip().casefold()
+        for ev in evidence_list
+    ):
+        claim.validation_status = "validated"
+        claim.validation_reasons = [
+            "verbatim claim span found in deterministically verified evidence"
+        ]
+        return claim
+
     # Phase 2: LLM (skippable for tests)
     if skip_llm:
         claim.validation_status = "validated"

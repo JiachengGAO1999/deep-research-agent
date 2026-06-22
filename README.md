@@ -377,3 +377,16 @@ deep-research-race \
   --hybrid evals/baselines/hybrid-score.json \
   --paperqa evals/baselines/paperqa-score.json
 ```
+
+本地可运行的 Hybrid MVP 建议先使用较小模型验证链路：
+
+```bash
+export HYBRID_DENSE_MODEL=sentence-transformers/all-MiniLM-L6-v2
+export HYBRID_RERANK_MODEL=cross-encoder/ms-marco-MiniLM-L6-v2
+export HYBRID_DEVICE=cpu
+export REPORT_GENERATION_MODE=strict
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+`strict` 报告只渲染 ValidatedClaims。设置 `REPORT_GENERATION_MODE=llm`
+会开放模型生成式报告，目前不建议与本地 8B 模型一起用于可信报告。

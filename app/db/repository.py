@@ -19,9 +19,17 @@ def _json_dump(obj) -> str:
     """Serialize an object to JSON string."""
     if obj is None:
         return "[]" if isinstance(obj, list) else "{}"
-    if hasattr(obj, "model_dump"):
-        return json.dumps(obj.model_dump(), ensure_ascii=False)
-    return json.dumps(obj, ensure_ascii=False, default=str)
+
+    def normalize(value):
+        if hasattr(value, "model_dump"):
+            return normalize(value.model_dump(mode="json"))
+        if isinstance(value, dict):
+            return {key: normalize(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple, set)):
+            return [normalize(item) for item in value]
+        return value
+
+    return json.dumps(normalize(obj), ensure_ascii=False, default=str)
 
 
 class TaskRepository:
