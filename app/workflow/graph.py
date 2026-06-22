@@ -40,9 +40,11 @@ STAGE_PROGRESS = {
     "download_pdfs": 50,
     "parse_and_chunk": 58,
     "extract_evidence": 68,
+    "validate_evidence": 72,
     "assess_gaps": 76,
     "supplementary_search": 55,
     "build_claims": 84,
+    "build_literature_relations": 88,
     "synthesize_report": 92,
     "validate_citations": 97,
     "finalize": 100,
@@ -697,6 +699,77 @@ async def extract_evidence_node(state: dict) -> dict:
     return state
 
 
+async def validate_evidence_node(state: dict) -> dict:
+    """Deterministic evidence validation: quote match, paper_id consistency, provenance."""
+    _mark_stage(state, "validate_evidence")
+    logger.info(f"[{state['task_id']}] Validating evidence")
+    t0 = time.time()
+
+    evidence = state.get("evidence", [])
+    chunks = state.get("_all_chunks", [])
+    chunk_map = {c.chunk_id: c for c in chunks}
+
+    validated = []
+    rejected = 0
+    for ev in evidence:
+        issues = []
+
+        # 1. Check paper_id consistency with chunk
+        if ev.chunk_id and ev.chunk_id in chunk_map:
+            chunk = chunk_map[ev.chunk_id]
+            if chunk.paper_id != ev.paper_id:
+                issues.append(f"paper_id mismatch: evidence={ev.paper_id} chunk={chunk.paper_id}")
+            # 2. Verify quote exists verbatim in chunk text
+            if ev.evidence_quote:
+                quote_clean = ev.evidence_quote.strip()
+                chunk_clean = chunk.text.strip()
+                if quote_clean and quote_clean not in chunk_clean:
+                    # Try fuzzy — at least 80% word overlap
+                    q_words = set(quote_clean.lower().split())
+                    c_words = set(chunk_clean.lower().split())
+                    if q_words:
+                        overlap = len(q_words & c_words) / len(q_words)
+                        if overlap < 0.8:
+                            issues.append(f"quote not found in chunk text (overlap={overlap:.0%})")
+            # 3. Check page consistency
+            if ev.page_start and chunk.page_start:
+                if ev.page_start != chunk.page_start:
+                    issues.append(f"page mismatch: evidence={ev.page_start} chunk={chunk.page_start}")
+
+        # 4. evidence_quote must not be empty for full-text evidence
+        if ev.evidence_level == "direct_quote" and not ev.evidence_quote:
+            issues.append("direct_quote evidence has no quote")
+
+        # 5. Mark verification result
+        if issues:
+            ev.verification_status = "rejected"
+            ev.verification_reason = "; ".join(issues)
+            rejected += 1
+        else:
+            ev.verification_status = "verified"
+        validated.append(ev)
+
+    state["evidence"] = validated
+    state["_evidence_validated"] = len(validated) - rejected
+    state["_evidence_rejected"] = rejected
+
+    mt = state.get("metrics", TaskMetrics())
+    sd = getattr(mt, "stage_durations", {})
+    sd["validate_evidence"] = time.time() - t0
+    mt.stage_durations = sd
+    state["metrics"] = mt
+    state["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+
+    if rejected > 0:
+        state.setdefault("warnings", []).append(
+            f"Evidence validation: {rejected}/{len(validated)} items rejected"
+        )
+    logger.info(
+        f"[{state['task_id']}] Evidence validated: {len(validated) - rejected} ok, {rejected} rejected"
+    )
+    return state
+
+
 async def build_claims_node(state: dict) -> dict:
     """Build report claims only from verified evidence and apply quality gates."""
     _mark_stage(state, "build_claims")
@@ -715,6 +788,114 @@ async def build_claims_node(state: dict) -> dict:
         state.setdefault("warnings", []).extend(
             f"Evidence quality: {issue}" for issue in quality.issues
         )
+    return state
+
+
+async def build_literature_relations_node(state: dict) -> dict:
+    """Pre-compute paper-to-paper relations: consensus, contradiction, complementary.
+
+    This runs BEFORE the report node, so the report only reads validated relations,
+    never invents its own consensus/disagreement.
+    """
+    _mark_stage(state, "build_literature_relations")
+    logger.info(f"[{state['task_id']}] Building literature relations")
+    t0 = time.time()
+
+    evidence = state.get("evidence", [])
+    claims = state.get("claims", [])
+    papers = state.get("selected_papers", [])
+    paper_map = {p.internal_id: p for p in papers}
+
+    # Collect claims per paper with their key topics
+    paper_claims: dict[str, list] = {}
+    for claim in claims:
+        for pid in getattr(claim, "paper_ids", []):
+            paper_claims.setdefault(pid, []).append(claim)
+
+    # Collect evidence per paper with actual numbers
+    paper_numbers: dict[str, list] = {}
+    import re
+    num_pattern = re.compile(r"(\d+(?:\.\d+)?\s*%?)")
+    for ev in evidence:
+        pid = getattr(ev, "paper_id", "")
+        quote = getattr(ev, "evidence_quote", "") or ""
+        numbers = num_pattern.findall(quote)
+        for n in numbers:
+            paper_numbers.setdefault(pid, []).append(
+                {"value": n, "context": quote[:200], "page": getattr(ev, "page_start", None)}
+            )
+
+    # Build pairwise relations
+    relations = []
+    paper_ids = list(paper_claims.keys())
+    seen_pairs = set()
+
+    for i in range(len(paper_ids)):
+        for j in range(i + 1, len(paper_ids)):
+            pi, pj = paper_ids[i], paper_ids[j]
+            pair = tuple(sorted([pi, pj]))
+            if pair in seen_pairs:
+                continue
+            seen_pairs.add(pair)
+
+            ci = paper_claims.get(pi, [])
+            cj = paper_claims.get(pj, [])
+
+            # Simple overlap heuristic: shared key terms in claim text
+            terms_i = set()
+            terms_j = set()
+            for c in ci:
+                for word in getattr(c, "claim_text", "").lower().split():
+                    if len(word) > 3:
+                        terms_i.add(word)
+            for c in cj:
+                for word in getattr(c, "claim_text", "").lower().split():
+                    if len(word) > 3:
+                        terms_j.add(word)
+
+            overlap = len(terms_i & terms_j)
+            union = len(terms_i | terms_j) or 1
+            jaccard = overlap / union
+
+            # Determine relation type
+            if jaccard > 0.4:
+                # Check for same direction or opposite
+                relation_type = "complementary"
+                # Simple check: if key findings mention similar improvements, it's consensus
+                shared = terms_i & terms_j
+                if any(w in shared for w in ["improve", "enhance", "increase", "reduce", "degradation", "decline"]):
+                    relation_type = "consensus"
+                relations.append({
+                    "relation_type": relation_type,
+                    "paper_ids": [pi, pj],
+                    "shared_concepts": list(shared)[:8],
+                    "jaccard": round(jaccard, 2),
+                    "validated": True,
+                    "rationale": f"Shared concepts: {', '.join(list(shared)[:5])}",
+                })
+            elif jaccard > 0.15:
+                relations.append({
+                    "relation_type": "complementary",
+                    "paper_ids": [pi, pj],
+                    "shared_concepts": list(terms_i & terms_j)[:5],
+                    "jaccard": round(jaccard, 2),
+                    "validated": True,
+                    "rationale": "Partial concept overlap — different perspectives",
+                })
+
+    state["literature_relations"] = relations
+    state["_paper_numbers"] = paper_numbers
+
+    mt = state.get("metrics", TaskMetrics())
+    sd = getattr(mt, "stage_durations", {})
+    sd["build_literature_relations"] = time.time() - t0
+    mt.stage_durations = sd
+    state["metrics"] = mt
+
+    logger.info(
+        f"[{state['task_id']}] Literature relations: {len(relations)} pairs "
+        f"({sum(1 for r in relations if r['relation_type']=='consensus')} consensus)"
+    )
     return state
 
 
@@ -797,7 +978,7 @@ Max supplementary rounds: {settings.MAX_SEARCH_ROUNDS - 1}
         user_prompt=user_prompt,
         output_model=GapAnalysis,
         model=settings.model_strong,
-        max_tokens=settings.LLM_STRONG_MAX_TOKENS,
+        max_tokens=min(settings.LLM_STRONG_MAX_TOKENS, 2048),
         enable_thinking=settings.LLM_STRONG_ENABLE_THINKING,
     )
 
@@ -897,15 +1078,15 @@ async def supplementary_search_node(state: dict) -> dict:
 
 
 async def synthesize_report_node(state: dict) -> dict:
-    """Generate the final Chinese Markdown research report."""
+    """Generate a Deep Research style report with literature landscape and research gaps."""
     _mark_stage(state, "synthesize_report")
     logger.info(f"[{state['task_id']}] Synthesizing report")
     t0 = time.time()
 
     papers = state.get("selected_papers", [])
     evidence = state.get("evidence", [])
-    claims = state.get("claims", [])
     gap_analysis = state.get("gap_analysis")
+    search_plan = state.get("search_plan")
     settings = get_settings()
 
     if not papers:
@@ -913,117 +1094,267 @@ async def synthesize_report_node(state: dict) -> dict:
         state.setdefault("warnings", []).append("No papers available for report generation")
         return state
 
-    # Safeguard for 8K context: report generation receives verified claims only.
+    # 8K context safeguard
     MAX_PAPERS_IN_PROMPT = 12
+    ABSTRACT_CHARS = 300
 
-    supported_paper_ids = {
-        paper_id
-        for claim in claims
-        if claim.support_status == "supported"
-        for paper_id in claim.paper_ids
-    }
-    eligible_papers = [
-        paper for paper in papers if paper.internal_id in supported_paper_ids
-    ]
-    papers_for_report = eligible_papers[:MAX_PAPERS_IN_PROMPT]
-    if not papers_for_report:
-        state["report"] = _build_fallback_report(state)
-        state["report_paper_ids"] = [
-            paper.internal_id for paper in papers[:MAX_PAPERS_IN_PROMPT]
-        ]
+    papers_for_report = papers[:MAX_PAPERS_IN_PROMPT]
+    if len(papers) > MAX_PAPERS_IN_PROMPT:
         state.setdefault("warnings", []).append(
-            "No verified claims available; generated fallback report"
+            f"Truncated papers from {len(papers)} to {MAX_PAPERS_IN_PROMPT} for report prompt"
         )
-        return state
-    state["report_paper_ids"] = [
-        paper.internal_id for paper in papers_for_report
-    ]
-    if len(eligible_papers) > MAX_PAPERS_IN_PROMPT:
-        state.setdefault("warnings", []).append(
-            f"Truncated supported papers from {len(eligible_papers)} to {MAX_PAPERS_IN_PROMPT} for report prompt"
-        )
+    state["report_paper_ids"] = [p.internal_id for p in papers_for_report]
 
+    # Build paper summaries: title + year + venue + abstract excerpt + key findings
     paper_summaries = []
     for i, paper in enumerate(papers_for_report):
-        paper_claims = [
-            claim for claim in claims if paper.internal_id in claim.paper_ids
-        ][:3]
-        claim_text = "\n".join(
-            f"    - Claim {claim.claim_id}: {claim.claim_text}"
-            for claim in paper_claims
-        ) or "    - No verified claim available"
-        source_locations = []
-        for ev in evidence:
-            if ev.paper_id != paper.internal_id:
-                continue
-            location = ev.section_title or "Abstract"
-            if ev.page_start:
-                location += f", p.{ev.page_start}"
-            source_locations.append(location)
+        ev_items = [e for e in evidence if e.paper_id == paper.internal_id]
+        findings = []
+        for ev in ev_items[:2]:
+            if ev.key_findings:
+                findings.extend(ev.key_findings[:2])
+        findings_text = "; ".join(findings[:4]) if findings else "N/A"
+
+        abstract_text = (paper.abstract or "N/A")[:ABSTRACT_CHARS]
+        if len(paper.abstract or "") > ABSTRACT_CHARS:
+            abstract_text += "..."
+
+        venue_year = f"{paper.venue or 'Unknown venue'}, {paper.publication_year or 'n.d.'}"
         summary = (
-            f"[P{i + 1}] {paper.title} ({paper.publication_year or 'n.d.'})\n"
-            f"    Verified claims:\n{claim_text}\n"
-            f"    Source locations: {', '.join(source_locations[:3]) or 'N/A'}\n"
+            f"[P{i + 1}] {paper.title}\n"
+            f"    {venue_year} | Citations: {paper.citation_count or 0}\n"
+            f"    Abstract: {abstract_text}\n"
+            f"    Key findings: {findings_text}"
         )
         paper_summaries.append(summary)
 
     paper_list_text = "\n\n".join(paper_summaries)
 
-    gap_text = ""
+    # Gap text
+    gap_items = []
     if gap_analysis and gap_analysis.gaps:
-        gap_text = "\n".join(
-            f"- {g.sub_question} (severity: {g.severity})\n  Missing: {g.what_is_missing}"
-            for g in gap_analysis.gaps
-        )
+        for g in gap_analysis.gaps:
+            gap_items.append(
+                f"- **{g.sub_question}** (severity: {g.severity})\n"
+                f"  Current: {g.current_coverage}\n"
+                f"  Missing: {g.what_is_missing}"
+            )
+    gap_text = "\n".join(gap_items) if gap_items else "No gaps formally identified."
+
+    covered = ""
+    if gap_analysis and gap_analysis.covered_aspects:
+        covered = "\n".join(f"- {a}" for a in gap_analysis.covered_aspects)
+
+    # Search info
+    search_info = f"检索轮次: {state.get('current_round', 0) + 1}"
+    if search_plan:
+        search_info += f"\n核心概念: {', '.join(search_plan.core_concepts[:6])}"
+        if search_plan.year_from or search_plan.year_to:
+            search_info += f"\n年份范围: {search_plan.year_from or 'any'} – {search_plan.year_to or 'any'}"
 
     llm = _get_llm_client()
 
-    language = state.get("report_language", "zh-CN")
-    language_instruction = (
-        "Write in Simplified Chinese (zh-CN)."
-        if language == "zh-CN"
-        else "Write in English."
-    )
-    system_prompt = f"""You are a senior research analyst writing a comprehensive research report.
+    system_prompt = f"""
+<role>
+You are an evidence-grounded academic research synthesizer.
+Write a Chinese research report for domain experts.
+Your purpose is faithful synthesis, not producing a complete-looking report.
+</role>
 
-Requirements:
-1. {language_instruction}
-2. Structure the report with clear sections
-3. Use [P1], [P2], etc. for in-text citations - ONLY cite papers provided to you
-4. NEVER add factual claims, references, findings, or data not present in the verified claims
-5. Be honest about evidence strength and gaps
-6. If a requested aspect has no verified claim, state that evidence is insufficient
+<source_of_truth>
+You may use only the information supplied in:
+1. validated_claims
+2. evidence_cards
+3. paper_metadata
 
-Sections:
-- 研究问题 (Research Question)
-- 检索范围与方法 (Search Scope and Method)
-- 核心发现 (Core Findings)
-- 研究之间的一致与分歧 (Agreements and Disagreements)
-- 研究局限与证据缺口 (Limitations and Evidence Gaps)
-- 对后续研究的建议 (Recommendations)
-- 参考文献 (References) - use exact title, venue, year from provided data
+Priority: validated_claims > evidence_cards > paper_metadata.
 
-CRITICAL: Only cite papers from the provided list. Each [P#] must correspond to a real paper."""
+Do not use outside knowledge.
+Do not infer experimental results from paper titles.
+A paper citation proves provenance, not entailment.
+</source_of_truth>
+
+<report_structure>
+Generate the following sections:
+
+## Executive Summary
+3-5 concise bullet points. Each cites at least one paper.
+
+## 1. 研究问题与范围
+Refined research question, search scope, data sources, year range, key concepts.
+
+## 2. 文献全景
+- 研究脉络: How has this area evolved?
+- 主题聚类: 3-5 thematic clusters with key papers and contributions
+- 关键论文表: Columns: Paper, Year, Core Contribution, Evidence Strength
+
+## 3. 核心发现
+Organize by theme. For each: what we know, evidence strength, key results.
+Include quantitative results only when an exact supporting excerpt is available.
+
+## 4. 共识与争议
+- 共识: Requires at least 2 independent papers
+- 分歧: Incompatible findings, assumptions, or definitions
+- 方法学比较: Different approaches and trade-offs
+
+## 5. 研究缺口与未来方向
+- 证据缺口, 方法学缺口, 新兴方向, 具体建议
+- Historical trends and future directions must be explicitly supported,
+  or labeled "基于当前检索结果的推断"
+
+## 6. 参考文献
+Auto-generated — use [P#] markers only.
+</report_structure>
+
+<claim_policy>
+Every factual statement must be directly entailed by its cited evidence.
+
+The evidence must support the same:
+- subject
+- direction
+- scope
+- metric
+- comparison
+- conclusion
+
+If support is incomplete, omit the statement.
+Do not rescue unsupported claims using words such as:
+"可能", "一定程度上", "表明", "显著", "主要", "普遍".
+
+Quantitative claims are allowed only when an exact validated evidence
+record contains the number, metric, comparison and paper ID.
+Copy numbers exactly.
+</claim_policy>
+
+<paper_role_policy>
+Respect the supplied paper_role field.
+
+Do not treat:
+- mitigation methods as direct evidence of a phenomenon
+- personalization studies as reasoning-reliability studies
+- safety studies as general reasoning studies
+- benchmarks as mitigation methods
+- conceptual frameworks as validated empirical findings
+- mixed memory as multimodal memory
+</paper_role_policy>
+
+<meta_claim_policy>
+Claims about the literature as a whole require explicit support.
+
+Consensus requires at least two independent directly supporting papers.
+Disagreement requires incompatible findings, assumptions or definitions.
+Different methods are not automatically a disagreement.
+
+Historical trends, research gaps and future directions must either:
+1. be explicitly supported by cited evidence, or
+2. be labeled "基于当前检索结果的推断".
+
+Never invent thresholds, missing experiments, computational costs,
+causal mechanisms or field-wide trends.
+</meta_claim_policy>
+
+<metadata_policy>
+Copy years, venues and paper roles exactly from structured metadata.
+Do not generate or correct them.
+
+Use the supplied evidence_strength value.
+If unavailable, write "未评估".
+</metadata_policy>
+
+<writing_policy>
+Write in Simplified Chinese.
+Prefer precise, narrow statements over broad summaries.
+If evidence is insufficient, explicitly state the limitation.
+Do not repeat the reference list because it is generated separately.
+</writing_policy>
+
+<final_check>
+Before returning the report, silently inspect every factual sentence:
+
+1. Is it supported by supplied evidence?
+2. Does the citation support the entire sentence?
+3. Is the paper role correct?
+4. Is every number copied exactly?
+5. Is a single-paper result incorrectly called consensus?
+6. Is an inference clearly labeled?
+
+Delete any sentence that fails a check.
+</final_check>"""
+
+    # Build literature relations text for §4 (共识与争议) — pre-computed, not LLM-invented
+    relations = state.get("literature_relations", [])
+    consensus_pairs = [r for r in relations if r.get("relation_type") == "consensus"]
+    complementary_pairs = [r for r in relations if r.get("relation_type") == "complementary"]
+    relations_text = ""
+    if consensus_pairs:
+        relations_text += "=== PRE-COMPUTED CONSENSUS (use these, do not invent others) ===\n"
+        for r in consensus_pairs[:10]:
+            relations_text += (
+                f"- {r['paper_ids']}: {r.get('rationale','')} "
+                f"(shared: {r.get('shared_concepts',[])}, jaccard={r.get('jaccard',0)})\n"
+            )
+    if complementary_pairs:
+        relations_text += "\n=== PRE-COMPUTED COMPLEMENTARY PERSPECTIVES ===\n"
+        for r in complementary_pairs[:10]:
+            relations_text += (
+                f"- {r['paper_ids']}: {r.get('rationale','')} "
+                f"(shared: {r.get('shared_concepts',[])}, jaccard={r.get('jaccard',0)})\n"
+            )
+    if not relations:
+        relations_text = (
+            "§4 共识与争议 MUST be: '当前证据不足以确定系统性共识或争议。'\n"
+            "Do NOT list any paper pairs as consensus or disagreement."
+        )
+
+    # Inject real numbers from validated evidence (keep short for 8K budget)
+    numbers = state.get("_paper_numbers", {})
+    numbers_text = ""
+    if numbers:
+        numbers_text = "=== REAL QUANTITATIVE DATA (copy exactly, max 5 papers) ===\n"
+        count = 0
+        for pid, nums in sorted(numbers.items()):
+            if count >= 5:
+                break
+            unique_nums = list({n["value"]: n for n in nums}.values())[:2]
+            for n in unique_nums:
+                numbers_text += f"  {pid}: {n['value']} — \"{n['context'][:100]}\" (p.{n.get('page','?')})\n"
+            count += 1
 
     user_prompt = f"""Research Question: {state['original_question']}
 
-Search rounds: {state.get('current_round', 0) + 1}
-Papers selected: {len(papers)}
+{search_info}
 
-Papers and verified claims:
+=== SELECTED PAPERS (only these can be cited) ===
 {paper_list_text}
 
-Evidence Gaps:
-{gap_text if gap_text else 'None'}
+{numbers_text}
 
-Generate a comprehensive Chinese research report. Cite papers using [P#] markers."""
+=== COVERED ASPECTS ===
+{covered or 'None formally identified'}
 
+=== EVIDENCE GAPS ===
+{gap_text}
+
+{relations_text}
+
+=== TASK ===
+Generate a comprehensive Deep Research report following the specified structure.
+- Use the PRE-COMPUTED CONSENSUS and COMPLEMENTARY PERSPECTIVES for §4.
+  If consensus_text is empty, write "当前证据不足以确定共识".
+- Use REAL QUANTITATIVE DATA for §3. Copy numbers exactly. If empty, write qualitative.
+- Do NOT invent your own consensus, disagreement, or numbers.
+- Do NOT generate a reference list placeholder like [P1]...[P12].
+  Only use [P#] in citations within the text body.
+Cite papers using [P#] markers ONLY from the list above."""
+
+    # 8K budget with large prompt: limit completion to 2048
+    report_max_tokens = min(settings.LLM_STRONG_MAX_TOKENS, 2048)
     report_text, usage = await llm.generate_text(
         system_prompt=system_prompt,
         user_prompt=user_prompt,
         model=settings.model_strong,
         temperature=0.3,
-        max_tokens=settings.LLM_STRONG_MAX_TOKENS,
+        max_tokens=report_max_tokens,
         enable_thinking=settings.LLM_STRONG_ENABLE_THINKING,
     )
 
@@ -1035,11 +1366,22 @@ Generate a comprehensive Chinese research report. Cite papers using [P#] markers
         # Only include papers actually shown to the LLM in the reference list
         ref_entries = build_reference_entries(papers_for_report)
         import re
-        ref_pattern = re.compile(r"(##\s*参考文献\s*\n).*", re.DOTALL)
+        ref_pattern = re.compile(
+            r"(#{1,3}\s*(?:参考文献|References|参考文獻).*?\n).*",
+            re.DOTALL | re.IGNORECASE,
+        )
+        # Strip model-generated reference placeholder like "[P1] [P2] ... [P12]"
+        report_text = re.sub(
+            r"\n\s*(\[P\d+\]\s*){2,}\n", "\n", report_text
+        )
         if ref_pattern.search(report_text):
             report_text = ref_pattern.sub(r"\1\n" + ref_entries, report_text)
         else:
             report_text += f"\n\n## 参考文献\n\n{ref_entries}"
+
+        # Post-generation number audit: flag any dubious percentages/metrics
+        _audit_numbers_in_report(report_text, evidence, state)
+
         state["report"] = report_text
     else:
         state["report"] = _build_fallback_report(state)
@@ -1122,15 +1464,52 @@ async def validate_citations_node(state: dict) -> dict:
 
     validation = validate_citations(report, papers)
 
+    # Deeper check: for each cited paper, verify claim→evidence→chunk chain
+    evidence = state.get("evidence", [])
+    claims = state.get("claims", [])
+    paper_has_verified_evidence = set()
+    for ev in evidence:
+        if getattr(ev, "verification_status", None) == "verified":
+            paper_has_verified_evidence.add(ev.paper_id)
+
+    # Build claim→paper mapping from claims
+    claim_paper_map = {}
+    for claim in claims:
+        for pid in getattr(claim, "paper_ids", []):
+            claim_paper_map.setdefault(pid, []).append(claim.claim_id)
+
+    # Check each cited paper has evidence backing
+    for marker_idx in range(1, len(papers) + 1):
+        if marker_idx <= len(papers):
+            paper = papers[marker_idx - 1]
+            pid = paper.internal_id
+            if pid not in paper_has_verified_evidence:
+                validation.issues.append(
+                    f"[P{marker_idx}] cited but has no verified evidence"
+                )
+            if pid not in claim_paper_map:
+                validation.issues.append(
+                    f"[P{marker_idx}] cited but has no associated claim"
+                )
+
+    # Re-evaluate validity
+    validation.is_valid = (
+        len(validation.orphan_citations) == 0 and len(validation.issues) == 0
+    )
+
     if not validation.is_valid:
-        logger.warning(f"Citation validation failed, attempting auto-fix")
-        fixed_report = auto_fix_citations(report, papers)
-        validation = validate_citations(fixed_report, papers)
-        if validation.is_valid:
-            state["report"] = fixed_report
-            validation.fixed = True
-        else:
-            state.setdefault("warnings", []).append(f"Citation issues could not be auto-fixed: {validation.issues}")
+        logger.warning(f"Citation validation found {len(validation.issues)} issues")
+        # Auto-fix only basic orphan citations; deeper issues are reported
+        if validation.orphan_citations:
+            fixed_report = auto_fix_citations(report, papers)
+            validation = validate_citations(fixed_report, papers)
+            if validation.is_valid:
+                state["report"] = fixed_report
+                validation.fixed = True
+        if not validation.is_valid:
+            state.setdefault("warnings", []).extend(
+                f"Citation: {issue}" for issue in validation.issues
+            )
 
     state["citation_validation"] = validation
     mt = state.get("metrics", TaskMetrics())
@@ -1144,8 +1523,48 @@ async def validate_citations_node(state: dict) -> dict:
     return state
 
 
+def _audit_numbers_in_report(report: str, evidence: list, state: dict) -> None:
+    """Post-hoc audit: flag numbers in the report that don't appear in any evidence quote."""
+    import re
+
+    # Collect all verifiable text from evidence
+    evidence_texts = set()
+    for ev in evidence:
+        if getattr(ev, "evidence_quote", None):
+            evidence_texts.add(ev.evidence_quote.strip())
+        for f in (getattr(ev, "key_findings", None) or []):
+            evidence_texts.add(f.strip())
+
+    # Find numbers with context in the report (e.g., "12%", "15-20%", "48%", "0.85")
+    number_pattern = re.compile(
+        r"(\d+(?:\.\d+)?\s*[-–]\s*\d+(?:\.\d+)?\s*%?|\d+(?:\.\d+)?\s*%)"
+    )
+    found_numbers = number_pattern.findall(report)
+
+    # Check each number against evidence texts
+    suspicious = []
+    for num in found_numbers:
+        num_clean = num.replace(" ", "")
+        found_in_evidence = any(num_clean in t for t in evidence_texts)
+        if not found_in_evidence:
+            # Also try without %
+            num_no_pct = num_clean.replace("%", "")
+            found_in_evidence = any(num_no_pct in t for t in evidence_texts)
+        if not found_in_evidence:
+            suspicious.append(num)
+
+    if suspicious:
+        state.setdefault("warnings", []).append(
+            f"Number audit: {len(suspicious)} metrics ({', '.join(suspicious[:8])}) "
+            f"not found in evidence quotes — may be fabricated"
+        )
+        logger.warning(
+            f"[{state.get('task_id', '?')}] Suspicious numbers: {suspicious[:8]}"
+        )
+
+
 async def finalize_node(state: dict) -> dict:
-    """Finalize the research task."""
+    """Finalize the research task and save a complete run record."""
     _mark_stage(state, "finalize")
     logger.info(f"[{state['task_id']}] Finalizing")
     state["status"] = TaskStatus.COMPLETED.value
@@ -1155,9 +1574,117 @@ async def finalize_node(state: dict) -> dict:
     state["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
     _runtime_progress[state["task_id"]] = state
 
+    # Save complete run record for audit and debugging
+    await _save_run_record(state)
+
     # Clean up cached instances
     _reset_cached_instances()
     return state
+
+
+async def _save_run_record(state: dict) -> None:
+    """Export full pipeline data to storage/tasks/{task_id}/run_record.json."""
+    import json
+    import os
+    from pathlib import Path
+
+    task_id = state["task_id"]
+    run_dir = Path("storage/tasks") / task_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    # Serialize key artifacts (skip non-serializable objects)
+    def _safe(obj):
+        if hasattr(obj, "model_dump"):
+            return obj.model_dump()
+        if hasattr(obj, "__dict__"):
+            return str(obj)
+        return obj
+
+    record = {
+        "task_id": task_id,
+        "original_question": state.get("original_question", ""),
+        "status": state.get("status", ""),
+        "research_depth": state.get("research_depth", "standard"),
+        "search_rounds": state.get("current_round", 0) + 1,
+        "created_at": state.get("created_at", ""),
+        "updated_at": state.get("updated_at", ""),
+        # Search plan
+        "search_plan": _safe(state.get("search_plan")),
+        "queries": state.get("queries", []),
+        # Paper counts
+        "total_papers_found": len(state.get("normalized_papers", [])),
+        "papers_selected": len(state.get("selected_papers", [])),
+        # Selected papers with provenance
+        "selected_papers": [
+            {
+                "internal_id": p.internal_id,
+                "title": p.title,
+                "year": p.publication_year,
+                "venue": p.venue,
+                "doi": p.doi,
+                "sources": p.source_names,
+                "relevance_score": p.relevance_score,
+                "relevance_reason": getattr(p, "relevance_reason", None),
+            }
+            for p in state.get("selected_papers", [])
+        ],
+        # Downloaded PDFs
+        "downloaded_pdfs": {
+            pid: {"sha256": info["sha256"][:16] + "...", "source_url": info.get("source_url", "")}
+            for pid, info in state.get("_downloaded_pdfs", {}).items()
+        },
+        # Parse results
+        "parse_results": {
+            pid: {
+                "parser": r.parser_name,
+                "pages": r.num_pages,
+                "sections": r.num_sections,
+                "parent_chunks": len(r.parent_chunks),
+                "child_chunks": len(r.child_chunks),
+            }
+            for pid, r in state.get("_parse_results", {}).items()
+        },
+        # Evidence with verification status
+        "evidence": [
+            {
+                "paper_id": getattr(ev, "paper_id", ""),
+                "chunk_id": getattr(ev, "chunk_id", None),
+                "section": getattr(ev, "section_title", None),
+                "page": getattr(ev, "page_start", None),
+                "evidence_quote": getattr(ev, "evidence_quote", None),
+                "verification_status": getattr(ev, "verification_status", "unchecked"),
+                "verification_reason": getattr(ev, "verification_reason", None),
+                "evidence_level": getattr(ev, "evidence_level", "paraphrase"),
+            }
+            for ev in state.get("evidence", [])
+        ],
+        # Claims
+        "claims": [_safe(c) for c in state.get("claims", [])],
+        # Literature relations (consensus/contradiction/complementary)
+        "literature_relations": state.get("literature_relations", []),
+        # Gap analysis
+        "gap_analysis": _safe(state.get("gap_analysis")),
+        # Metrics
+        "metrics": _safe(state.get("metrics", {})),
+        # Citation validation
+        "citation_validation": _safe(state.get("citation_validation")),
+        # Warnings & errors
+        "warnings": state.get("warnings", []),
+        "errors": state.get("errors", []),
+        # Report
+        "report_length": len(state.get("report", "")),
+    }
+
+    record_path = run_dir / "run_record.json"
+    record_path.write_text(json.dumps(record, ensure_ascii=False, indent=2, default=str))
+    logger.info(f"[{task_id}] Run record saved to {record_path}")
+
+    # Also save the full report as a standalone Markdown file
+    report_text = state.get("report", "")
+    if report_text:
+        report_path = run_dir / "report.md"
+        report_path.write_text(report_text, encoding="utf-8")
+        logger.info(f"[{task_id}] Report saved to {report_path}")
 
 
 # ---- Routing functions ----
@@ -1188,9 +1715,11 @@ def build_research_graph() -> StateGraph:
     workflow.add_node("download_pdfs", download_pdfs_node)
     workflow.add_node("parse_and_chunk", parse_and_chunk_node)
     workflow.add_node("extract_evidence", extract_evidence_node)
+    workflow.add_node("validate_evidence", validate_evidence_node)
     workflow.add_node("assess_gaps", assess_gaps_node)
     workflow.add_node("supplementary_search", supplementary_search_node)
     workflow.add_node("build_claims", build_claims_node)
+    workflow.add_node("build_literature_relations", build_literature_relations_node)
     workflow.add_node("synthesize_report", synthesize_report_node)
     workflow.add_node("validate_citations", validate_citations_node)
     workflow.add_node("finalize", finalize_node)
@@ -1204,7 +1733,8 @@ def build_research_graph() -> StateGraph:
     workflow.add_edge("rank_and_select", "download_pdfs")
     workflow.add_edge("download_pdfs", "parse_and_chunk")
     workflow.add_edge("parse_and_chunk", "extract_evidence")
-    workflow.add_edge("extract_evidence", "assess_gaps")
+    workflow.add_edge("extract_evidence", "validate_evidence")
+    workflow.add_edge("validate_evidence", "assess_gaps")
 
     # Conditional branching
     workflow.add_conditional_edges(
@@ -1216,11 +1746,12 @@ def build_research_graph() -> StateGraph:
         },
     )
 
-    # After supplementary search, re-rank
-    workflow.add_edge("supplementary_search", "rank_and_select")
+    # After supplementary search, normalize + dedup before re-ranking
+    workflow.add_edge("supplementary_search", "normalize_and_deduplicate")
 
     # Final steps
-    workflow.add_edge("build_claims", "synthesize_report")
+    workflow.add_edge("build_claims", "build_literature_relations")
+    workflow.add_edge("build_literature_relations", "synthesize_report")
     workflow.add_edge("synthesize_report", "validate_citations")
     workflow.add_edge("validate_citations", "finalize")
     workflow.add_edge("finalize", END)

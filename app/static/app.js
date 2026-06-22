@@ -6,7 +6,7 @@ const stageNames = {
   parse_and_chunk: "解析论文全文", extract_evidence: "检索与验证证据",
   assess_gaps: "分析证据缺口", supplementary_search: "补充检索",
   build_claims: "构建 Claim–Evidence", synthesize_report: "撰写研究报告",
-  validate_citations: "校验引用完整性", finalize: "完成"
+  build_literature_relations: "构建文献关系", validate_evidence: "程序化证据校验", validate_citations: "校验引用完整性", finalize: "完成"
 };
 let pollTimer = null;
 
