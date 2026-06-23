@@ -155,6 +155,12 @@ def _reset_cached_instances():
     _cached_providers = None
     _cached_llm_client = None
     _cached_evidence_engine = None
+    # Also reset Tavily client
+    try:
+        from app.clients import reset_tavily_client
+        reset_tavily_client()
+    except ImportError:
+        pass
 
 
 async def _check_availability(providers) -> list:
@@ -188,6 +194,16 @@ async def initialize_node(state: dict) -> dict:
     state["metrics"] = mt
     state["created_at"] = state.get("created_at", time.strftime("%Y-%m-%dT%H:%M:%S"))
     state["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+
+    # Default research_mode to quick if not set
+    state.setdefault("research_mode", "quick")
+    # Quick Research state init
+    if state["research_mode"] == "quick":
+        state.setdefault("quick_search_round", 0)
+        state.setdefault("web_search_results", [])
+        state.setdefault("extracted_sources", [])
+        state.setdefault("research_notes", [])
+        state.setdefault("all_quick_queries", [])
 
     # Initialize providers and LLM client (cached at module level, not stored in state)
     _get_providers()
@@ -1863,6 +1879,32 @@ async def _save_run_record(state: dict) -> None:
 
 # ---- Routing functions ----
 
+def _route_by_mode(state: dict) -> str:
+    """Route to Quick or Strict subgraph after initialization."""
+    mode = state.get("research_mode", "quick")
+    if mode == "strict":
+        return "plan_queries"  # → strict (existing) flow
+    return "classify_question"  # → quick flow
+
+
+def _quick_next_after_search(state: dict) -> str:
+    """After Tavily search, go to source selection."""
+    return "quick_select_sources"
+
+
+def _quick_next_after_notes(state: dict) -> str:
+    """After building research notes, assess coverage."""
+    return "quick_assess_coverage"
+
+
+def _quick_supplement_decision(state: dict) -> str:
+    """Decide whether to do supplementary search or proceed to matrix."""
+    needs = state.get("quick_needs_supplementary", False)
+    if needs:
+        return "quick_supplementary_search"
+    return "build_comparison_matrix"
+
+
 def should_supplement(state: dict) -> str:
     """Decide whether to perform supplementary search or proceed to report."""
     gap = state.get("gap_analysis")
@@ -1877,11 +1919,36 @@ def should_supplement(state: dict) -> str:
 # ---- Build the graph ----
 
 def build_research_graph() -> StateGraph:
-    """Build and compile the LangGraph research workflow."""
+    """Build and compile the LangGraph research workflow.
+
+    Routes at the top level:
+    - QUICK mode → Quick Research subgraph (Tavily-based)
+    - STRICT mode → Existing Strict subgraph (academic PDF-based)
+    """
+    from app.workflow.quick_research import (
+        classify_question_node,
+        quick_plan_queries_node,
+        tavily_search_node,
+        quick_select_sources_node,
+        tavily_extract_node,
+        build_research_notes_node,
+        quick_assess_coverage_node,
+        quick_supplementary_search_node,
+        build_comparison_matrix_node,
+        synthesize_quick_report_node,
+        lightweight_citation_check_node,
+        quick_finalize_node,
+    )
+
     workflow = StateGraph(dict)
 
-    # Add nodes
+    # ---- All nodes ----
+
+    # Common
     workflow.add_node("initialize", initialize_node)
+    workflow.add_node("finalize", finalize_node)
+
+    # Strict (existing) nodes
     workflow.add_node("plan_queries", plan_queries_node)
     workflow.add_node("search_sources", search_sources_node)
     workflow.add_node("normalize_and_deduplicate", normalize_and_deduplicate_node)
@@ -1896,11 +1963,64 @@ def build_research_graph() -> StateGraph:
     workflow.add_node("build_literature_relations", build_literature_relations_node)
     workflow.add_node("synthesize_report", synthesize_report_node)
     workflow.add_node("validate_citations", validate_citations_node)
-    workflow.add_node("finalize", finalize_node)
 
-    # Define the flow
+    # Quick Research nodes
+    workflow.add_node("classify_question", classify_question_node)
+    workflow.add_node("quick_plan_queries", quick_plan_queries_node)
+    workflow.add_node("tavily_search", tavily_search_node)
+    workflow.add_node("quick_select_sources", quick_select_sources_node)
+    workflow.add_node("tavily_extract", tavily_extract_node)
+    workflow.add_node("build_research_notes", build_research_notes_node)
+    workflow.add_node("quick_assess_coverage", quick_assess_coverage_node)
+    workflow.add_node("quick_supplementary_search", quick_supplementary_search_node)
+    workflow.add_node("build_comparison_matrix", build_comparison_matrix_node)
+    workflow.add_node("synthesize_quick_report", synthesize_quick_report_node)
+    workflow.add_node("lightweight_citation_check", lightweight_citation_check_node)
+    workflow.add_node("quick_finalize", quick_finalize_node)
+
+    # ---- Entry and mode routing ----
     workflow.set_entry_point("initialize")
-    workflow.add_edge("initialize", "plan_queries")
+
+    workflow.add_conditional_edges(
+        "initialize",
+        _route_by_mode,
+        {
+            "plan_queries": "plan_queries",         # → Strict flow
+            "classify_question": "classify_question",  # → Quick flow
+        },
+    )
+
+    # ================================================================
+    # QUICK Research flow
+    # ================================================================
+    workflow.add_edge("classify_question", "quick_plan_queries")
+    workflow.add_edge("quick_plan_queries", "tavily_search")
+    workflow.add_edge("tavily_search", "quick_select_sources")
+    workflow.add_edge("quick_select_sources", "tavily_extract")
+    workflow.add_edge("tavily_extract", "build_research_notes")
+    workflow.add_edge("build_research_notes", "quick_assess_coverage")
+
+    # Supplementary search loop
+    workflow.add_conditional_edges(
+        "quick_assess_coverage",
+        _quick_supplement_decision,
+        {
+            "quick_supplementary_search": "quick_supplementary_search",
+            "build_comparison_matrix": "build_comparison_matrix",
+        },
+    )
+    # After supplementary search, loop back through search→select→extract→notes→coverage
+    workflow.add_edge("quick_supplementary_search", "tavily_search")
+
+    # Matrix → Report → Citation check → Finalize
+    workflow.add_edge("build_comparison_matrix", "synthesize_quick_report")
+    workflow.add_edge("synthesize_quick_report", "lightweight_citation_check")
+    workflow.add_edge("lightweight_citation_check", "quick_finalize")
+    workflow.add_edge("quick_finalize", END)
+
+    # ================================================================
+    # STRICT (existing) flow — unchanged
+    # ================================================================
     workflow.add_edge("plan_queries", "search_sources")
     workflow.add_edge("search_sources", "normalize_and_deduplicate")
     workflow.add_edge("normalize_and_deduplicate", "rank_and_select")
@@ -1910,7 +2030,6 @@ def build_research_graph() -> StateGraph:
     workflow.add_edge("extract_evidence", "validate_evidence")
     workflow.add_edge("validate_evidence", "assess_gaps")
 
-    # Conditional branching
     workflow.add_conditional_edges(
         "assess_gaps",
         should_supplement,
@@ -1920,15 +2039,11 @@ def build_research_graph() -> StateGraph:
         },
     )
 
-    # After supplementary search, normalize + dedup before re-ranking
     workflow.add_edge("supplementary_search", "normalize_and_deduplicate")
-
-    # Final steps
     workflow.add_edge("build_claims", "build_literature_relations")
     workflow.add_edge("build_literature_relations", "synthesize_report")
     workflow.add_edge("synthesize_report", "validate_citations")
     workflow.add_edge("validate_citations", "finalize")
-    workflow.add_edge("finalize", END)
 
     # Compile without checkpointer to avoid serialization issues
     graph = workflow.compile()
@@ -1950,9 +2065,11 @@ async def run_research(state: dict) -> dict:
     """
     _reset_cached_instances()
 
-    # Ensure DB tables + FTS5 exist (needed for PDF cache, chunks)
-    from app.db.database import init_db
-    await init_db()
+    # Ensure DB tables exist (needed for PDF cache, chunks — only for strict mode)
+    mode = state.get("research_mode", "quick")
+    if mode == "strict":
+        from app.db.database import init_db
+        await init_db()
 
     graph = build_research_graph()
 

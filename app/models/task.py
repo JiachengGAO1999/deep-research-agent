@@ -88,6 +88,9 @@ class TaskState(BaseModel):
     original_question: str = ""
     status: TaskStatus = TaskStatus.PENDING
 
+    # Research mode
+    research_mode: str = "quick"  # "quick" | "strict"
+
     # Search configuration
     year_from: Optional[int] = None
     year_to: Optional[int] = None

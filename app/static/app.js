@@ -1,12 +1,20 @@
 const $ = (id) => document.getElementById(id);
 const stageNames = {
+  // Strict mode
   initialize: "初始化研究任务", plan_queries: "分析问题与规划检索",
   search_sources: "检索学术数据源", normalize_and_deduplicate: "规范化与文献去重",
   rank_and_select: "筛选相关论文", download_pdfs: "下载开放全文",
   parse_and_chunk: "解析论文全文", extract_evidence: "检索与验证证据",
   assess_gaps: "分析证据缺口", supplementary_search: "补充检索",
   build_claims: "构建 Claim–Evidence", synthesize_report: "撰写研究报告",
-  build_literature_relations: "构建文献关系", validate_evidence: "程序化证据校验", validate_citations: "校验引用完整性", finalize: "完成"
+  build_literature_relations: "构建文献关系", validate_evidence: "程序化证据校验", validate_citations: "校验引用完整性", finalize: "完成",
+  // Quick mode
+  classify_question: "分析研究问题", quick_plan_queries: "规划检索查询",
+  tavily_search: "搜索公开网页", quick_select_sources: "筛选高质量来源",
+  tavily_extract: "提取网页正文", build_research_notes: "构建研究笔记",
+  quick_assess_coverage: "评估覆盖度", quick_supplementary_search: "补充检索",
+  build_comparison_matrix: "构建比较矩阵", synthesize_quick_report: "撰写研究报告",
+  lightweight_citation_check: "引用完整性检查", quick_finalize: "完成"
 };
 let pollTimer = null;
 
@@ -38,20 +46,38 @@ function showMessages(warnings = [], errors = []) {
   ].join("");
 }
 
+let currentMode = "quick";
+
 async function poll(taskId) {
   try {
     const status = await api(`/api/research/${taskId}`);
     const progress = status.progress_percent || 0;
+    const mode = status.research_mode || "quick";
+    currentMode = mode;
     $("stage-label").textContent = stageNames[status.current_stage] || status.status;
     $("progress-number").textContent = `${progress}%`;
     $("bar-fill").style.width = `${progress}%`;
     $("rounds").textContent = status.current_round + 1;
+    $("llm-calls").textContent = status.llm_calls;
+
+    // Toggle mode-specific stats visibility
+    const isQuick = mode === "quick";
+    document.querySelectorAll(".quick-stat").forEach(el => el.style.display = isQuick ? "" : "none");
+    document.querySelectorAll(".strict-stat").forEach(el => el.style.display = isQuick ? "none" : "");
+    $("runtime-meta").textContent = isQuick
+      ? `research=quick · source=tavily · cost $${Number(status.estimated_cost_usd || 0).toFixed(4)}`
+      : `research=strict · retrieval=${status.retrieval_backend || "—"} · cost $${Number(status.estimated_cost_usd || 0).toFixed(4)}`;
+
+    // Quick mode stats
+    $("web-results").textContent = status.web_results || 0;
+    $("sources-selected").textContent = status.sources_selected || 0;
+    $("research-notes").textContent = status.research_notes_count || 0;
+    // Strict mode stats
     $("papers-found").textContent = status.papers_found;
     $("papers-selected").textContent = status.papers_selected;
     $("passages").textContent = status.retrieved_passages;
     $("verified-evidence").textContent = status.verified_evidence;
-    $("llm-calls").textContent = status.llm_calls;
-    $("runtime-meta").textContent = `retrieval=${status.retrieval_backend || "—"} · estimated cost $${Number(status.estimated_cost_usd || 0).toFixed(4)}`;
+
     showMessages(status.warnings, status.errors);
     if (status.status === "completed") {
       clearInterval(pollTimer);
@@ -75,7 +101,7 @@ async function loadResults(taskId) {
     api(`/api/research/${taskId}/evidence`),
     api(`/api/research/${taskId}/claims`)
   ]);
-  $("report").textContent = report.report;
+  $("report").innerHTML = renderMarkdown(report.report);
   $("papers").innerHTML = papers.papers.map(p => `
     <article class="card">
       <h3>${escapeHtml(p.title)}</h3>
@@ -115,6 +141,7 @@ $("research-form").addEventListener("submit", async (event) => {
       year_to: numberOrNull("year-to"),
       max_papers: Number($("max-papers").value),
       research_depth: $("depth").value,
+      research_mode: $("research-mode").value,
       retrieval_profile: $("profile").value,
       full_text_required: $("full-text-required").checked,
       language: $("language").value,
@@ -143,6 +170,23 @@ document.querySelectorAll(".tabs button").forEach(button => {
     $(button.dataset.tab).classList.add("active");
   });
 });
+
+function renderMarkdown(md) {
+  if (!md) return "";
+  return md
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/^### (.+)$/gm, "<h3>$1</h3>")
+    .replace(/^## (.+)$/gm, "<h2>$1</h2>")
+    .replace(/^# (.+)$/gm, "<h1>$1</h1>")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/^- (.+)$/gm, "<li>$1</li>")
+    .replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>")
+    .replace(/\[S(\d+)\]/g, "<sup class=\"cite\">[$1]</sup>")
+    .replace(/\n\n/g, "</p><p>")
+    .replace(/\n/g, "<br>")
+    .replace(/<p>/, "<p>");
+}
 
 api("/health").then(() => {
   $("health").textContent = "服务正常";

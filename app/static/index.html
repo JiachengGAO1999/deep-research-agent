@@ -41,6 +41,12 @@
         <details>
           <summary>高级设置</summary>
           <div class="grid advanced">
+            <label><span>研究模式</span>
+              <select id="research-mode">
+                <option value="quick" selected>快速研究（网页+论文页面，生成完整报告）</option>
+                <option value="strict">严格全文（仅可下载全文+严格验证，覆盖率可能较低）</option>
+              </select>
+            </label>
             <label><span>检索档位</span>
               <select id="profile">
                 <option value="quality" selected>质量优先（赛马胜出后端）</option>
@@ -75,10 +81,13 @@
       <div class="bar"><div id="bar-fill"></div></div>
       <div class="stats">
         <span>轮次 <strong id="rounds">0</strong></span>
-        <span>发现论文 <strong id="papers-found">0</strong></span>
-        <span>纳入论文 <strong id="papers-selected">0</strong></span>
-        <span>证据片段 <strong id="passages">0</strong></span>
-        <span>已验证证据 <strong id="verified-evidence">0</strong></span>
+        <span class="quick-stat">搜索结果 <strong id="web-results">0</strong></span>
+        <span class="quick-stat">入选来源 <strong id="sources-selected">0</strong></span>
+        <span class="quick-stat">研究笔记 <strong id="research-notes">0</strong></span>
+        <span class="strict-stat">发现论文 <strong id="papers-found">0</strong></span>
+        <span class="strict-stat">纳入论文 <strong id="papers-selected">0</strong></span>
+        <span class="strict-stat">证据片段 <strong id="passages">0</strong></span>
+        <span class="strict-stat">已验证证据 <strong id="verified-evidence">0</strong></span>
         <span>LLM 调用 <strong id="llm-calls">0</strong></span>
       </div>
       <p id="runtime-meta" class="task-id"></p>

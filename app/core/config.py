@@ -148,8 +148,34 @@ class Settings:
     # OA resolution
     UNPAYWALL_EMAIL: str = os.getenv("UNPAYWALL_EMAIL", "")
 
+    # Tavily Search (Quick Research mode)
+    TAVILY_API_KEY: str = os.getenv("TAVILY_API_KEY", "")
+    TAVILY_SEARCH_DEPTH: str = os.getenv("TAVILY_SEARCH_DEPTH", "advanced")
+    TAVILY_MAX_RESULTS_PER_QUERY: int = int(
+        os.getenv("TAVILY_MAX_RESULTS_PER_QUERY", "8")
+    )
+    TAVILY_EXTRACT_DEPTH: str = os.getenv("TAVILY_EXTRACT_DEPTH", "advanced")
+    TAVILY_MAX_SOURCES: int = int(os.getenv("TAVILY_MAX_SOURCES", "20"))
+    TAVILY_TIMEOUT: int = int(os.getenv("TAVILY_TIMEOUT", "30"))
+
+    # Quick Research mode limits
+    QUICK_MAX_SEARCH_ROUNDS: int = int(os.getenv("QUICK_MAX_SEARCH_ROUNDS", "2"))
+    QUICK_MAX_QUERIES_PER_ROUND: int = int(
+        os.getenv("QUICK_MAX_QUERIES_PER_ROUND", "6")
+    )
+    QUICK_MIN_HIGH_QUALITY_SOURCES: int = int(
+        os.getenv("QUICK_MIN_HIGH_QUALITY_SOURCES", "5")
+    )
+
     # Mock mode (no API keys required)
     MOCK_MODE: bool = os.getenv("MOCK_MODE", "").lower() in ("1", "true", "yes")
+
+    @property
+    def has_tavily_key(self) -> bool:
+        return bool(self.TAVILY_API_KEY) and self.TAVILY_API_KEY not in (
+            "",
+            "your-tavily-key-here",
+        )
 
     @property
     def has_llm_key(self) -> bool:

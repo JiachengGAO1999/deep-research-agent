@@ -143,6 +143,7 @@ class TestFullWorkflow:
         state = {
             "task_id": "integration_test_001",
             "original_question": "How does dialogue history affect reasoning reliability in large language models?",
+            "research_mode": "strict",
             "year_from": 2020,
             "year_to": 2026,
             "max_rounds": 3,
@@ -182,6 +183,7 @@ class TestFullWorkflow:
         state = {
             "task_id": "integration_test_002",
             "original_question": "What are the effects of context length on LLM reasoning?",
+            "research_mode": "strict",
             "year_from": 2022,
             "year_to": 2025,
             "max_rounds": 3,
@@ -215,6 +217,7 @@ class TestFullWorkflow:
         state = {
             "task_id": "integration_test_003",
             "original_question": "Test question for loop prevention",
+            "research_mode": "strict",
             "max_rounds": 2,
             "status": "pending",
             "current_round": 0,
@@ -263,6 +266,7 @@ class TestFullWorkflow:
             state = {
                 "task_id": "integration_test_004",
                 "original_question": "Test provider failure resilience",
+                "research_mode": "strict",
                 "max_rounds": 2,
                 "status": "pending",
                 "current_round": 0,

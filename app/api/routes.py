@@ -58,6 +58,11 @@ class ResearchRequest(BaseModel):
     report_language: str = Field(default="zh-CN", pattern="^(zh-CN|en)$")
     language: Optional[str] = Field(default=None, pattern="^(zh-CN|en)$")
     max_cost_usd: Optional[float] = Field(default=None, ge=0)
+    research_mode: Optional[str] = Field(
+        default="quick",
+        pattern="^(quick|strict)$",
+        description="Research mode: 'quick' (Tavily web search) or 'strict' (academic PDF full-text)",
+    )
 
     @model_validator(mode="after")
     def validate_request(self):
@@ -107,9 +112,15 @@ class TaskStatusResponse(BaseModel):
     updated_at: str
     current_stage: Optional[str] = None
     progress_percent: int = 0
+    research_mode: Optional[str] = "quick"
     retrieval_backend: Optional[str] = None
     retrieved_passages: int = 0
     verified_evidence: int = 0
+    # Quick mode stats
+    web_results: int = 0
+    sources_selected: int = 0
+    research_notes_count: int = 0
+    # Common
     llm_calls: int = 0
     estimated_cost_usd: float = 0.0
 
@@ -154,6 +165,7 @@ async def _run_research_background(state: TaskState) -> None:
             "task_id": state.task_id,
             "original_question": state.original_question,
             "status": TaskStatus.RUNNING.value,
+            "research_mode": state.research_mode,
             "year_from": state.year_from,
             "year_to": state.year_to,
             "max_papers": state.max_papers,
@@ -243,6 +255,7 @@ async def create_research(
     depth_rounds = {"quick": 1, "standard": 2, "deep": 3}
     state = TaskState(
         original_question=request.question or "",
+        research_mode=request.research_mode or "quick",
         year_from=request.year_from,
         year_to=request.year_to,
         max_papers=request.max_papers,
@@ -309,6 +322,7 @@ async def get_task_status(
         updated_at=record.updated_at,
         current_stage=runtime.get("current_stage"),
         progress_percent=runtime.get("progress_percent", 100 if record.status == "completed" else 0),
+        research_mode=runtime.get("research_mode", "quick"),
         retrieval_backend=runtime.get("evidence_backend", record.evidence_backend),
         retrieved_passages=len(runtime.get("retrieved_passages", [])),
         verified_evidence=sum(
@@ -316,6 +330,9 @@ async def get_task_status(
             == "verified"
             for item in evidence
         ),
+        web_results=len(runtime.get("web_search_results", [])),
+        sources_selected=len(runtime.get("selected_web_sources", [])) if runtime.get("selected_web_sources") else len(runtime.get("extracted_sources", [])),
+        research_notes_count=len(runtime.get("research_notes", [])),
         llm_calls=metrics.llm_call_count,
         estimated_cost_usd=metrics.estimated_cost_usd,
     )
