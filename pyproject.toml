@@ -46,6 +46,12 @@ deep-research-baseline = "app.evaluation.baseline:main"
 deep-research-eval = "app.evaluation.runner:main"
 deep-research-race = "app.evaluation.race:main"
 
+[tool.uv]
+# Default to syncing all extras for development convenience
+dev-dependencies = []
+
+[tool.uv.sources]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
