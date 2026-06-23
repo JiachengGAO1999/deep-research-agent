@@ -74,13 +74,17 @@ class PDFDownloader:
         arxiv_id = _extract_arxiv_id(paper)
 
         strategies = [
-            ("arxiv", lambda: self._arxiv_url(arxiv_id)) if arxiv_id else None,
-            ("full_text_url", lambda: paper.full_text_url) if paper.full_text_url else None,
-            ("unpaywall", lambda: self._unpaywall_resolve(paper.doi))
-            if paper.doi and self._unpaywall_email else None,
-            ("doi_redirect", lambda: self._doi_resolve(paper.doi))
-            if paper.doi else None,
-            ("direct_url", lambda: paper.url) if paper.url else None,
+            entry
+            for entry in (
+                ("arxiv", lambda: self._arxiv_url(arxiv_id)) if arxiv_id else None,
+                ("full_text_url", lambda: paper.full_text_url) if paper.full_text_url else None,
+                ("unpaywall", lambda: self._unpaywall_resolve(paper.doi))
+                if paper.doi and self._unpaywall_email else None,
+                ("doi_redirect", lambda: self._doi_resolve(paper.doi))
+                if paper.doi else None,
+                ("direct_url", lambda: paper.url) if paper.url else None,
+            )
+            if entry is not None
         ]
 
         for label, resolver in strategies:
