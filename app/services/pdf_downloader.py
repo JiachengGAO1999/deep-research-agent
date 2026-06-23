@@ -13,6 +13,7 @@ start with %%PDF.  No host allowlist — the metadata-driven chain replaces it.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import re
@@ -86,7 +87,11 @@ class PDFDownloader:
             if resolver is None:
                 continue
             try:
-                url = await resolver() if label in ("unpaywall", "doi_redirect") else resolver()
+                result = resolver()
+                if asyncio.iscoroutine(result):
+                    url = await result
+                else:
+                    url = result
             except Exception as exc:
                 logger.debug("OA resolver %s raised: %s", label, exc)
                 continue
@@ -106,7 +111,7 @@ class PDFDownloader:
     # ── strategy helpers ──────────────────────────────────────────────
 
     @staticmethod
-    async def _arxiv_url(arxiv_id: str) -> str:
+    def _arxiv_url(arxiv_id: str) -> str:
         return f"https://arxiv.org/pdf/{arxiv_id}"
 
     async def _unpaywall_resolve(self, doi: str) -> Optional[str]:
