@@ -149,6 +149,9 @@ class Settings:
         "REPORT_GENERATION_MODE", "strict"
     )
 
+    # OA resolution
+    UNPAYWALL_EMAIL: str = os.getenv("UNPAYWALL_EMAIL", "")
+
     # Mock mode (no API keys required)
     MOCK_MODE: bool = os.getenv("MOCK_MODE", "").lower() in ("1", "true", "yes")
 

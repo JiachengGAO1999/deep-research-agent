@@ -561,19 +561,13 @@ async def download_pdfs_node(state: dict) -> dict:
 
     downloaded = {}
     for paper in papers:
-        pdf_url = paper.full_text_url or paper.url
-        if not pdf_url:
-            state.setdefault("warnings", []).append(
-                f"No PDF URL for {paper.internal_id}: {paper.title[:60]}"
-            )
-            continue
-
-        sha256, file_path, error = await downloader.download(pdf_url)
+        sha256, file_path, error, source = await downloader.resolve_and_download(paper)
         if sha256 and file_path:
             downloaded[paper.internal_id] = {
                 "sha256": sha256,
                 "file_path": file_path,
-                "source_url": pdf_url,
+                "source_url": paper.full_text_url or paper.url or "",
+                "oa_source": source,
             }
             # Register in lifecycle DB
             import os

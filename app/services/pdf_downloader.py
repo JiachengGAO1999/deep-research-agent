@@ -1,10 +1,23 @@
-"""PDF download service — streaming download with SHA-256 cache."""
+"""PDF download service — OA resolution chain + streaming download with SHA-256 cache.
+
+Resolution order (first success wins):
+    1. arXiv ID → arxiv.org/pdf/{id}
+    2. Paper's full_text_url (from OpenAlex oa_url / S2 openAccessPdf)
+    3. Unpaywall API → best_oa_location (requires UNPAYWALL_EMAIL)
+    4. DOI → follow redirects, check Content-Type
+    5. Paper's url as last resort
+
+Every resolved URL is validated: Content-Type must include "pdf" and body must
+start with %%PDF.  No host allowlist — the metadata-driven chain replaces it.
+"""
 
 from __future__ import annotations
 
 import hashlib
 import logging
+import re
 from typing import Optional
+from urllib.parse import urlparse
 
 import httpx
 
@@ -13,59 +26,151 @@ from app.core.storage import LocalDocumentStorage
 
 logger = logging.getLogger(__name__)
 
-# Known open-access PDF hosts — safe to download
-ALLOWED_PDF_HOSTS = {
-    "arxiv.org",
-    "export.arxiv.org",
-    "browse.arxiv.org",
-    "www.biorxiv.org",
-    "www.medrxiv.org",
-    "openaccess.thecvf.com",
-    "proceedings.neurips.cc",
-    "proceedings.mlr.press",
-    "aclanthology.org",
-    "papers.nips.cc",
-    "dl.acm.org",  # Some are OA
-    "par.nsf.gov",
-    "pubmed.ncbi.nlm.nih.gov",
-    "europepmc.org",
-}
+# ── arXiv ID extraction ──────────────────────────────────────────────
+
+_ARXIV_ID_RE = re.compile(r"arxiv(?:\.org)?[/:](\d{4}\.\d{4,5}(?:v\d+)?)", re.I)
+_ARXIV_ABS_RE = re.compile(r"arxiv\.org/abs/(\d{4}\.\d{4,5}(?:v\d+)?)", re.I)
+
+
+def _extract_arxiv_id(paper) -> Optional[str]:
+    """Extract a clean arXiv ID from paper metadata."""
+    # Try DOI-style arXiv ID first (e.g. 10.48550/arxiv.2505.06120)
+    doi = paper.doi or ""
+    m = re.search(r"10\.\d{4,9}/arxiv\.(\d{4}\.\d{4,5})", doi, re.I)
+    if m:
+        return m.group(1)
+    # Try URL fields
+    for field in (paper.url, paper.full_text_url):
+        if field:
+            m = _ARXIV_ID_RE.search(field) or _ARXIV_ABS_RE.search(field)
+            if m:
+                return m.group(1).rstrip("v1234567890")  # strip version
+    return None
+
+
+# ── PDF downloader ───────────────────────────────────────────────────
 
 
 class PDFDownloader:
-    """Download PDFs from open-access sources, cache by SHA-256."""
+    """OA-aware PDF downloader with metadata-driven URL resolution."""
 
     def __init__(self, settings=None, storage: Optional[LocalDocumentStorage] = None):
         self._settings = settings or get_settings()
         self._storage = storage or LocalDocumentStorage(settings=self._settings)
         self._max_size = self._settings.PDF_MAX_SIZE_MB * 1024 * 1024
+        self._download_timeout = self._settings.PDF_DOWNLOAD_TIMEOUT
+        self._unpaywall_email: Optional[str] = getattr(
+            self._settings, "UNPAYWALL_EMAIL", None
+        ) or None
+
+    # ── public API ────────────────────────────────────────────────────
+
+    async def resolve_and_download(self, paper) -> tuple[Optional[str], Optional[str], Optional[str], str]:
+        """Try every OA resolution strategy. Returns (sha256, file_path, error, source).
+
+        ``source`` describes which strategy succeeded (for logging / lifecycle).
+        """
+        arxiv_id = _extract_arxiv_id(paper)
+
+        strategies = [
+            ("arxiv", lambda: self._arxiv_url(arxiv_id)) if arxiv_id else None,
+            ("full_text_url", lambda: paper.full_text_url) if paper.full_text_url else None,
+            ("unpaywall", lambda: self._unpaywall_resolve(paper.doi))
+            if paper.doi and self._unpaywall_email else None,
+            ("doi_redirect", lambda: self._doi_resolve(paper.doi))
+            if paper.doi else None,
+            ("direct_url", lambda: paper.url) if paper.url else None,
+        ]
+
+        for label, resolver in strategies:
+            if resolver is None:
+                continue
+            try:
+                url = await resolver() if label in ("unpaywall", "doi_redirect") else resolver()
+            except Exception as exc:
+                logger.debug("OA resolver %s raised: %s", label, exc)
+                continue
+            if not url:
+                continue
+            sha256, file_path, error = await self._try_download(url)
+            if sha256 and file_path:
+                return sha256, file_path, None, label
+
+        return None, None, "All OA resolution strategies exhausted", "none"
 
     async def download(self, url: str) -> tuple[Optional[str], Optional[str], Optional[str]]:
-        """Download a PDF from url. Returns (sha256, file_path, error_message).
+        """Legacy single-URL download (used by tests / baselines)."""
+        sha256, file_path, error = await self._try_download(url)
+        return sha256, file_path, error
 
-        Only downloads from known open-access hosts.
-        Checks PDF signature and file size.
-        Caches by SHA-256 — same PDF not downloaded twice.
-        """
-        # Validate URL
+    # ── strategy helpers ──────────────────────────────────────────────
+
+    @staticmethod
+    async def _arxiv_url(arxiv_id: str) -> str:
+        return f"https://arxiv.org/pdf/{arxiv_id}"
+
+    async def _unpaywall_resolve(self, doi: str) -> Optional[str]:
+        """Query Unpaywall for the best OA PDF location."""
+        url = f"https://api.unpaywall.org/v2/{doi}?email={self._unpaywall_email}"
+        client = httpx.AsyncClient(timeout=httpx.Timeout(15), follow_redirects=True)
+        try:
+            async with client:
+                resp = await client.get(url)
+                if resp.status_code != 200:
+                    logger.debug("Unpaywall HTTP %s for %s", resp.status_code, doi)
+                    return None
+                data = resp.json()
+        except Exception as exc:
+            logger.debug("Unpaywall error for %s: %s", doi, exc)
+            return None
+        finally:
+            await client.aclose()
+
+        best = data.get("best_oa_location") or {}
+        pdf_url = best.get("url_for_pdf") or best.get("url_for_landing_page")
+        if not pdf_url:
+            # Fallback: try all oa_locations
+            for loc in data.get("oa_locations") or []:
+                pdf_url = loc.get("url_for_pdf")
+                if pdf_url:
+                    break
+        return pdf_url
+
+    async def _doi_resolve(self, doi: str) -> Optional[str]:
+        """Follow DOI redirect chain, return final URL if it's a PDF."""
+        doi_url = f"https://doi.org/{doi}"
+        client = httpx.AsyncClient(
+            timeout=httpx.Timeout(15),
+            follow_redirects=True,
+        )
+        try:
+            async with client:
+                # HEAD first to check final Content-Type
+                head = await client.head(
+                    doi_url,
+                    headers={"Accept": "application/pdf, text/html"},
+                )
+                final_url = str(head.url) if head.url else doi_url
+                ct = head.headers.get("content-type", "")
+                if "pdf" in ct.lower():
+                    return final_url
+                # If not PDF, return the resolved URL anyway — caller will validate
+                return final_url if final_url != doi_url else None
+        except Exception as exc:
+            logger.debug("DOI resolve error for %s: %s", doi, exc)
+            return None
+        finally:
+            await client.aclose()
+
+    # ── core download ─────────────────────────────────────────────────
+
+    async def _try_download(self, url: str) -> tuple[Optional[str], Optional[str], Optional[str]]:
+        """Download and validate a single URL. Returns (sha256, file_path, error)."""
         if not url or not url.startswith("http"):
             return None, None, f"Invalid URL: {url}"
 
-        # Check open-access host (arxiv is always fine, others need explicit listing)
-        from urllib.parse import urlparse
-        host = urlparse(url).hostname or ""
-
-        # Allow arxiv unconditionally, others must be in allowlist
-        is_arxiv = host.endswith("arxiv.org")
-        if not is_arxiv and host not in ALLOWED_PDF_HOSTS:
-            # Still try — log a warning but proceed if it looks like a PDF
-            if not url.lower().endswith(".pdf"):
-                logger.debug(f"Skipping non-PDF, non-OA URL: {url[:100]}")
-                return None, None, f"Not a known OA host and not a .pdf: {host}"
-
-        # Stream download
         client = httpx.AsyncClient(
-            timeout=httpx.Timeout(self._settings.PDF_DOWNLOAD_TIMEOUT),
+            timeout=httpx.Timeout(self._download_timeout),
             follow_redirects=True,
         )
 
@@ -77,21 +182,23 @@ class PDFDownloader:
 
                     # Check Content-Type
                     content_type = response.headers.get("content-type", "")
-                    if "pdf" not in content_type.lower() and not is_arxiv:
-                        # arXiv sometimes serves PDF without proper content-type
-                        logger.debug(f"Non-PDF content-type: {content_type} for {url[:80]}")
-                        # Continue anyway — some servers misconfigure
+                    if "pdf" not in content_type.lower():
+                        host = urlparse(url).hostname or ""
+                        # arxiv sometimes serves PDFs without proper Content-Type
+                        if host.endswith("arxiv.org"):
+                            pass  # continue anyway
+                        else:
+                            return None, None, f"Not a PDF (Content-Type: {content_type})"
 
-                    # Check Content-Length against max size
+                    # Check Content-Length
                     content_length = response.headers.get("content-length")
                     if content_length and int(content_length) > self._max_size:
                         return None, None, (
-                            f"PDF too large: {int(content_length)} bytes "
-                            f"(max: {self._max_size})"
+                            f"PDF too large: {int(content_length)} bytes (max: {self._max_size})"
                         )
 
-                    # Read in chunks, checking size limit
-                    chunks = []
+                    # Stream to memory, enforcing size limit
+                    chunks: list[bytes] = []
                     total = 0
                     async for chunk in response.aiter_bytes(chunk_size=65536):
                         total += len(chunk)
@@ -103,23 +210,26 @@ class PDFDownloader:
 
                     # Verify PDF signature
                     if not content.startswith(b"%PDF"):
-                        return None, None, f"Not a valid PDF (missing %%PDF signature)"
+                        return None, None, "Not a valid PDF (missing %%PDF signature)"
 
-                    # Save to cache (SHA-256 addressed)
                     sha256, file_path = await self._storage.save_pdf(content, url)
                     logger.info(
-                        f"PDF downloaded: {sha256[:12]}... "
-                        f"({len(content)} bytes) from {url[:80]}"
+                        "PDF downloaded: %s... (%d bytes) from %s",
+                        sha256[:12],
+                        len(content),
+                        url[:100],
                     )
                     return sha256, file_path, None
 
         except httpx.TimeoutException:
-            return None, None, f"Timeout downloading PDF"
-        except Exception as e:
-            logger.error(f"PDF download failed: {e}")
-            return None, None, str(e)
+            return None, None, "Timeout downloading PDF"
+        except Exception as exc:
+            logger.error("PDF download error: %s", exc)
+            return None, None, str(exc)
         finally:
             await client.aclose()
+
+    # ── cache helpers ─────────────────────────────────────────────────
 
     def get_pdf_path(self, sha256: str) -> Optional[str]:
         return self._storage.get_pdf_path(sha256)
