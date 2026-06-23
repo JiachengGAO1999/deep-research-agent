@@ -130,12 +130,13 @@ def _get_providers(settings=None):
     else:
         from app.providers.openalex import OpenAlexProvider
         from app.providers.semantic_scholar import SemanticScholarProvider
-        from app.providers.arxiv import ArxivProvider
         _cached_providers = [
             OpenAlexProvider(settings=settings),
             SemanticScholarProvider(settings=settings),
-            ArxivProvider(settings=settings),
         ]
+        # arXiv is NOT used as a search provider: SJTU outbound IP is
+        # hard-rate-limited by export.arxiv.org. arXiv PDFs are still
+        # fetched via arxiv.org/pdf/{id} in download_pdfs_node.
     return _cached_providers
 
 
