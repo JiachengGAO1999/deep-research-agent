@@ -28,3 +28,7 @@ Thumbs.db
 htmlcov/
 .coverage
 docs/
+
+# Tool configs (may contain keys)
+.claude/
+.codex/

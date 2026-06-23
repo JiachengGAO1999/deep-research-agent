@@ -31,13 +31,9 @@ class Settings:
     LLM_FAST_MAX_TOKENS: int = int(os.getenv("LLM_FAST_MAX_TOKENS", "1024"))
     LLM_STRONG_MAX_TOKENS: int = int(os.getenv("LLM_STRONG_MAX_TOKENS", "4096"))
 
-    # Thinking mode (vLLM chat_template_kwargs)
-    LLM_FAST_ENABLE_THINKING: bool = os.getenv(
-        "LLM_FAST_ENABLE_THINKING", "false"
-    ).lower() in ("1", "true", "yes")
-    LLM_STRONG_ENABLE_THINKING: bool = os.getenv(
-        "LLM_STRONG_ENABLE_THINKING", "true"
-    ).lower() in ("1", "true", "yes")
+    # Thinking mode (vLLM chat_template_kwargs — only sent when explicitly set)
+    LLM_FAST_ENABLE_THINKING: bool | None = None
+    LLM_STRONG_ENABLE_THINKING: bool | None = None
 
     # OpenAlex
     OPENALEX_API_KEY: str = os.getenv("OPENALEX_API_KEY", "")
