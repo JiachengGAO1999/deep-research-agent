@@ -577,7 +577,7 @@ async def download_pdfs_node(state: dict) -> dict:
                 await lifecycle.register_download(
                     session=session,
                     sha256=sha256,
-                    source_url=pdf_url,
+                    source_url=paper.full_text_url or paper.url or "",
                     file_path=file_path,
                     file_size_bytes=file_size,
                     task_id=state["task_id"],
