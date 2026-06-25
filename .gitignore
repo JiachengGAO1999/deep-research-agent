@@ -27,7 +27,6 @@ Thumbs.db
 .pytest_cache/
 htmlcov/
 .coverage
-docs/
 
 # Tool configs (may contain keys)
 .claude/
