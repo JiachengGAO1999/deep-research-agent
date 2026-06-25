@@ -31,3 +31,4 @@ htmlcov/
 # Tool configs (may contain keys)
 .claude/
 .codex/
+docs/deploy.md
